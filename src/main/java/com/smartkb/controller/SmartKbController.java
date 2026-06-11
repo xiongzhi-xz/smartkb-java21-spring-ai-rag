@@ -1,0 +1,234 @@
+package com.smartkb.controller;
+
+import com.smartkb.service.RagService;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * SmartKB REST API 控制器
+ * <p>
+ * 提供以下接口：
+ * 1. POST /api/documents/upload - 上传文档到知识库
+ * 2. POST /api/chat - 单轮 RAG 问答
+ * 3. POST /api/chat/conversation - 多轮对话（带上下文记忆）
+ * <p>
+ * Virtual Threads 应用：
+ * - Spring Boot 3.3 已启用虚拟线程（application.yml 配置）
+ * - 所有 Controller 方法自动运行在虚拟线程上
+ * - RagService 的文档处理任务也使用虚拟线程池，不阻塞 Controller 线程
+ *
+ * @author SmartKB Team
+ * @since 1.0.0
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+public class SmartKbController {
+
+    private final RagService ragService;
+
+    /**
+     * 上传文档到知识库
+     * <p>
+     * 处理流程：
+     * 1. 接收 MultipartFile
+     * 2. 调用 RagService.addDocument（解析 → Embedding → 存储）
+     * 3. 返回处理结果（文档块数量）
+     * <p>
+     * Virtual Threads 优化：
+     * - Controller 方法运行在虚拟线程（不阻塞平台线程）
+     * - 文档处理任务使用虚拟线程池并发执行
+     * - 支持高并发上传（传统线程池无法做到）
+     *
+     * @param file 上传的文档文件
+     * @return 处理结果
+     */
+    @PostMapping("/documents/upload")
+    public ResponseEntity<Map<String, Object>> uploadDocument(@RequestParam("file") MultipartFile file) {
+        log.info("接收文档上传请求: 文件名={}, 大小={} bytes", file.getOriginalFilename(), file.getSize());
+
+        try {
+            // 1. 检查文件类型
+            String fileName = file.getOriginalFilename();
+            if (fileName == null || fileName.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "文件名不能为空"));
+            }
+
+            String fileType = getFileExtension(fileName);
+            if (!isSupportedFileType(fileType)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "不支持的文件类型: " + fileType,
+                        "supportedTypes", "pdf, docx, md, txt"
+                ));
+            }
+
+            // 2. 转换为 Spring Resource
+            Resource resource = file.getResource();
+
+            // 3. 调用 RagService 处理文档
+            int chunkCount = ragService.addDocument(resource, fileType, null);
+
+            // 4. 返回成功响应
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("fileName", fileName);
+            response.put("fileType", fileType);
+            response.put("chunkCount", chunkCount);
+            response.put("message", "文档上传成功");
+
+            log.info("文档上传成功: {}, {} chunks", fileName, chunkCount);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("文档上传失败: {}", file.getOriginalFilename(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 单轮 RAG 问答
+     * <p>
+     * 流程说明：
+     * 1. 接收用户问题
+     * 2. ChatClient 通过 QuestionAnswerAdvisor 自动执行 RAG 流程：
+     *    - 向量检索相关文档
+     *    - 注入检索结果到 Prompt
+     *    - LLM 基于文档生成答案
+     * 3. 返回答案
+     *
+     * @param request 问答请求（包含 question 字段）
+     * @return 答案
+     */
+    @PostMapping("/chat")
+    public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest request) {
+        log.info("接收问答请求: {}", request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
+
+        try {
+            // 调用 RagService 进行 RAG 问答
+            String answer = ragService.query(request.getQuestion());
+
+            ChatResponse response = new ChatResponse();
+            response.setAnswer(answer);
+            response.setSuccess(true);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("问答失败: {}", request.getQuestion(), e);
+            ChatResponse errorResponse = new ChatResponse();
+            errorResponse.setSuccess(false);
+            errorResponse.setError(e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    /**
+     * 多轮对话（带上下文记忆）
+     * <p>
+     * 与单轮问答的区别：
+     * - 使用 conversationId 管理会话
+     * - ChatMemoryAdvisor 自动加载历史消息
+     * - 支持上下文关联的连续提问
+     * <p>
+     * 使用示例：
+     * 1. 用户问："Java 21 有哪些新特性？"
+     * 2. 用户问："Virtual Threads 怎么用？"（基于上文理解是 Java 21 的特性）
+     *
+     * @param request 对话请求（包含 question 和 conversationId）
+     * @return 答案
+     */
+    @PostMapping("/chat/conversation")
+    public ResponseEntity<ChatResponse> chatWithContext(@RequestBody ConversationRequest request) {
+        log.info("接收多轮对话请求: conversationId={}, question={}",
+                request.getConversationId(),
+                request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
+
+        try {
+            // 如果没有提供 conversationId，生成一个新的
+            String conversationId = request.getConversationId();
+            if (conversationId == null || conversationId.isEmpty()) {
+                conversationId = UUID.randomUUID().toString();
+            }
+
+            // 调用 RagService 进行多轮 RAG 问答
+            String answer = ragService.queryWithContext(request.getQuestion(), conversationId);
+
+            ChatResponse response = new ChatResponse();
+            response.setAnswer(answer);
+            response.setConversationId(conversationId);
+            response.setSuccess(true);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("多轮对话失败: conversationId={}, question={}",
+                    request.getConversationId(), request.getQuestion(), e);
+            ChatResponse errorResponse = new ChatResponse();
+            errorResponse.setSuccess(false);
+            errorResponse.setError(e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    /**
+     * 获取文件扩展名
+     */
+    private String getFileExtension(String fileName) {
+        int lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex > 0 && lastDotIndex < fileName.length() - 1) {
+            return fileName.substring(lastDotIndex + 1).toLowerCase();
+        }
+        return "";
+    }
+
+    /**
+     * 检查是否支持该文件类型
+     */
+    private boolean isSupportedFileType(String fileType) {
+        return fileType.matches("pdf|docx?|md|txt");
+    }
+
+    // ========== DTO 定义 ==========
+
+    /**
+     * 单轮问答请求
+     */
+    @Data
+    public static class ChatRequest {
+        private String question;
+    }
+
+    /**
+     * 多轮对话请求
+     */
+    @Data
+    public static class ConversationRequest {
+        private String question;
+        private String conversationId;
+    }
+
+    /**
+     * 问答响应
+     */
+    @Data
+    public static class ChatResponse {
+        private String answer;
+        private String conversationId;
+        private boolean success;
+        private String error;
+    }
+}
