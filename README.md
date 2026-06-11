@@ -51,13 +51,14 @@ Grafana: http://localhost:3000 (admin/admin123)
 
 ### 后续开发计划
 - [x] 项目初始化 + Virtual Threads 配置 + CLAUDE.md 规则
-- [ ] 文档智能解析与切片服务
-- [ ] Embedding 与向量存储
-- [ ] Advanced RAG（多Advisor组合）
-- [ ] Tool-Calling Agent 与多轮对话
+- [x] 文档智能解析与切片服务
+- [x] Embedding 与向量存储
+- [x] 核心 RAG 服务（单轮/多轮问答）
+- [x] REST API 接口
+- [ ] Advanced RAG（Query Rewriting、Metadata Filtering、Re-ranking）
 - [ ] Kubernetes 部署 + 完整监控面板
 - [ ] 性能压测报告（Virtual Threads收益数据）
-- [ ] 3篇技术博客输出
+- [ ] 技术博客输出
 
 ### 学习收获与总结
 通过本项目，我将理论知识转化为可运行的生产级系统，深入理解了 Virtual Threads 在AI场景下的正确使用方式、Spring AI Advisor 的设计思想，以及RAG系统的工程化落地路径。这些经验将帮助我快速适应2026年的企业技术要求。
