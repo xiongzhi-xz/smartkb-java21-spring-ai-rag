@@ -1,6 +1,7 @@
 package com.smartkb.controller;
 
 import com.smartkb.service.AdvancedRagService;
+import com.smartkb.service.DocumentManagementService;
 import com.smartkb.service.RagService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class SmartKbController {
 
     private final RagService ragService;
     private final AdvancedRagService advancedRagService;
+    private final DocumentManagementService documentManagementService;
 
     /**
      * 上传文档到知识库
@@ -184,6 +186,121 @@ public class SmartKbController {
             errorResponse.setSuccess(false);
             errorResponse.setError(e.getMessage());
             return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    // ========== 文档管理接口 ==========
+
+    /**
+     * 查询所有已上传文档
+     *
+     * @return 文档列表
+     */
+    @GetMapping("/documents")
+    public ResponseEntity<Map<String, Object>> listDocuments() {
+        log.info("查询文档列表");
+
+        try {
+            List<Map<String, Object>> documents = documentManagementService.listDocuments();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("documents", documents);
+            response.put("count", documents.size());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("查询文档列表失败", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 查询文档详情
+     *
+     * @param fileName 文件名
+     * @return 文档详情
+     */
+    @GetMapping("/documents/{fileName}")
+    public ResponseEntity<Map<String, Object>> getDocumentDetail(@PathVariable String fileName) {
+        log.info("查询文档详情: {}", fileName);
+
+        try {
+            Map<String, Object> detail = documentManagementService.getDocumentDetail(fileName);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("document", detail);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("查询文档详情失败: {}", fileName, e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 删除文档
+     *
+     * @param fileName 文件名
+     * @return 删除结果
+     */
+    @DeleteMapping("/documents/{fileName}")
+    public ResponseEntity<Map<String, Object>> deleteDocument(@PathVariable String fileName) {
+        log.info("删除文档: {}", fileName);
+
+        try {
+            int deletedCount = documentManagementService.deleteDocument(fileName);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("fileName", fileName);
+            response.put("deletedChunks", deletedCount);
+            response.put("message", "文档删除成功");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("删除文档失败: {}", fileName, e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 查询文档统计信息
+     *
+     * @return 统计信息
+     */
+    @GetMapping("/documents/stats")
+    public ResponseEntity<Map<String, Object>> getDocumentStatistics() {
+        log.info("查询文档统计信息");
+
+        try {
+            Map<String, Object> stats = documentManagementService.getStatistics();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("statistics", stats);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("查询统计信息失败", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
         }
     }
 
