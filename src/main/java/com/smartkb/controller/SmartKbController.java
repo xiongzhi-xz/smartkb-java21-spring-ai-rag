@@ -1,5 +1,6 @@
 package com.smartkb.controller;
 
+import com.smartkb.service.AdvancedRagService;
 import com.smartkb.service.RagService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ import java.util.UUID;
 public class SmartKbController {
 
     private final RagService ragService;
+    private final AdvancedRagService advancedRagService;
 
     /**
      * 上传文档到知识库
@@ -204,6 +206,50 @@ public class SmartKbController {
     }
 
     /**
+     * Advanced RAG 问答（支持查询改写 + 元数据过滤）
+     * <p>
+     * 与普通 /api/chat 的区别：
+     * - 自动进行查询改写（提升检索准确率）
+     * - 支持元数据过滤（如只搜索特定文档）
+     * - 结果重排序
+     * <p>
+     * 适用场景：
+     * - 需要高精度检索
+     * - 需要指定文档范围
+     * - 用户问题比较模糊
+     *
+     * @param request Advanced RAG 请求
+     * @return 答案
+     */
+    @PostMapping("/chat/advanced")
+    public ResponseEntity<ChatResponse> chatAdvanced(@RequestBody AdvancedChatRequest request) {
+        log.info("接收 Advanced RAG 请求: {}", request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
+
+        try {
+            // 调用 AdvancedRagService
+            String answer = advancedRagService.queryAdvanced(
+                    request.getQuestion(),
+                    request.getMetadataFilter(),
+                    request.getHistory()
+            );
+
+            ChatResponse response = new ChatResponse();
+            response.setAnswer(answer);
+            response.setContent(answer);
+            response.setSuccess(true);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Advanced RAG 问答失败: {}", request.getQuestion(), e);
+            ChatResponse errorResponse = new ChatResponse();
+            errorResponse.setSuccess(false);
+            errorResponse.setError(e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    /**
      * 测试专用 RAG 接口（带详细调试信息）
      * <p>
      * 用于验证整个 RAG 链路是否正常工作：
@@ -260,6 +306,16 @@ public class SmartKbController {
     public static class ConversationRequest {
         private String question;
         private String conversationId;
+    }
+
+    /**
+     * Advanced RAG 请求
+     */
+    @Data
+    public static class AdvancedChatRequest {
+        private String question;
+        private Map<String, Object> metadataFilter;  // 元数据过滤条件（可选）
+        private String history;  // 对话历史（可选）
     }
 
     /**
