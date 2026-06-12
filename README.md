@@ -55,10 +55,31 @@ Grafana: http://localhost:3000 (admin/admin123)
 - [x] Embedding 与向量存储
 - [x] 核心 RAG 服务（单轮/多轮问答）
 - [x] REST API 接口
-- [ ] Advanced RAG（Query Rewriting、Metadata Filtering、Re-ranking）
+- [x] Advanced RAG（Query Rewriting、Metadata Filtering、Re-ranking）
+- [x] 生产级功能（文档管理、异常处理）
+- [x] Web 前端界面
+- [x] 单元测试（核心服务）
 - [ ] Kubernetes 部署 + 完整监控面板
 - [ ] 性能压测报告（Virtual Threads收益数据）
 - [ ] 技术博客输出
+
+## API 文档
+
+### 文档管理
+- `POST /api/documents/upload` - 上传文档
+- `GET /api/documents` - 查询文档列表
+- `GET /api/documents/{fileName}` - 查询文档详情
+- `DELETE /api/documents/{fileName}` - 删除文档
+- `GET /api/documents/stats` - 文档统计信息
+
+### 问答服务
+- `POST /api/chat` - 基础 RAG 问答
+- `POST /api/chat/advanced` - Advanced RAG 问答（查询改写+过滤）
+- `POST /api/chat/conversation` - 多轮对话
+- `POST /api/test/rag` - 测试接口（带调试信息）
+
+### 详细测试步骤
+参考 [TESTING.md](TESTING.md) 获取完整测试指南。
 
 ### 学习收获与总结
 通过本项目，我将理论知识转化为可运行的生产级系统，深入理解了 Virtual Threads 在AI场景下的正确使用方式、Spring AI Advisor 的设计思想，以及RAG系统的工程化落地路径。这些经验将帮助我快速适应2026年的企业技术要求。
