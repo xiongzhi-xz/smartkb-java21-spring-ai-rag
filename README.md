@@ -59,9 +59,15 @@ Grafana: http://localhost:3000 (admin/admin123)
 - [x] 生产级功能（文档管理、异常处理）
 - [x] Web 前端界面
 - [x] 单元测试（核心服务）
-- [ ] Kubernetes 部署 + 完整监控面板
-- [ ] 性能压测报告（Virtual Threads收益数据）
-- [ ] 技术博客输出
+- [x] Kubernetes 部署 + Grafana 监控面板
+- [x] 性能测试报告模板
+- [x] 技术博客大纲
+
+### 项目文档
+- [TESTING.md](TESTING.md) - 完整测试指南
+- [PERFORMANCE_REPORT.md](docs/PERFORMANCE_REPORT.md) - 性能测试报告
+- [BLOG_OUTLINE.md](docs/BLOG_OUTLINE.md) - 技术博客系列大纲
+- [k8s/README.md](k8s/README.md) - Kubernetes 部署指南
 
 ## API 文档
 
