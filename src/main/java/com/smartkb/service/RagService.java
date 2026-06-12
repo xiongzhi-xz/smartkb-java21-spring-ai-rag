@@ -1,5 +1,6 @@
 package com.smartkb.service;
 
+import com.smartkb.util.VirtualThreadInspector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -64,11 +65,12 @@ public class RagService {
      */
     public int addDocument(Resource resource, String fileType, java.util.Map<String, Object> metadata) {
         log.info("开始处理文档: {}, 类型: {}", resource.getFilename(), fileType);
+        VirtualThreadInspector.logThreadInfo("文档处理开始", "文件: " + resource.getFilename());
         long startTime = System.currentTimeMillis();
 
         try {
             // 1. 解析并切片文档
-            logThreadInfo("文档解析开始");
+            VirtualThreadInspector.logThreadInfo("文档解析阶段");
             List<Document> chunks = documentLoaderService.loadAndSplitDocument(resource, fileType);
             log.info("文档切片完成: {} chunks", chunks.size());
 
@@ -82,17 +84,19 @@ public class RagService {
             });
 
             // 3. 批量生成 Embedding（Virtual Threads 并发）
-            logThreadInfo("Embedding 生成开始");
+            VirtualThreadInspector.logThreadInfo("Embedding生成阶段");
             embeddingService.embedDocumentsBatch(chunks);
             log.info("Embedding 生成完成");
 
             // 4. 存入向量库
-            logThreadInfo("向量存储开始");
+            VirtualThreadInspector.logThreadInfo("向量存储阶段");
             vectorStoreService.addDocuments(chunks);
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("文档处理完成: {}, {} chunks, 耗时: {} ms",
+            log.info("文档处理完成: {},  chunks, 耗时:  ms",
                     resource.getFilename(), chunks.size(), duration);
+            VirtualThreadInspector.logThreadInfo("文档处理完成",
+                    String.format("文件: %s, chunks: %d, 耗时: %d ms", resource.getFilename(), chunks.size(), duration));
 
             return chunks.size();
 
@@ -115,12 +119,18 @@ public class RagService {
      */
     public int addDocumentsBatch(List<Resource> resources, String fileType) {
         log.info("批量处理文档: {} 个文件, 类型: {}", resources.size(), fileType);
+        VirtualThreadInspector.logThreadInfo("批量文档处理开始", "文件数: " + resources.size());
         long startTime = System.currentTimeMillis();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            log.info("使用 Virtual Thread Executor 并发处理 {} 个文档", resources.size());
+
             // 为每个文档创建一个虚拟线程并发处理
             List<java.util.concurrent.Future<Integer>> futures = resources.stream()
-                    .map(resource -> executor.submit(() -> addDocument(resource, fileType, null)))
+                    .map(resource -> executor.submit(() -> {
+                        VirtualThreadInspector.logThreadInfo("文档处理任务", "文件: " + resource.getFilename());
+                        return addDocument(resource, fileType, null);
+                    }))
                     .toList();
 
             // 等待所有文档处理完成
@@ -138,6 +148,8 @@ public class RagService {
             long duration = System.currentTimeMillis() - startTime;
             log.info("批量文档处理完成: {} 个文件, {} chunks, 耗时: {} ms",
                     resources.size(), totalChunks, duration);
+            VirtualThreadInspector.logThreadInfo("批量文档处理完成",
+                    String.format("文件数: %d, 总chunks: %d, 耗时: %d ms", resources.size(), totalChunks, duration));
 
             return totalChunks;
 
@@ -160,7 +172,7 @@ public class RagService {
      */
     public String query(String question) {
         log.info("RAG 问答: {}", question.substring(0, Math.min(50, question.length())));
-        logThreadInfo("RAG 查询开始");
+        VirtualThreadInspector.logThreadInfo("RAG查询开始", "问题长度: " + question.length());
 
         try {
             // ChatClient 已配置 Advisor 链，会自动执行 RAG 流程
@@ -169,7 +181,8 @@ public class RagService {
                     .call()
                     .content();
 
-            log.info("RAG 问答完成");
+            log.info("RAG 问答完成，答案长度: {}", answer.length());
+            VirtualThreadInspector.logThreadInfo("RAG查询完成", "答案长度: " + answer.length());
             return answer;
 
         } catch (Exception e) {
@@ -192,7 +205,8 @@ public class RagService {
     public String queryWithContext(String question, String conversationId) {
         log.info("多轮 RAG 问答: conversationId={}, question={}",
                 conversationId, question.substring(0, Math.min(50, question.length())));
-        logThreadInfo("多轮 RAG 查询开始");
+        VirtualThreadInspector.logThreadInfo("多轮RAG查询开始",
+                "conversationId: " + conversationId + ", 问题长度: " + question.length());
 
         try {
             // ChatClient 的 VectorStoreChatMemoryAdvisor 会自动加载历史
@@ -202,7 +216,9 @@ public class RagService {
                     .call()
                     .content();
 
-            log.info("多轮 RAG 问答完成: conversationId={}", conversationId);
+            log.info("多轮 RAG 问答完成: conversationId={}, 答案长度: {}", conversationId, answer.length());
+            VirtualThreadInspector.logThreadInfo("多轮RAG查询完成",
+                    "conversationId: " + conversationId + ", 答案长度: " + answer.length());
             return answer;
 
         } catch (Exception e) {
@@ -212,11 +228,83 @@ public class RagService {
     }
 
     /**
-     * 记录当前线程信息（用于验证 Virtual Threads 是否生效）
+     * 测试专用方法：带详细调试信息的 RAG 查询
+     * <p>
+     * 返回完整的调试信息，用于验证：
+     * 1. Virtual Threads 是否生效
+     * 2. 向量检索结果（Top-K 文档）
+     * 3. 注入到 LLM 的上下文内容
+     * 4. 最终生成的答案
+     *
+     * @param question 用户问题
+     * @return 包含调试信息的 Map
      */
-    private void logThreadInfo(String context) {
-        Thread thread = Thread.currentThread();
-        log.debug("[{}] 线程信息 - 名称: {}, 是否虚拟线程: {}, ID: {}",
-                context, thread.getName(), thread.isVirtual(), thread.threadId());
+    public java.util.Map<String, Object> queryWithDebugInfo(String question) {
+        log.info("=== RAG 测试查询开始 ===");
+        log.info("问题: {}", question);
+
+        java.util.Map<String, Object> debugInfo = new java.util.LinkedHashMap<>();
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // 1. 记录当前线程信息
+            Thread currentThread = Thread.currentThread();
+            debugInfo.put("threadName", currentThread.getName());
+            debugInfo.put("isVirtualThread", currentThread.isVirtual() ? "✓ YES" : "✗ NO");
+            debugInfo.put("threadId", currentThread.threadId());
+            VirtualThreadInspector.logThreadInfo("RAG测试查询", "问题: " + question.substring(0, Math.min(30, question.length())));
+
+            // 2. 手动执行向量检索（验证检索功能）
+            log.info("执行向量检索...");
+            long retrievalStart = System.currentTimeMillis();
+            List<Document> retrievedDocs = vectorStoreService.searchSimilarDocuments(question, 5, 0.7);
+            long retrievalDuration = System.currentTimeMillis() - retrievalStart;
+
+            log.info("检索完成: 找到 {} 条相关文档，耗时: {} ms", retrievedDocs.size(), retrievalDuration);
+            debugInfo.put("retrievedDocsCount", retrievedDocs.size());
+            debugInfo.put("retrievalDuration", retrievalDuration + " ms");
+
+            // 3. 记录检索到的文档片段
+            List<java.util.Map<String, Object>> docDetails = new java.util.ArrayList<>();
+            for (int i = 0; i < retrievedDocs.size(); i++) {
+                Document doc = retrievedDocs.get(i);
+                java.util.Map<String, Object> docInfo = new java.util.LinkedHashMap<>();
+                docInfo.put("index", i + 1);
+                docInfo.put("content", doc.getContent().substring(0, Math.min(200, doc.getContent().length())) + "...");
+                docInfo.put("metadata", doc.getMetadata());
+                docDetails.add(docInfo);
+
+                log.info("文档 #{}: {}", i + 1, doc.getContent().substring(0, Math.min(100, doc.getContent().length())));
+            }
+            debugInfo.put("retrievedDocs", docDetails);
+
+            // 4. 调用 ChatClient（Advisor 自动执行）
+            log.info("调用 ChatClient 生成答案...");
+            long chatStart = System.currentTimeMillis();
+            String answer = chatClient.prompt()
+                    .user(question)
+                    .call()
+                    .content();
+            long chatDuration = System.currentTimeMillis() - chatStart;
+
+            log.info("答案生成完成，耗时: {} ms", chatDuration);
+            debugInfo.put("answer", answer);
+            debugInfo.put("answerLength", answer.length());
+            debugInfo.put("chatDuration", chatDuration + " ms");
+
+            // 5. 总结
+            long totalDuration = System.currentTimeMillis() - startTime;
+            debugInfo.put("totalQueryDuration", totalDuration + " ms");
+
+            log.info("=== RAG 测试查询完成 ===");
+            log.info("总耗时: {} ms (检索:  ms, 生成: {} ms)", totalDuration, retrievalDuration, chatDuration);
+
+            return debugInfo;
+
+        } catch (Exception e) {
+            log.error("RAG 测试查询失败", e);
+            debugInfo.put("error", e.getMessage());
+            throw new RuntimeException("RAG 测试查询失败: " + e.getMessage(), e);
+        }
     }
 }

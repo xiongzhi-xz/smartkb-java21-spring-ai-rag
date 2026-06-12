@@ -1,5 +1,6 @@
 package com.smartkb.service;
 
+import com.smartkb.util.VirtualThreadInspector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.ExtractedTextFormatter;
@@ -52,6 +53,7 @@ public class DocumentLoaderService {
      */
     public List<Document> loadAndSplitDocument(Resource resource, String fileType) {
         log.info("开始加载文档: {}, 类型: {}", resource.getFilename(), fileType);
+        VirtualThreadInspector.logThreadInfo("文档加载开始", "文件: " + resource.getFilename());
 
         try {
             // 1. 根据文件类型选择合适的 DocumentReader
@@ -61,10 +63,13 @@ public class DocumentLoaderService {
                 default -> throw new IllegalArgumentException("不支持的文件类型: " + fileType);
             };
 
+            VirtualThreadInspector.logThreadInfo("文档解析完成", "原始文档数: " + documents.size());
+
             // 2. 智能切片（TokenTextSplitter 会保留 metadata）
             List<Document> chunks = textSplitter.apply(documents);
 
             log.info("文档切片完成: {} -> {} chunks", resource.getFilename(), chunks.size());
+            VirtualThreadInspector.logThreadInfo("文档切片完成", "chunks: " + chunks.size());
             return chunks;
 
         } catch (Exception e) {
@@ -90,11 +95,17 @@ public class DocumentLoaderService {
      */
     public List<Document> loadAndSplitDocumentsBatch(List<Resource> resources, String fileType) {
         log.info("批量加载文档: {} 个文件, 类型: {}", resources.size(), fileType);
+        VirtualThreadInspector.logThreadInfo("批量文档加载开始", "文件数: " + resources.size());
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            log.info("使用 Virtual Thread Executor 并发处理 {} 个文档", resources.size());
+
             // 为每个文档启动一个虚拟线程进行解析
             var futures = resources.stream()
-                    .map(resource -> executor.submit(() -> loadAndSplitDocument(resource, fileType)))
+                    .map(resource -> executor.submit(() -> {
+                        VirtualThreadInspector.logThreadInfo("文档解析任务", "文件: " + resource.getFilename());
+                        return loadAndSplitDocument(resource, fileType);
+                    }))
                     .toList();
 
             // 等待所有文档解析完成，合并结果
@@ -110,6 +121,7 @@ public class DocumentLoaderService {
                     .collect(Collectors.toList());
 
             log.info("批量加载完成: 总计 {} chunks", allChunks.size());
+            VirtualThreadInspector.logThreadInfo("批量文档加载完成", "总chunks: " + allChunks.size());
             return allChunks;
 
         } catch (Exception e) {

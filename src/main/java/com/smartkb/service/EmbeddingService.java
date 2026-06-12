@@ -1,5 +1,6 @@
 package com.smartkb.service;
 
+import com.smartkb.util.VirtualThreadInspector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -81,15 +82,18 @@ public class EmbeddingService {
         }
 
         log.info("开始批量生成 Embedding: {} 个文档", documents.size());
+        VirtualThreadInspector.logThreadInfo("批量Embedding开始", "文档数: " + documents.size());
         long startTime = System.currentTimeMillis();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             // 分批处理（每批 BATCH_SIZE 个文档）
             List<List<Document>> batches = partitionList(documents, BATCH_SIZE);
+            log.info("分为 {} 个批次，每批 {} 个文档", batches.size(), BATCH_SIZE);
 
             // 为每批启动一个虚拟线程
             var futures = batches.stream()
                     .map(batch -> executor.submit(() -> {
+                        VirtualThreadInspector.logThreadInfo("Embedding批次处理", "批次大小: " + batch.size());
                         embedBatch(batch);
                         return null;
                     }))
@@ -108,6 +112,8 @@ public class EmbeddingService {
             long duration = System.currentTimeMillis() - startTime;
             log.info("批量 Embedding 完成: {} 个文档, 耗时: {} ms, 平均: {} ms/doc",
                     documents.size(), duration, duration / documents.size());
+            VirtualThreadInspector.logThreadInfo("批量Embedding完成",
+                    String.format("耗时: %d ms, 平均: %d ms/doc", duration, duration / documents.size()));
 
             return documents;
 

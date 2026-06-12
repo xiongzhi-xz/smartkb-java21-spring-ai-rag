@@ -202,6 +202,46 @@ public class SmartKbController {
         return fileType.matches("pdf|docx?|md|txt");
     }
 
+    /**
+     * 测试专用 RAG 接口（带详细调试信息）
+     * <p>
+     * 用于验证整个 RAG 链路是否正常工作：
+     * - 向量检索是否生效
+     * - Advisor 链路是否正确执行
+     * - Virtual Threads 是否生效
+     * <p>
+     * 返回完整调试信息，便于排查问题
+     *
+     * @param request 测试请求
+     * @return 详细调试信息
+     */
+    @PostMapping("/test/rag")
+    public ResponseEntity<Map<String, Object>> testRag(@RequestBody ChatRequest request) {
+        log.info("=== RAG 测试接口调用 ===");
+        log.info("问题: {}", request.getQuestion());
+
+        try {
+            long startTime = System.currentTimeMillis();
+
+            // 调用 RagService 进行测试
+            Map<String, Object> testResult = ragService.queryWithDebugInfo(request.getQuestion());
+
+            long duration = System.currentTimeMillis() - startTime;
+            testResult.put("totalDuration", duration + " ms");
+            testResult.put("success", true);
+
+            log.info("=== RAG 测试完成，耗时: {} ms ===", duration);
+            return ResponseEntity.ok(testResult);
+
+        } catch (Exception e) {
+            log.error("RAG 测试失败", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
+    }
+
     // ========== DTO 定义 ==========
 
     /**
