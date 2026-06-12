@@ -123,6 +123,7 @@ public class SmartKbController {
 
             ChatResponse response = new ChatResponse();
             response.setAnswer(answer);
+            response.setContent(answer);  // 兼容前端
             response.setSuccess(true);
 
             return ResponseEntity.ok(response);
@@ -267,6 +268,7 @@ public class SmartKbController {
     @Data
     public static class ChatResponse {
         private String answer;
+        private String content;  // 兼容前端
         private String conversationId;
         private boolean success;
         private String error;
