@@ -45,3 +45,11 @@ application-local.yml
 
 # Docker
 docker/data/
+
+# Local extraction and browser automation artifacts
+.playwright-mcp/
+data/
+scripts/batch_extract_docs.py
+scripts/extract_docs.py
+scripts/extract_feishu_docs.js
+scripts/remaining_docs.js
