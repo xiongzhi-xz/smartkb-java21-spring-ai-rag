@@ -1,5 +1,6 @@
 package com.smartkb.service;
 
+import com.smartkb.domain.AdvancedRagResult;
 import com.smartkb.util.VirtualThreadInspector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
@@ -59,9 +60,9 @@ public class AdvancedRagService {
      * @param question       用户问题
      * @param metadataFilter 元数据过滤条件（可选）
      * @param history        对话历史（可选）
-     * @return 答案
+     * @return Advanced RAG 查询结果
      */
-    public String queryAdvanced(String question, Map<String, Object> metadataFilter, String history) {
+    public AdvancedRagResult queryAdvancedWithDetails(String question, Map<String, Object> metadataFilter, String history) {
         log.info("=== Advanced RAG 查询开始 ===");
         log.info("原始问题: {}", question);
         VirtualThreadInspector.logThreadInfo("Advanced RAG 查询开始");
@@ -93,15 +94,23 @@ public class AdvancedRagService {
             log.info("步骤 5: LLM 生成答案");
             String context = buildContext(retrievedDocs);
             String answer = generateAnswer(question, context);
+            List<String> sources = extractSources(retrievedDocs);
 
             log.info("=== Advanced RAG 查询完成 ===");
             VirtualThreadInspector.logThreadInfo("Advanced RAG 查询完成");
-            return answer;
+            return new AdvancedRagResult(answer, rewrittenQuery, sources, retrievedDocs.size());
 
         } catch (Exception e) {
             log.error("Advanced RAG 查询失败", e);
             throw new RuntimeException("Advanced RAG 查询失败: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Advanced RAG 查询（兼容旧调用，只返回答案）
+     */
+    public String queryAdvanced(String question, Map<String, Object> metadataFilter, String history) {
+        return queryAdvancedWithDetails(question, metadataFilter, history).answer();
     }
 
     /**
@@ -182,6 +191,19 @@ public class AdvancedRagService {
         }
 
         return context.toString();
+    }
+
+    /**
+     * 提取命中的来源文档名，用于前端展示。
+     */
+    private List<String> extractSources(List<Document> documents) {
+        return documents.stream()
+                .map(Document::getMetadata)
+                .map(metadata -> metadata.get("fileName"))
+                .filter(Objects::nonNull)
+                .map(String::valueOf)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**

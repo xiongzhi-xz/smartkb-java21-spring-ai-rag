@@ -1,5 +1,6 @@
 package com.smartkb.controller;
 
+import com.smartkb.domain.AdvancedRagResult;
 import com.smartkb.service.AdvancedRagService;
 import com.smartkb.service.DocumentManagementService;
 import com.smartkb.service.RagService;
@@ -346,15 +347,18 @@ public class SmartKbController {
 
         try {
             // 调用 AdvancedRagService
-            String answer = advancedRagService.queryAdvanced(
+            AdvancedRagResult result = advancedRagService.queryAdvancedWithDetails(
                     request.getQuestion(),
                     request.getMetadataFilter(),
                     request.getHistory()
             );
 
             ChatResponse response = new ChatResponse();
-            response.setAnswer(answer);
-            response.setContent(answer);
+            response.setAnswer(result.answer());
+            response.setContent(result.answer());
+            response.setSources(result.sources());
+            response.setRewrittenQuery(result.rewrittenQuery());
+            response.setRetrievedCount(result.retrievedCount());
             response.setSuccess(true);
 
             return ResponseEntity.ok(response);
@@ -445,6 +449,9 @@ public class SmartKbController {
         private String answer;
         private String content;  // 兼容前端
         private String conversationId;
+        private List<String> sources;
+        private String rewrittenQuery;
+        private Integer retrievedCount;
         private boolean success;
         private String error;
     }

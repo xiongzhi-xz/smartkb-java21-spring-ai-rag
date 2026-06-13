@@ -275,7 +275,7 @@
         });
     }
 
-    function addMessage(content, isUser, sources = []) {
+    function addMessage(content, isUser, sources = [], details = {}) {
         const container = document.getElementById('chatContainer');
         const msgDiv = document.createElement('div');
         msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} message`;
@@ -284,6 +284,19 @@
             <div class="${isUser ? 'user-msg' : 'ai-msg'} px-5 py-3.5 rounded-3xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}">
                 <div class="text-sm">${renderText(content)}</div>
         `;
+
+        if (!isUser) {
+            const detailParts = [];
+            if (Number.isFinite(Number(details.retrievedCount))) {
+                detailParts.push(`${Number(details.retrievedCount)} 个片段`);
+            }
+            if (details.rewrittenQuery) {
+                detailParts.push(`改写：${escapeHtml(details.rewrittenQuery)}`);
+            }
+            if (detailParts.length > 0) {
+                html += `<div class="mt-2 text-xs text-gray-400">${detailParts.join(' · ')}</div>`;
+            }
+        }
         
         if (!isUser && sources.length > 0) {
             html += `<div class="mt-3 text-xs text-gray-500">参考来源：${sources.map(escapeHtml).join('、')}</div>`;
@@ -324,7 +337,10 @@
             }
 
             const answer = data.answer || data.content || '处理中...';
-            addMessage(answer, false, data.sources || []);
+            addMessage(answer, false, data.sources || [], {
+                retrievedCount: data.retrievedCount,
+                rewrittenQuery: data.rewrittenQuery
+            });
             if (ragMode === 'conversation' && data.conversationId) {
                 conversationId = data.conversationId;
                 localStorage.setItem(conversationIdKey, conversationId);
