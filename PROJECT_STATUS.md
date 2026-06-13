@@ -27,6 +27,7 @@
 - ✅ 已上传文档详情查看
 - ✅ 文档详情窗口宽度调整
 - ✅ 对话界面（问答交互）
+- ✅ 对话模式流式输出（SSE 增量显示）
 - ✅ 前端会话 ID 持久化（支持连续追问和新会话）
 - ✅ Advanced RAG 模式切换与按文档过滤
 - ✅ Advanced RAG 改写查询、命中片段数与来源文档展示
@@ -45,6 +46,7 @@
 - **普通问答**：`POST /api/chat` 可正常返回答案
 - **知识库问答**：`POST /api/test/rag` 可检索到 `virtual-threads-guide.md` 并生成答案
 - **多轮对话代码链路**：`POST /api/chat/conversation` 已接入 ChatMemory Advisor，前端会复用 conversationId
+- **流式输出代码链路**：`POST /api/chat/conversation/stream` 使用 SSE 推送增量 token，前端实时追加到回答气泡
 - **Advanced RAG 代码链路**：查询改写、文档过滤、重排序已接入，生成阶段直接调用 ChatModel，避免二次触发普通 RAG Advisor
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
 - **自动化测试**：`mvn test` 通过（5 tests, 0 failures）
@@ -217,6 +219,6 @@ DELETE FROM vector_store;
 
 ---
 
-**当前最紧急任务**：重启应用后验证多轮对话和 Advanced RAG 真实效果，然后继续做 Hybrid Search 或来源片段展开。
+**当前最紧急任务**：重启应用后验证流式输出、多轮对话和 Advanced RAG 真实效果，然后继续做 Hybrid Search 或来源片段展开。
 
 祝顺利！🚀

@@ -1,5 +1,6 @@
 package com.smartkb.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartkb.domain.AdvancedRagResult;
 import com.smartkb.service.AdvancedRagService;
 import com.smartkb.service.DocumentManagementService;
@@ -8,15 +9,20 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.OutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * SmartKB REST API 控制器
@@ -43,6 +49,7 @@ public class SmartKbController {
     private final RagService ragService;
     private final AdvancedRagService advancedRagService;
     private final DocumentManagementService documentManagementService;
+    private final ObjectMapper objectMapper;
 
     /**
      * 上传文档到知识库
@@ -190,6 +197,83 @@ public class SmartKbController {
             errorResponse.setError(e.getMessage());
             return ResponseEntity.internalServerError().body(errorResponse);
         }
+    }
+
+    /**
+     * 多轮对话流式输出。
+     * <p>
+     * SSE 事件：
+     * - conversation：返回 conversationId
+     * - token：返回增量文本
+     * - done：回答结束
+     * - error：回答失败
+     */
+    @PostMapping(value = "/chat/conversation/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<StreamingResponseBody> chatWithContextStream(@RequestBody ConversationRequest request) {
+        log.info("接收多轮流式对话请求: conversationId={}, question={}",
+                request.getConversationId(),
+                request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
+
+        String conversationId = request.getConversationId();
+        if (conversationId == null || conversationId.isEmpty()) {
+            conversationId = UUID.randomUUID().toString();
+        }
+
+        String finalConversationId = conversationId;
+        StreamingResponseBody body = outputStream -> {
+            CountDownLatch done = new CountDownLatch(1);
+
+            try {
+                writeSseEvent(outputStream, "conversation", Map.of("conversationId", finalConversationId));
+
+                ragService.queryWithContextStream(request.getQuestion(), finalConversationId)
+                        .subscribe(
+                                chunk -> writeSseEventUnchecked(outputStream, "token", Map.of("content", chunk)),
+                                error -> {
+                                    try {
+                                        log.error("流式对话失败: conversationId={}", finalConversationId, error);
+                                        writeSseEventUnchecked(outputStream, "error", Map.of("error", error.getMessage()));
+                                    } finally {
+                                        done.countDown();
+                                    }
+                                },
+                                () -> {
+                                    try {
+                                        writeSseEventUnchecked(outputStream, "done", Map.of("success", true));
+                                    } finally {
+                                        done.countDown();
+                                    }
+                                }
+                        );
+
+                done.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                writeSseEvent(outputStream, "error", Map.of("error", "流式响应被中断"));
+            } catch (Exception e) {
+                log.error("创建流式对话失败: conversationId={}", finalConversationId, e);
+                writeSseEvent(outputStream, "error", Map.of("error", e.getMessage()));
+            }
+        };
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_EVENT_STREAM)
+                .body(body);
+    }
+
+    private void writeSseEventUnchecked(OutputStream outputStream, String event, Object data) {
+        try {
+            writeSseEvent(outputStream, event, data);
+        } catch (IOException e) {
+            throw new RuntimeException("写入流式响应失败", e);
+        }
+    }
+
+    private void writeSseEvent(OutputStream outputStream, String event, Object data) throws IOException {
+        String payload = objectMapper.writeValueAsString(data);
+        String message = "event: " + event + "\n" + "data: " + payload + "\n\n";
+        outputStream.write(message.getBytes(StandardCharsets.UTF_8));
+        outputStream.flush();
     }
 
     // ========== 文档管理接口 ==========

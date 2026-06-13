@@ -349,6 +349,89 @@
             : '发送';
     }
 
+    function parseSseBlock(block) {
+        const event = { type: 'message', data: '' };
+        const dataLines = [];
+
+        block.split(/\r?\n/).forEach(line => {
+            if (line.startsWith('event:')) {
+                event.type = line.slice('event:'.length).trim();
+            } else if (line.startsWith('data:')) {
+                dataLines.push(line.slice('data:'.length).trimStart());
+            }
+        });
+
+        event.data = dataLines.join('\n');
+        return event;
+    }
+
+    async function streamConversationMessage(payload, pendingMessage) {
+        const res = await fetch('/api/chat/conversation/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok || !res.body) {
+            throw new Error('流式问答请求失败');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let answer = '';
+        let nextConversationId = payload.conversationId || null;
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            let boundaryIndex;
+            while ((boundaryIndex = buffer.indexOf('\n\n')) >= 0) {
+                const block = buffer.slice(0, boundaryIndex).trim();
+                buffer = buffer.slice(boundaryIndex + 2);
+                if (!block) continue;
+
+                const event = parseSseBlock(block);
+                const data = event.data ? JSON.parse(event.data) : {};
+
+                if (event.type === 'conversation') {
+                    nextConversationId = data.conversationId || nextConversationId;
+                    conversationId = nextConversationId;
+                    localStorage.setItem(conversationIdKey, conversationId);
+                    updateConversationStatus();
+                    continue;
+                }
+
+                if (event.type === 'token') {
+                    answer += data.content || '';
+                    updateAssistantMessage(pendingMessage, answer || '正在生成回答...');
+                    continue;
+                }
+
+                if (event.type === 'error') {
+                    throw new Error(data.error || '流式问答失败');
+                }
+            }
+        }
+
+        if (buffer.trim()) {
+            const event = parseSseBlock(buffer.trim());
+            if (event.data) {
+                const data = JSON.parse(event.data);
+                if (event.type === 'token') {
+                    answer += data.content || '';
+                }
+            }
+        }
+
+        return {
+            answer: answer || '未生成回答',
+            conversationId: nextConversationId
+        };
+    }
+
     async function sendMessage() {
         if (chatBusy) return;
 
@@ -370,28 +453,29 @@
                 payload.metadataFilter = { fileName: advancedFilterFileName };
             }
 
-            const res = await fetch(ragMode === 'advanced' ? '/api/chat/advanced' : '/api/chat/conversation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            const data = await res.json();
-            if (!res.ok || data.success === false) {
-                throw new Error(data.error || '问答请求失败');
+            let answer;
+            if (ragMode === 'conversation') {
+                const streamResult = await streamConversationMessage(payload, pendingMessage);
+                answer = streamResult.answer;
+            } else {
+                const res = await fetch('/api/chat/advanced', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (!res.ok || data.success === false) {
+                    throw new Error(data.error || '问答请求失败');
+                }
+
+                answer = data.answer || data.content || '处理中...';
+                updateAssistantMessage(pendingMessage, answer, data.sources || [], {
+                    retrievedCount: data.retrievedCount,
+                    rewrittenQuery: data.rewrittenQuery
+                });
             }
 
-            const answer = data.answer || data.content || '处理中...';
-            updateAssistantMessage(pendingMessage, answer, data.sources || [], {
-                retrievedCount: data.retrievedCount,
-                rewrittenQuery: data.rewrittenQuery
-            });
-            if (ragMode === 'conversation' && data.conversationId) {
-                conversationId = data.conversationId;
-                localStorage.setItem(conversationIdKey, conversationId);
-                updateConversationStatus();
-            }
-            
             chatHistory.push({ role: 'user', content: question });
             chatHistory.push({ role: 'assistant', content: answer });
         } catch (e) {

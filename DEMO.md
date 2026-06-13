@@ -120,6 +120,8 @@ Virtual Threads 和传统线程池相比有什么优势？
 
 继续追问时，页面会复用当前会话 ID 调用 `/api/chat/conversation`，用于展示多轮上下文能力。点击右上角 `新会话` 会清空当前 conversationId。
 
+对话模式会调用 `/api/chat/conversation/stream`，回答会以流式方式逐段显示；如果模型响应慢，页面也会先展示“正在结合会话上下文检索并生成回答...”。
+
 建议话术：
 
 ```text

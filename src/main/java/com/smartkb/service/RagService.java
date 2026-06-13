@@ -12,6 +12,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -226,6 +227,33 @@ public class RagService {
             log.error("多轮 RAG 问答失败: conversationId={}, question={}", conversationId, question, e);
             throw new RuntimeException("多轮 RAG 问答失败: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * RAG 问答流式输出（多轮对话，支持上下文记忆）
+     *
+     * @param question       用户问题
+     * @param conversationId 会话 ID
+     * @return 增量答案片段
+     */
+    public Flux<String> queryWithContextStream(String question, String conversationId) {
+        log.info("多轮 RAG 流式问答: conversationId={}, question={}",
+                conversationId, question.substring(0, Math.min(50, question.length())));
+        VirtualThreadInspector.logThreadInfo("多轮RAG流式查询开始",
+                "conversationId: " + conversationId + ", 问题长度: " + question.length());
+
+        return chatClient.prompt()
+                .user(question)
+                .advisors(a -> a.param(AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId))
+                .stream()
+                .content()
+                .doOnComplete(() -> {
+                    log.info("多轮 RAG 流式问答完成: conversationId={}", conversationId);
+                    VirtualThreadInspector.logThreadInfo("多轮RAG流式查询完成",
+                            "conversationId: " + conversationId);
+                })
+                .doOnError(e -> log.error("多轮 RAG 流式问答失败: conversationId={}, question={}",
+                        conversationId, question, e));
     }
 
     /**
