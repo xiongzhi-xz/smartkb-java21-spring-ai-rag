@@ -75,8 +75,25 @@
     </div>
 </div>
 
+<div id="documentDetailOverlay" class="hidden fixed inset-0 z-50 bg-gray-900/40">
+    <div class="ml-auto h-full w-full max-w-3xl bg-white shadow-2xl flex flex-col">
+        <div class="px-6 py-4 border-b flex items-center justify-between">
+            <div class="min-w-0">
+                <h3 id="documentDetailTitle" class="font-semibold text-gray-800 truncate">文档详情</h3>
+                <p id="documentDetailMeta" class="text-xs text-gray-500 mt-1"></p>
+            </div>
+            <button onclick="closeDocumentDetail()"
+                    class="w-9 h-9 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div id="documentDetailBody" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50"></div>
+    </div>
+</div>
+
 <script>
     let chatHistory = [];
+    let selectedDocumentFileName = null;
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -90,6 +107,19 @@
 
     function renderText(value) {
         return escapeHtml(value).replace(/\n/g, '<br>');
+    }
+
+    function getDocumentItemClass(isActive) {
+        return [
+            'w-full p-3 text-left rounded-lg border transition group',
+            isActive ? 'bg-blue-50 border-blue-200' : 'border-transparent hover:bg-gray-50'
+        ].join(' ');
+    }
+
+    function highlightSelectedDocument() {
+        document.querySelectorAll('[data-document-file-name]').forEach(item => {
+            item.className = getDocumentItemClass(item.dataset.documentFileName === selectedDocumentFileName);
+        });
     }
 
     function addMessage(content, isUser, sources = []) {
@@ -234,6 +264,89 @@
         }
     }
 
+    function openDocumentDetail() {
+        document.getElementById('documentDetailOverlay').classList.remove('hidden');
+    }
+
+    function closeDocumentDetail() {
+        document.getElementById('documentDetailOverlay').classList.add('hidden');
+        selectedDocumentFileName = null;
+        highlightSelectedDocument();
+    }
+
+    async function showDocumentDetail(fileName) {
+        selectedDocumentFileName = fileName;
+        highlightSelectedDocument();
+        openDocumentDetail();
+
+        const title = document.getElementById('documentDetailTitle');
+        const meta = document.getElementById('documentDetailMeta');
+        const body = document.getElementById('documentDetailBody');
+
+        title.textContent = fileName;
+        meta.textContent = '加载中...';
+        body.innerHTML = `
+            <div class="h-full flex items-center justify-center text-sm text-gray-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>
+                正在加载文档片段
+            </div>
+        `;
+
+        try {
+            const res = await fetch(`/api/documents/${encodeURIComponent(fileName)}`);
+            const data = await res.json();
+            if (!res.ok || data.success === false) {
+                throw new Error(data.error || '加载文档详情失败');
+            }
+
+            renderDocumentDetail(data.document || { fileName, chunks: [] });
+        } catch (err) {
+            meta.textContent = '加载失败';
+            body.innerHTML = `
+                <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    ${escapeHtml(err.message)}
+                </div>
+            `;
+        }
+    }
+
+    function renderDocumentDetail(documentDetail) {
+        const title = document.getElementById('documentDetailTitle');
+        const meta = document.getElementById('documentDetailMeta');
+        const body = document.getElementById('documentDetailBody');
+        const chunks = documentDetail.chunks || [];
+
+        title.textContent = documentDetail.fileName || selectedDocumentFileName || '文档详情';
+        meta.textContent = `${chunks.length} 个片段`;
+
+        if (chunks.length === 0) {
+            body.innerHTML = '<div class="text-center text-sm text-gray-400 py-12">暂无可查看的文档片段</div>';
+            return;
+        }
+
+        body.innerHTML = chunks.map((chunk, index) => `
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">片段 ${index + 1}</span>
+                    <span class="text-xs text-gray-400">${escapeHtml(chunk.id || '')}</span>
+                </div>
+                <div class="p-4 text-sm text-gray-700 leading-7 whitespace-pre-wrap break-words">${escapeHtml(chunk.content || '')}</div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('documentDetailOverlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDocumentDetail();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDocumentDetail();
+        }
+    });
+
     function loadDocuments() {
         // 从向量数据库加载文档列表
         fetch('/api/documents')
@@ -256,12 +369,16 @@
                 }
 
                 docs.forEach(doc => {
-                    const docDiv = document.createElement('div');
-                    docDiv.className = 'p-3 hover:bg-gray-50 border-b cursor-pointer group';
+                    const fileName = doc.fileName || doc.name || '未知文档';
+                    const docDiv = document.createElement('button');
+                    docDiv.type = 'button';
+                    docDiv.dataset.documentFileName = fileName;
+                    docDiv.className = getDocumentItemClass(fileName === selectedDocumentFileName);
+                    docDiv.addEventListener('click', () => showDocumentDetail(fileName));
                     docDiv.innerHTML = `
                         <div class="flex items-center justify-between">
                             <div class="flex-1 min-w-0">
-                                <div class="font-medium text-sm text-gray-900 truncate">${escapeHtml(doc.fileName || doc.name || '未知文档')}</div>
+                                <div class="font-medium text-sm text-gray-900 truncate">${escapeHtml(fileName)}</div>
                                 <div class="text-xs text-gray-500 mt-1">${escapeHtml(doc.chunkCount || doc.chunks || 0)} 个片段</div>
                             </div>
                             <i class="fa-solid fa-file-alt text-gray-300 group-hover:text-blue-500"></i>
