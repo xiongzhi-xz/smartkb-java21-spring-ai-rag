@@ -19,8 +19,10 @@ http://localhost:8080
 建议准备测试文档：
 
 ```text
-test-docs/virtual-threads-guide.md
+test-docs/advanced-rag-demo.md
 ```
+
+轻量烟测可用 `test-docs/virtual-threads-guide.md`，但它通常只有 1 个片段，不适合展示 Advanced RAG 的引用片段效果。
 
 ## 讲解开场
 
@@ -59,7 +61,7 @@ http://localhost:8080
 点击 `上传文档`，选择：
 
 ```text
-test-docs/virtual-threads-guide.md
+test-docs/advanced-rag-demo.md
 ```
 
 观察：
