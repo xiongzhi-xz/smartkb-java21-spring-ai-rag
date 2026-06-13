@@ -50,10 +50,13 @@
     <div class="flex-1 flex flex-col">
         <div class="bg-white border-b px-6 py-4 flex items-center justify-between">
             <h2 class="font-semibold text-gray-700">智能对话</h2>
-            <button onclick="clearChat()" 
-                    class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1">
-                <i class="fa-solid fa-trash"></i> 清空对话
-            </button>
+            <div class="flex items-center gap-4">
+                <span id="conversationStatus" class="text-xs text-gray-400"></span>
+                <button onclick="clearChat()"
+                        class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-trash"></i> 新会话
+                </button>
+            </div>
         </div>
 
         <div id="chatContainer" class="chat-container p-6 overflow-y-auto bg-gray-50 space-y-6">
@@ -97,6 +100,8 @@
 
 <script>
     let chatHistory = [];
+    const conversationIdKey = 'smartkb.conversationId';
+    let conversationId = localStorage.getItem(conversationIdKey) || null;
     let selectedDocumentFileName = null;
     const documentDetailWidthKey = 'smartkb.documentDetailWidth';
     const documentDetailMinWidth = 420;
@@ -114,6 +119,11 @@
 
     function renderText(value) {
         return escapeHtml(value).replace(/\n/g, '<br>');
+    }
+
+    function updateConversationStatus() {
+        const status = document.getElementById('conversationStatus');
+        status.textContent = conversationId ? `会话 ${conversationId.slice(0, 8)}` : '新会话';
     }
 
     function getDocumentItemClass(isActive) {
@@ -202,12 +212,11 @@
         addMessage(question, true);
         input.value = '';
 
-        // 调用后端接口（请根据你的Controller实际路径修改）
         try {
-            const res = await fetch('/api/chat', {
+            const res = await fetch('/api/chat/conversation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: question, history: chatHistory })
+                body: JSON.stringify({ question: question, conversationId: conversationId })
             });
             
             const data = await res.json();
@@ -216,6 +225,11 @@
             }
 
             addMessage(data.answer || data.content || '处理中...', false, data.sources || []);
+            if (data.conversationId) {
+                conversationId = data.conversationId;
+                localStorage.setItem(conversationIdKey, conversationId);
+                updateConversationStatus();
+            }
             
             chatHistory.push({ role: 'user', content: question });
             chatHistory.push({ role: 'assistant', content: data.answer || data.content });
@@ -310,9 +324,12 @@
     });
 
     function clearChat() {
-        if (confirm('确定要清空所有对话记录吗？')) {
+        if (confirm('确定要开始一个新会话吗？')) {
             document.getElementById('chatContainer').innerHTML = '';
             chatHistory = [];
+            conversationId = null;
+            localStorage.removeItem(conversationIdKey);
+            updateConversationStatus();
         }
     }
 
@@ -457,6 +474,7 @@
             </div>
         `;
         document.getElementById('chatContainer').innerHTML = welcome;
+        updateConversationStatus();
         initDocumentDetailResize();
         initDocumentDetailWidth();
         loadDocuments(); // 自动加载文档列表

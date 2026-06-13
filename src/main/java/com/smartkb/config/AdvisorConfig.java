@@ -2,6 +2,7 @@ package com.smartkb.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
@@ -80,12 +81,15 @@ public class AdvisorConfig {
      * User Question → QuestionAnswerAdvisor (检索+注入) → ChatModel → Answer
      */
     @Bean
-    public ChatClient chatClient() {
+    public ChatClient chatClient(ChatMemory chatMemory) {
         log.info("初始化 ChatClient with Advisor 链");
         log.info("RAG 配置 - topK: {}, similarityThreshold: {}", topK, similarityThreshold);
 
         return ChatClient.builder(chatModel)
                 .defaultAdvisors(
+                        // MessageChatMemoryAdvisor - 多轮对话记忆
+                        new MessageChatMemoryAdvisor(chatMemory),
+
                         // QuestionAnswerAdvisor - RAG 核心组件
                         new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()
                                 .withTopK(topK)

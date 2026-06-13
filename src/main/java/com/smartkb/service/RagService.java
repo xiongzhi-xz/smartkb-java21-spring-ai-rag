@@ -4,6 +4,7 @@ import com.smartkb.util.VirtualThreadInspector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -194,8 +195,8 @@ public class RagService {
     /**
      * RAG 问答（多轮对话，支持上下文记忆）
      * <p>
-     * 使用 VectorStoreChatMemoryAdvisor 自动管理对话历史：
-     * - 历史消息存储在 Redis（基于 conversationId）
+     * 使用 MessageChatMemoryAdvisor 自动管理对话历史：
+     * - 历史消息存储在 ChatMemory（基于 conversationId）
      * - Advisor 会自动注入历史上下文到 Prompt
      *
      * @param question       用户问题
@@ -209,10 +210,10 @@ public class RagService {
                 "conversationId: " + conversationId + ", 问题长度: " + question.length());
 
         try {
-            // ChatClient 的 VectorStoreChatMemoryAdvisor 会自动加载历史
+            // ChatClient 的 MessageChatMemoryAdvisor 会自动加载历史
             String answer = chatClient.prompt()
                     .user(question)
-                    .advisors(a -> a.param("conversationId", conversationId))  // 传递会话 ID
+                    .advisors(a -> a.param(AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId))
                     .call()
                     .content();
 

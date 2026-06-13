@@ -175,6 +175,7 @@ public class SmartKbController {
 
             ChatResponse response = new ChatResponse();
             response.setAnswer(answer);
+            response.setContent(answer);
             response.setConversationId(conversationId);
             response.setSuccess(true);
 

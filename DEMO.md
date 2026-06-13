@@ -118,6 +118,8 @@ Java 21 Virtual Threads 适合解决什么问题？
 Virtual Threads 和传统线程池相比有什么优势？
 ```
 
+继续追问时，页面会复用当前会话 ID 调用 `/api/chat/conversation`，用于展示多轮上下文能力。点击右上角 `新会话` 会清空当前 conversationId。
+
 建议话术：
 
 ```text
