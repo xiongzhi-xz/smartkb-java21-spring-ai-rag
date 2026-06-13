@@ -14,6 +14,7 @@
 - ✅ Embedding 生成服务（使用 Ollama nomic-embed-text）
 - ✅ 向量存储服务（PostgreSQL + pgvector）
 - ✅ RAG 问答接口（`POST /api/chat`）
+- ✅ 多轮对话接口（`POST /api/chat/conversation`）
 - ✅ 文档管理接口（列表、详情、删除、统计）
 - ✅ Virtual Threads 配置（全局启用）
 - ✅ Spring AI Advisor 体系（QuestionAnswerAdvisor）
@@ -22,7 +23,10 @@
 - ✅ 响应式 UI（文档上传 + 对话界面）
 - ✅ 上传进度提示（加载 → 成功 → 错误）
 - ✅ 文档列表显示（实时更新）
+- ✅ 已上传文档详情查看
+- ✅ 文档详情窗口宽度调整
 - ✅ 对话界面（问答交互）
+- ✅ 前端会话 ID 持久化（支持连续追问和新会话）
 
 ### 4. 配置与部署
 - ✅ 混合模式配置（Chat 用中转站 + Embedding 用本地）
@@ -37,6 +41,7 @@
 - **服务健康**：`/actuator/health` 返回 `UP`
 - **普通问答**：`POST /api/chat` 可正常返回答案
 - **知识库问答**：`POST /api/test/rag` 可检索到 `virtual-threads-guide.md` 并生成答案
+- **多轮对话代码链路**：`POST /api/chat/conversation` 已接入 ChatMemory Advisor，前端会复用 conversationId
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
 - **自动化测试**：`mvn test` 通过（5 tests, 0 failures）
 
@@ -51,7 +56,7 @@
 ### 阶段 1：完成基础 RAG 功能（优先）
 - [x] 修复对话功能（中转站 API 兼容性）
 - [x] 测试完整流程（上传 → 问答 → 验证答案质量）
-- [ ] 添加多轮对话支持（`POST /api/chat/conversation`）
+- [x] 添加多轮对话支持（`POST /api/chat/conversation`）
 
 ### 阶段 2：Advanced RAG 功能
 - [ ] Query Rewriting（问题改写）
@@ -82,10 +87,10 @@
 ## 🔧 当前运行状态
 
 ### 后端服务
-- **应用状态**：✅ 运行中（PID 747）
+- **应用状态**：以本机实际 health check 为准（IDEA 重启后验证）
 - **端口**：http://localhost:8080
 - **Profile**：hybrid
-- **日志位置**：`/tmp/smartkb.log`
+- **日志位置**：IDEA Run 控制台；命令行启动时可重定向到日志文件
 
 ### 数据库
 - **PostgreSQL**：✅ 运行中（localhost:5432）
@@ -191,17 +196,23 @@ DELETE FROM vector_store;
    ps aux | grep java
    ```
 
-2. **测试对话功能**：
+2. **测试多轮对话功能**：
    - 浏览器访问：http://localhost:8080
-   - 提问："Hello"
-   - 观察是否有响应
+   - 提问："Java 21 Virtual Threads 适合解决什么问题？"
+   - 继续追问："它和传统线程池相比有什么优势？"
+   - 观察右上角会话 ID 是否保持不变
 
-3. **如果还有问题**：
+3. **继续推进 Advanced RAG 联调**：
+   - 验证 `POST /api/chat/advanced`
+   - 确认 Query Rewriting、Metadata Filtering、Re-ranking 的日志和效果
+   - 视效果把 Advanced RAG 入口接到前端
+
+4. **如果还有问题**：
    - 查看日志：`tail -50 /tmp/smartkb.log`
    - 考虑切换到 Ollama 本地 Chat 模型（避免中转站兼容性问题）
 
 ---
 
-**当前最紧急任务**：修复对话功能，确保完整 RAG 流程可用。
+**当前最紧急任务**：重启应用后验证多轮对话真实效果，然后进入 Advanced RAG 联调。
 
 祝顺利！🚀
