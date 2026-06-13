@@ -29,6 +29,7 @@
 - ✅ 对话界面（问答交互）
 - ✅ 前端会话 ID 持久化（支持连续追问和新会话）
 - ✅ Advanced RAG 模式切换与按文档过滤
+- ✅ Advanced RAG 改写查询、命中片段数与来源文档展示
 
 ### 4. 配置与部署
 - ✅ 混合模式配置（Chat 用中转站 + Embedding 用本地）
@@ -216,6 +217,6 @@ DELETE FROM vector_store;
 
 ---
 
-**当前最紧急任务**：重启应用后验证多轮对话和 Advanced RAG 真实效果，然后继续做 Hybrid Search 或答案来源片段展示。
+**当前最紧急任务**：重启应用后验证多轮对话和 Advanced RAG 真实效果，然后继续做 Hybrid Search 或来源片段展开。
 
 祝顺利！🚀
