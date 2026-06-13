@@ -1,5 +1,25 @@
 # SmartKB 项目当前进度总结
 
+## 2026-06-13 收尾记录
+
+### 今日新增修复
+- ✅ `fix: 修复文本文件编码解析`：Markdown/TXT 直接按 UTF-8 读取，避免中文文档上传后变成乱码。
+- ✅ `fix: 提升 advanced rag 检索召回`：Advanced RAG 现在同时召回原始问题和改写问题，支持 metadata 过滤下推，并按关键词相关度重排序。
+
+### 明天继续前必须做
+- [ ] 在 IDEA 中重启 Spring Boot，让最新代码生效。
+- [ ] 删除修复前上传过的旧 `advanced-rag-demo.md`。
+- [ ] 重新上传 `test-docs/advanced-rag-demo.md`。
+- [ ] 打开文档详情，确认中文正常且不再乱码。
+- [ ] Advanced 模式选择 `advanced-rag-demo.md` 后验证推荐问题：
+  - `查询改写在 Advanced RAG 中解决什么问题？`
+  - `为什么引用片段能提升 RAG 系统可信度？`
+
+### 当前判断
+- 如果页面仍显示 `æ¥è¯¢æ¹å` 这类文字，说明数据库里还是旧乱码数据，不是前端显示问题。
+- 代码修复不会自动修复已入库的旧向量内容，必须删除旧文档后重新上传。
+- 当前下一阶段建议先做 Hybrid Search，其次做引用片段点击跳转到对应 chunk。
+
 ## ✅ 已完成功能
 
 ### 1. 基础设施
@@ -16,6 +36,7 @@
 - ✅ RAG 问答接口（`POST /api/chat`）
 - ✅ 多轮对话接口（`POST /api/chat/conversation`）
 - ✅ Advanced RAG 接口（`POST /api/chat/advanced`，查询改写 + 元数据过滤 + 重排序）
+- ✅ Advanced RAG 检索召回优化（原始问题 + 改写问题双路召回，metadata 过滤下推）
 - ✅ 文档管理接口（列表、详情、删除、统计）
 - ✅ Virtual Threads 配置（全局启用）
 - ✅ Spring AI Advisor 体系（QuestionAnswerAdvisor）
@@ -48,6 +69,7 @@
 - **多轮对话代码链路**：`POST /api/chat/conversation` 已接入 ChatMemory Advisor，前端会复用 conversationId
 - **流式输出代码链路**：`POST /api/chat/conversation/stream` 使用 SSE 推送增量 token，前端实时追加到回答气泡
 - **Advanced RAG 代码链路**：查询改写、文档过滤、重排序、引用片段返回已接入，生成阶段直接调用 ChatModel，避免二次触发普通 RAG Advisor
+- **文本编码链路**：Markdown/TXT 上传解析已固定 UTF-8，重新上传后文档详情和引用片段应显示正常中文
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
 - **自动化测试**：`mvn test` 通过（5 tests, 0 failures）
 
@@ -212,6 +234,7 @@ DELETE FROM vector_store;
    - 验证 `POST /api/chat/advanced`
    - 确认 Query Rewriting、Metadata Filtering、Re-ranking 的日志和效果
    - 前端切到 `Advanced` 后查看回答下方的引用片段折叠区
+   - 若引用片段乱码，先删除旧文档并重新上传 `test-docs/advanced-rag-demo.md`
 
 4. **如果还有问题**：
    - 查看日志：`tail -50 /tmp/smartkb.log`

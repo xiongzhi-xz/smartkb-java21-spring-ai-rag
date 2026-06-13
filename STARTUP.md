@@ -123,6 +123,8 @@ http://localhost:8080
 
 如果刚改过前端页面，使用 `Ctrl + F5` 强刷浏览器缓存。
 
+如果刚拉取或修改过后端代码，必须在 IDEA 中停止并重新启动 Spring Boot。仅刷新浏览器不会让后端 Java 代码生效。
+
 ## 5. 完整演示流程
 
 1. 打开 `http://localhost:8080`
@@ -130,6 +132,12 @@ http://localhost:8080
 
 ```text
 test-docs/virtual-threads-guide.md
+```
+
+如需演示 Advanced RAG 引用片段，优先上传：
+
+```text
+test-docs/advanced-rag-demo.md
 ```
 
 3. 在左侧文档列表点击已上传文档，查看 chunk 详情
@@ -229,6 +237,23 @@ nomic-embed-text
 ### 文档列表为空
 
 先上传文档，或检查数据库 `vector_store` 表是否有数据。上传成功后页面会自动刷新文档列表。
+
+### 文档详情或引用片段中文乱码
+
+项目已经修复 Markdown/TXT 的 UTF-8 解析问题，但修复前上传过的旧数据不会自动变正常。
+
+处理方式：
+
+1. 在 IDEA 中重启 Spring Boot。
+2. 删除旧的乱码文档。
+3. 重新上传原始 Markdown/TXT 文件。
+4. 浏览器使用 `Ctrl + F5` 强刷。
+
+也可以用接口删除指定文档：
+
+```powershell
+Invoke-RestMethod -Uri 'http://localhost:8080/api/documents/advanced-rag-demo.md' -Method Delete
+```
 
 ### favicon.ico 相关日志
 

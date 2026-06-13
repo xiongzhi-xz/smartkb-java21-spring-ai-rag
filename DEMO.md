@@ -138,10 +138,33 @@ Virtual Threads 和传统线程池相比有什么优势？
 这份文档里提到 Virtual Threads 的核心价值是什么？
 ```
 
+建议继续验证两个 Advanced RAG 专用问题：
+
+```text
+查询改写在 Advanced RAG 中解决什么问题？
+```
+
+预期引用片段应命中第 7 节附近，片段中能看到：
+
+```text
+查询改写是 Advanced RAG 的第一步
+```
+
+```text
+为什么引用片段能提升 RAG 系统可信度？
+```
+
+预期引用片段应命中第 11 节附近，片段中能看到：
+
+```text
+SmartKB 在 Advanced 模式中返回引用片段
+```
+
 观察后端日志：
 
 - `步骤 1: 查询改写`
-- `步骤 3: 元数据过滤`
+- `步骤 2: 向量检索`
+- `步骤 3: 元数据过滤校验`
 - `步骤 4: 结果重排序`
 
 页面回答下方会显示命中片段数、改写后的查询、参考来源，并提供 `查看引用片段` 折叠区。
@@ -149,7 +172,7 @@ Virtual Threads 和传统线程池相比有什么优势？
 建议话术：
 
 ```text
-Advanced RAG 不是直接把用户问题拿去检索，而是先做查询改写，再限定检索范围，最后对结果重排序。
+Advanced RAG 不是只把改写后的问题拿去检索，而是同时召回原始问题和改写问题，再限定检索范围，最后对结果重排序。
 这个入口方便演示指定文档范围内的高精度问答，而且答案能展开追溯到具体 chunk 片段。
 ```
 
@@ -232,6 +255,20 @@ Invoke-RestMethod http://localhost:8080/api/documents
 
 ```text
 Ctrl + F5
+```
+
+### 文档详情或引用片段乱码
+
+说明数据库里仍是修复前上传的旧数据。先删除该文档，再重新上传：
+
+```powershell
+Invoke-RestMethod -Uri 'http://localhost:8080/api/documents/advanced-rag-demo.md' -Method Delete
+```
+
+然后重新上传：
+
+```text
+test-docs/advanced-rag-demo.md
 ```
 
 ### 端口冲突
