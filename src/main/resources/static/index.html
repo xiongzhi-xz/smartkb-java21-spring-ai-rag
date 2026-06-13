@@ -78,6 +78,20 @@
 <script>
     let chatHistory = [];
 
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+    }
+
+    function renderText(value) {
+        return escapeHtml(value).replace(/\n/g, '<br>');
+    }
+
     function addMessage(content, isUser, sources = []) {
         const container = document.getElementById('chatContainer');
         const msgDiv = document.createElement('div');
@@ -85,11 +99,11 @@
         
         let html = `
             <div class="${isUser ? 'user-msg' : 'ai-msg'} px-5 py-3.5 rounded-3xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}">
-                <div class="text-sm">${content}</div>
+                <div class="text-sm">${renderText(content)}</div>
         `;
         
         if (!isUser && sources.length > 0) {
-            html += `<div class="mt-3 text-xs text-gray-500">参考来源：${sources.join('、')}</div>`;
+            html += `<div class="mt-3 text-xs text-gray-500">参考来源：${sources.map(escapeHtml).join('、')}</div>`;
         }
         
         html += `</div>`;
@@ -115,6 +129,10 @@
             });
             
             const data = await res.json();
+            if (!res.ok || data.success === false) {
+                throw new Error(data.error || '问答请求失败');
+            }
+
             addMessage(data.answer || data.content || '处理中...', false, data.sources || []);
             
             chatHistory.push({ role: 'user', content: question });
@@ -131,7 +149,23 @@
     document.getElementById('fileInput').addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
-        
+
+        // 显示上传进度提示
+        const docList = document.getElementById('documentList');
+        const uploadingDiv = document.createElement('div');
+        uploadingDiv.id = 'uploading-indicator';
+        uploadingDiv.className = 'p-3 bg-blue-50 border border-blue-200 rounded-lg';
+        uploadingDiv.innerHTML = `
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-spinner fa-spin text-blue-600"></i>
+                <div class="flex-1">
+                    <div class="font-medium text-blue-900 text-sm">${escapeHtml(file.name)}</div>
+                    <div class="text-xs text-blue-600 mt-1">正在上传并生成向量...</div>
+                </div>
+            </div>
+        `;
+        docList.prepend(uploadingDiv);
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -141,11 +175,56 @@
                 body: formData
             });
             const result = await res.json();
-            alert('文档上传成功：' + file.name);
-            loadDocuments();
+            if (!res.ok || result.success === false) {
+                throw new Error(result.error || '上传失败');
+            }
+
+            // 移除上传提示
+            uploadingDiv.remove();
+
+            // 添加成功提示
+            const successDiv = document.createElement('div');
+            successDiv.className = 'p-3 bg-green-50 border border-green-200 rounded-lg';
+            successDiv.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-check-circle text-green-600"></i>
+                    <div class="flex-1">
+                        <div class="font-medium text-green-900 text-sm">${escapeHtml(file.name)}</div>
+                        <div class="text-xs text-green-600 mt-1">上传成功，已生成 ${escapeHtml(result.chunkCount || '?')} 个向量块</div>
+                    </div>
+                </div>
+            `;
+            docList.prepend(successDiv);
+
+            // 3秒后移除成功提示，加载文档列表
+            setTimeout(() => {
+                successDiv.remove();
+                loadDocuments();
+            }, 3000);
+
         } catch (err) {
-            alert('上传失败：' + err.message);
+            // 移除上传提示
+            uploadingDiv.remove();
+
+            // 显示错误
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-3 bg-red-50 border border-red-200 rounded-lg';
+            errorDiv.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-exclamation-circle text-red-600"></i>
+                    <div class="flex-1">
+                        <div class="font-medium text-red-900 text-sm">上传失败</div>
+                        <div class="text-xs text-red-600 mt-1">${escapeHtml(err.message)}</div>
+                    </div>
+                </div>
+            `;
+            docList.prepend(errorDiv);
+
+            setTimeout(() => errorDiv.remove(), 5000);
         }
+
+        // 重置文件输入
+        e.target.value = '';
     });
 
     function clearChat() {
@@ -156,11 +235,49 @@
     }
 
     function loadDocuments() {
-        // 可后续扩展显示已上传文档列表
-        console.log('文档列表加载（可扩展）');
+        // 从向量数据库加载文档列表
+        fetch('/api/documents')
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok || data.success === false) {
+                    throw new Error(data.error || '加载文档列表失败');
+                }
+                return data;
+            })
+            .then(data => {
+                const docList = document.getElementById('documentList');
+                docList.innerHTML = '';
+
+                const docs = data.documents || [];
+
+                if (docs.length === 0) {
+                    docList.innerHTML = '<div class="text-gray-400 text-sm text-center py-4">暂无文档</div>';
+                    return;
+                }
+
+                docs.forEach(doc => {
+                    const docDiv = document.createElement('div');
+                    docDiv.className = 'p-3 hover:bg-gray-50 border-b cursor-pointer group';
+                    docDiv.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-sm text-gray-900 truncate">${escapeHtml(doc.fileName || doc.name || '未知文档')}</div>
+                                <div class="text-xs text-gray-500 mt-1">${escapeHtml(doc.chunkCount || doc.chunks || 0)} 个片段</div>
+                            </div>
+                            <i class="fa-solid fa-file-alt text-gray-300 group-hover:text-blue-500"></i>
+                        </div>
+                    `;
+                    docList.appendChild(docDiv);
+                });
+            })
+            .catch(err => {
+                console.error('加载文档列表失败:', err);
+                const docList = document.getElementById('documentList');
+                docList.innerHTML = '<div class="text-red-400 text-sm text-center py-4">加载失败</div>';
+            });
     }
 
-    // 初始化欢迎语
+    // 页面加载时自动加载文档列表
     window.onload = function() {
         const welcome = `
             <div class="text-center text-gray-400 py-8">
@@ -170,6 +287,7 @@
             </div>
         `;
         document.getElementById('chatContainer').innerHTML = welcome;
+        loadDocuments(); // 自动加载文档列表
     };
 </script>
 </body>
