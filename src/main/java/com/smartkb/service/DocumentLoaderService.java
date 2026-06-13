@@ -72,6 +72,9 @@ public class DocumentLoaderService {
             VirtualThreadInspector.logThreadInfo("文档切片完成", "chunks: " + chunks.size());
             return chunks;
 
+        } catch (IllegalArgumentException e) {
+            log.error("文档加载失败: {}", resource.getFilename(), e);
+            throw e;
         } catch (Exception e) {
             log.error("文档加载失败: {}", resource.getFilename(), e);
             throw new RuntimeException("文档加载失败: " + e.getMessage(), e);

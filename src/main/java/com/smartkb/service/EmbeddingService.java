@@ -1,12 +1,12 @@
 package com.smartkb.service;
 
 import com.smartkb.util.VirtualThreadInspector;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -36,10 +36,13 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmbeddingService {
 
     private final EmbeddingModel embeddingModel;
+
+    public EmbeddingService(@Qualifier("ollamaEmbeddingModel") EmbeddingModel embeddingModel) {
+        this.embeddingModel = embeddingModel;
+    }
 
     private static final int BATCH_SIZE = 10;  // 每批次处理的文档数量（避免单个请求过大）
 

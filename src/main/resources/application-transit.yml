@@ -7,6 +7,11 @@ spring:
     virtual:
       enabled: true  # 全局启用虚拟线程（Spring Boot 3.2+）
 
+  # 禁用 Ollama 自动配置
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.autoconfigure.ollama.OllamaAutoConfiguration
+
   # 数据源配置 - PostgreSQL 16 + pgvector
   datasource:
     url: jdbc:postgresql://localhost:5432/smartkb
@@ -35,8 +40,8 @@ spring:
   # Spring AI 配置 - 使用中转站
   ai:
     openai:
-      api-key: sk-mimo-aecba9d84292acf8fbd6a4a1ab90796d47eb4c39c61f4d73cd9ace29ccec2345
-      base-url: https://fufu.iqach.top/v1
+      api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:sk-your-api-key-here}}
+      base-url: ${TRANSIT_BASE_URL:https://fufu.iqach.top/v1}
       chat:
         options:
           model: mimo-v2.5-pro
@@ -46,6 +51,11 @@ spring:
         options:
           model: text-embedding-3-small  # 中转站支持的 Embedding 模型
           dimensions: 1536
+
+    # 禁用 Ollama（避免 Bean 冲突）
+    ollama:
+      auto-configuration:
+        enabled: false
 
     # pgvector 向量存储配置
     vectorstore:

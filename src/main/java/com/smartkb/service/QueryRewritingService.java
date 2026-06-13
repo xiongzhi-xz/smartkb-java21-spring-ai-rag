@@ -1,10 +1,10 @@
 package com.smartkb.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -30,10 +30,13 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class QueryRewritingService {
 
     private final ChatModel chatModel;
+
+    public QueryRewritingService(@Qualifier("openAiChatModel") ChatModel chatModel) {
+        this.chatModel = chatModel;
+    }
 
     private static final String REWRITE_PROMPT_TEMPLATE = """
             你是一个查询优化专家。用户的原始问题可能不够明确，请将其改写为更适合知识库检索的查询。

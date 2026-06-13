@@ -2,10 +2,10 @@ spring:
   application:
     name: smartkb
 
-  # Java 21 Virtual Threads - 2026主流IO密集场景优化
+  # Java 21 Virtual Threads
   threads:
     virtual:
-      enabled: true  # 全局启用虚拟线程（Spring Boot 3.2+）
+      enabled: true
 
   # 数据源配置 - PostgreSQL 16 + pgvector
   datasource:
@@ -19,7 +19,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
 
-  # Redis 配置 - 会话记忆 + 缓存
+  # Redis 配置
   data:
     redis:
       host: localhost
@@ -32,28 +32,35 @@ spring:
           max-idle: 10
           min-idle: 5
 
-  # Spring AI 配置
+  # Spring AI 配置 - 混合模式（Chat用中转站 + Embedding用本地）
   ai:
-    # OpenAI 兼容接口（使用中转站）
+    # OpenAI 兼容接口 - 用于 Chat
     openai:
       api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:sk-your-api-key-here}}
       base-url: ${TRANSIT_BASE_URL:https://fufu.iqach.top}
       chat:
+        enabled: true
         options:
           model: mimo-v2-pro
           temperature: 0.7
           max-tokens: 2000
-      # embedding:
-      #   options:
-      #     model: text-embedding-3-small
-      #     dimensions: 1536
+      embedding:
+        enabled: false  # 禁用 OpenAI Embedding
+
+    # Ollama 本地模型 - 用于 Embedding
+    ollama:
+      base-url: http://localhost:11434
+      embedding:
+        enabled: true
+        options:
+          model: nomic-embed-text
 
     # pgvector 向量存储配置
     vectorstore:
       pgvector:
-        index-type: HNSW  # 2026主流高性能索引
+        index-type: HNSW
         distance-type: COSINE_DISTANCE
-        dimensions: 1536
+        dimensions: 768  # nomic-embed-text 的维度
         remove-existing-vector-store-table: false
         initialize-schema: true
 
@@ -64,7 +71,7 @@ server:
     enabled: true
     mime-types: application/json,text/html,text/xml,text/plain
 
-# 可观测性 - Actuator + Prometheus
+# 可观测性
 management:
   endpoints:
     web:
@@ -76,7 +83,7 @@ management:
         enabled: true
   tracing:
     sampling:
-      probability: 1.0  # 开发环境全采样，生产环境建议 0.1
+      probability: 1.0
   endpoint:
     health:
       show-details: always
@@ -87,32 +94,27 @@ logging:
     root: INFO
     com.smartkb: DEBUG
     org.springframework.ai: DEBUG
+    org.springframework.ai.openai.api: TRACE  # 追踪 OpenAI API URL
     org.springframework.jdbc: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 # 应用自定义配置
 smartkb:
-  # 文档处理配置
   document:
     max-file-size: 50MB
     allowed-extensions: pdf,docx,txt,md
-    # Virtual Threads 并发配置 - 文档解析
-    parse-concurrency: 50  # 虚拟线程可大幅提升并发数
+    parse-concurrency: 50
 
-  # Embedding 批处理配置
   embedding:
     batch-size: 100
-    # Virtual Threads 并发配置 - Embedding 生成
     concurrent-requests: 30
 
-  # RAG 检索配置
   rag:
-    top-k: 5  # 向量检索返回 Top-K 文档
+    top-k: 5
     similarity-threshold: 0.7
-    context-window: 4000  # Token 限制
+    context-window: 4000
 
-  # Agent 配置
   agent:
     max-iterations: 5
     timeout: 60s

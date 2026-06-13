@@ -1,6 +1,5 @@
 package com.smartkb.config;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
@@ -9,6 +8,7 @@ import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,11 +37,15 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
-@RequiredArgsConstructor
 public class AdvisorConfig {
 
     private final ChatModel chatModel;
     private final VectorStore vectorStore;
+
+    public AdvisorConfig(ChatModel chatModel, VectorStore vectorStore) {
+        this.chatModel = chatModel;
+        this.vectorStore = vectorStore;
+    }
 
     @Value("${smartkb.rag.top-k:5}")
     private int topK;

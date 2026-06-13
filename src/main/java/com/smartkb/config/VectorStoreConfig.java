@@ -1,9 +1,9 @@
 package com.smartkb.config;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.PgVectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -31,11 +31,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 @Slf4j
 @Configuration
-@RequiredArgsConstructor
 public class VectorStoreConfig {
 
     private final JdbcTemplate jdbcTemplate;
     private final EmbeddingModel embeddingModel;
+
+    public VectorStoreConfig(JdbcTemplate jdbcTemplate, @Qualifier("ollamaEmbeddingModel") EmbeddingModel embeddingModel) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.embeddingModel = embeddingModel;
+    }
 
     /**
      * 配置 PgVectorStore Bean
