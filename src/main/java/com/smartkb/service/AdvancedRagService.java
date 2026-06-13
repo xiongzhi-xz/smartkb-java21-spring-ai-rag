@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Advanced RAG 服务
@@ -34,6 +36,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AdvancedRagService {
+
+    private static final int CANDIDATE_TOP_K = 12;
+    private static final int FINAL_TOP_K = 5;
+    private static final double CANDIDATE_SIMILARITY_THRESHOLD = 0.55;
+    private static final double FALLBACK_SIMILARITY_THRESHOLD = 0.0;
+    private static final Pattern LATIN_TOKEN_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9+.#_-]*");
+    private static final Pattern CJK_SEQUENCE_PATTERN = Pattern.compile("\\p{IsHan}{2,}");
+    private static final Set<String> CJK_STOP_WORDS = Set.of(
+            "什么", "为什么", "如何", "怎么", "这个", "那个", "哪些", "是否", "可以", "系统", "问题"
+    );
 
     private final QueryRewritingService queryRewritingService;
     private final VectorStoreService vectorStoreService;
@@ -74,22 +86,34 @@ public class AdvancedRagService {
             String rewrittenQuery = queryRewritingService.rewriteQuery(question, history);
             log.info("改写后查询: {}", rewrittenQuery);
 
-            // 2. Vector Search - 向量检索（使用改写后的查询）
+            // 2. Vector Search - 双路召回，避免改写 query 偏离原问题
             log.info("步骤 2: 向量检索");
-            List<Document> retrievedDocs = vectorStoreService.searchSimilarDocuments(
-                    rewrittenQuery, 5, 0.7);
-            log.info("检索到 {} 条文档", retrievedDocs.size());
+            List<Document> retrievedDocs = retrieveCandidates(question, rewrittenQuery, metadataFilter);
+            log.info("检索到 {} 条候选文档", retrievedDocs.size());
 
-            // 3. Metadata Filtering - 元数据过滤（如果提供了过滤条件）
+            // 3. Metadata Filtering - 过滤下推后再做一次内存校验，防止异常数据漏出
             if (metadataFilter != null && !metadataFilter.isEmpty()) {
-                log.info("步骤 3: 元数据过滤 - {}", metadataFilter);
+                log.info("步骤 3: 元数据过滤校验 - {}", metadataFilter);
                 retrievedDocs = filterByMetadata(retrievedDocs, metadataFilter);
                 log.info("过滤后剩余 {} 条文档", retrievedDocs.size());
             }
 
-            // 4. Re-ranking - 重排序（按相似度 + 元数据综合评分）
+            // 4. Re-ranking - 按关键词相关度 + 内容完整度重排序
             log.info("步骤 4: 结果重排序");
-            retrievedDocs = rerank(retrievedDocs, rewrittenQuery);
+            retrievedDocs = rerank(retrievedDocs, question, rewrittenQuery).stream()
+                    .limit(FINAL_TOP_K)
+                    .collect(Collectors.toList());
+
+            if (retrievedDocs.isEmpty()) {
+                log.warn("Advanced RAG 未检索到相关片段: {}", question);
+                return new AdvancedRagResult(
+                        "未检索到与问题相关的文档片段。请确认已上传正确文档，或换一种更具体的问法。",
+                        rewrittenQuery,
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        0
+                );
+            }
 
             // 5. 构建上下文并生成答案
             log.info("步骤 5: LLM 生成答案");
@@ -120,6 +144,66 @@ public class AdvancedRagService {
      */
     public String queryAdvanced(String question) {
         return queryAdvanced(question, null, null);
+    }
+
+    private List<Document> retrieveCandidates(String question, String rewrittenQuery, Map<String, Object> metadataFilter) {
+        Map<String, Document> merged = searchBothQueries(
+                question,
+                rewrittenQuery,
+                metadataFilter,
+                CANDIDATE_SIMILARITY_THRESHOLD
+        );
+
+        if (merged.isEmpty()) {
+            log.info("高阈值未召回文档，降低阈值重试");
+            merged = searchBothQueries(
+                    question,
+                    rewrittenQuery,
+                    metadataFilter,
+                    FALLBACK_SIMILARITY_THRESHOLD
+            );
+        }
+
+        return new ArrayList<>(merged.values());
+    }
+
+    private Map<String, Document> searchBothQueries(
+            String question,
+            String rewrittenQuery,
+            Map<String, Object> metadataFilter,
+            double similarityThreshold) {
+        Map<String, Document> merged = new LinkedHashMap<>();
+
+        mergeSearchResults(merged, rewrittenQuery, metadataFilter, similarityThreshold);
+        if (!rewrittenQuery.equalsIgnoreCase(question)) {
+            mergeSearchResults(merged, question, metadataFilter, similarityThreshold);
+        }
+
+        return merged;
+    }
+
+    private void mergeSearchResults(
+            Map<String, Document> merged,
+            String query,
+            Map<String, Object> metadataFilter,
+            double similarityThreshold) {
+        List<Document> documents = vectorStoreService.searchSimilarDocuments(
+                query,
+                CANDIDATE_TOP_K,
+                similarityThreshold,
+                metadataFilter
+        );
+
+        for (Document document : documents) {
+            merged.putIfAbsent(documentKey(document), document);
+        }
+    }
+
+    private String documentKey(Document document) {
+        if (document.getId() != null && !document.getId().isBlank()) {
+            return document.getId();
+        }
+        return String.valueOf(document.getMetadata().get("fileName")) + ":" + document.getContent().hashCode();
     }
 
     /**
@@ -163,18 +247,84 @@ public class AdvancedRagService {
     /**
      * 重排序检索结果
      * <p>
-     * 简单实现：按内容长度降序（更长的文档可能包含更多信息）
+     * 简单实现：按问题关键词命中度排序，再按内容长度补充排序
      * 生产环境可使用专门的 Re-ranking 模型（如 Cohere Rerank）
      *
      * @param documents 原始文档列表
-     * @param query     查询文本
      * @return 重排序后的文档列表
      */
-    private List<Document> rerank(List<Document> documents, String query) {
-        // 简单策略：按内容长度降序
+    private List<Document> rerank(List<Document> documents, String originalQuery, String rewrittenQuery) {
+        List<String> keywords = extractKeywords(originalQuery + " " + rewrittenQuery);
+
         return documents.stream()
-                .sorted(Comparator.comparingInt(doc -> -doc.getContent().length()))
+                .sorted(Comparator
+                        .comparingInt((Document doc) -> relevanceScore(doc.getContent(), keywords))
+                        .reversed()
+                        .thenComparing(Comparator.comparingInt((Document doc) -> doc.getContent().length()).reversed()))
                 .collect(Collectors.toList());
+    }
+
+    private int relevanceScore(String content, List<String> keywords) {
+        if (content == null || content.isBlank() || keywords.isEmpty()) {
+            return 0;
+        }
+
+        String normalizedContent = content.toLowerCase(Locale.ROOT);
+        int score = 0;
+        for (String keyword : keywords) {
+            int occurrences = countOccurrences(normalizedContent, keyword.toLowerCase(Locale.ROOT));
+            if (occurrences > 0) {
+                score += occurrences * Math.min(keyword.length(), 8);
+            }
+        }
+        return score;
+    }
+
+    private int countOccurrences(String content, String keyword) {
+        int count = 0;
+        int index = content.indexOf(keyword);
+        while (index >= 0) {
+            count++;
+            index = content.indexOf(keyword, index + keyword.length());
+        }
+        return count;
+    }
+
+    private List<String> extractKeywords(String text) {
+        if (text == null || text.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        Set<String> keywords = new LinkedHashSet<>();
+        Matcher latinMatcher = LATIN_TOKEN_PATTERN.matcher(text);
+        while (latinMatcher.find()) {
+            String token = latinMatcher.group().toLowerCase(Locale.ROOT);
+            if (token.length() >= 2) {
+                keywords.add(token);
+            }
+        }
+
+        Matcher cjkMatcher = CJK_SEQUENCE_PATTERN.matcher(text);
+        while (cjkMatcher.find()) {
+            addCjkNgrams(cjkMatcher.group(), keywords);
+        }
+
+        return keywords.stream()
+                .sorted(Comparator.comparingInt(String::length).reversed())
+                .limit(80)
+                .collect(Collectors.toList());
+    }
+
+    private void addCjkNgrams(String text, Set<String> keywords) {
+        int maxLength = Math.min(6, text.length());
+        for (int length = maxLength; length >= 2; length--) {
+            for (int start = 0; start <= text.length() - length; start++) {
+                String keyword = text.substring(start, start + length);
+                if (!CJK_STOP_WORDS.contains(keyword)) {
+                    keywords.add(keyword);
+                }
+            }
+        }
     }
 
     /**
@@ -240,7 +390,8 @@ public class AdvancedRagService {
      */
     private String generateAnswer(String question, String context) {
         String prompt = String.format("""
-                请根据以下文档内容回答用户问题。如果文档中没有相关信息，请明确告知。
+                请只根据以下文档内容回答用户问题，不要使用文档外的通用知识补充。
+                如果文档中没有相关信息，请只回答“文档中未找到相关信息”。
 
                 文档内容：
                 %s
