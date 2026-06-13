@@ -48,10 +48,28 @@
 
     <!-- 右侧：聊天区域 -->
     <div class="flex-1 flex flex-col">
-        <div class="bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div class="bg-white border-b px-6 py-4 flex items-center justify-between gap-4">
             <h2 class="font-semibold text-gray-700">智能对话</h2>
-            <div class="flex items-center gap-4">
-                <span id="conversationStatus" class="text-xs text-gray-400"></span>
+            <div class="flex items-center justify-end gap-3 flex-wrap">
+                <div class="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1 text-xs">
+                    <button id="conversationModeButton" onclick="setRagMode('conversation')"
+                            class="px-3 py-1.5 rounded-md flex items-center gap-1.5"
+                            title="多轮对话">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>对话</span>
+                    </button>
+                    <button id="advancedModeButton" onclick="setRagMode('advanced')"
+                            class="px-3 py-1.5 rounded-md flex items-center gap-1.5"
+                            title="Advanced RAG">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Advanced</span>
+                    </button>
+                </div>
+                <select id="advancedDocumentFilter"
+                        onchange="setAdvancedFilter(this.value)"
+                        class="hidden max-w-52 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500">
+                </select>
+                <span id="conversationStatus" class="max-w-52 truncate text-xs text-gray-400"></span>
                 <button onclick="clearChat()"
                         class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1">
                     <i class="fa-solid fa-trash"></i> 新会话
@@ -101,7 +119,12 @@
 <script>
     let chatHistory = [];
     const conversationIdKey = 'smartkb.conversationId';
+    const ragModeKey = 'smartkb.ragMode';
+    const advancedFilterKey = 'smartkb.advancedFilterFileName';
     let conversationId = localStorage.getItem(conversationIdKey) || null;
+    let ragMode = localStorage.getItem(ragModeKey) || 'conversation';
+    let advancedFilterFileName = localStorage.getItem(advancedFilterKey) || '';
+    let uploadedDocuments = [];
     let selectedDocumentFileName = null;
     const documentDetailWidthKey = 'smartkb.documentDetailWidth';
     const documentDetailMinWidth = 420;
@@ -123,7 +146,75 @@
 
     function updateConversationStatus() {
         const status = document.getElementById('conversationStatus');
-        status.textContent = conversationId ? `会话 ${conversationId.slice(0, 8)}` : '新会话';
+        let text;
+        if (ragMode === 'advanced') {
+            text = advancedFilterFileName ? `过滤 ${advancedFilterFileName}` : 'Advanced RAG';
+        } else {
+            text = conversationId ? `会话 ${conversationId.slice(0, 8)}` : '新会话';
+        }
+        status.textContent = text;
+        status.title = text;
+    }
+
+    function getModeButtonClass(isActive) {
+        return [
+            'px-3 py-1.5 rounded-md flex items-center gap-1.5 transition',
+            isActive ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+        ].join(' ');
+    }
+
+    function updateRagModeUI() {
+        document.getElementById('conversationModeButton').className = getModeButtonClass(ragMode === 'conversation');
+        document.getElementById('advancedModeButton').className = getModeButtonClass(ragMode === 'advanced');
+        document.getElementById('advancedDocumentFilter').classList.toggle('hidden', ragMode !== 'advanced');
+        updateConversationStatus();
+    }
+
+    function setRagMode(mode) {
+        ragMode = mode;
+        localStorage.setItem(ragModeKey, ragMode);
+        updateRagModeUI();
+    }
+
+    function setAdvancedFilter(fileName) {
+        advancedFilterFileName = fileName;
+        if (advancedFilterFileName) {
+            localStorage.setItem(advancedFilterKey, advancedFilterFileName);
+        } else {
+            localStorage.removeItem(advancedFilterKey);
+        }
+        updateConversationStatus();
+    }
+
+    function renderAdvancedDocumentFilter() {
+        const select = document.getElementById('advancedDocumentFilter');
+        select.innerHTML = '';
+
+        const allOption = document.createElement('option');
+        allOption.value = '';
+        allOption.textContent = '全部文档';
+        select.appendChild(allOption);
+
+        const fileNames = uploadedDocuments.map(doc => doc.fileName || doc.name).filter(Boolean);
+        if (advancedFilterFileName && !fileNames.includes(advancedFilterFileName)) {
+            setAdvancedFilter('');
+        }
+
+        fileNames.forEach(fileName => {
+            const option = document.createElement('option');
+            option.value = fileName;
+            option.textContent = fileName;
+            select.appendChild(option);
+        });
+
+        select.value = advancedFilterFileName;
+    }
+
+    function buildHistoryText() {
+        return chatHistory
+            .slice(-10)
+            .map(item => `${item.role === 'user' ? '用户' : '助手'}：${item.content}`)
+            .join('\n');
     }
 
     function getDocumentItemClass(isActive) {
@@ -213,10 +304,18 @@
         input.value = '';
 
         try {
-            const res = await fetch('/api/chat/conversation', {
+            const payload = ragMode === 'advanced'
+                ? { question: question, history: buildHistoryText() }
+                : { question: question, conversationId: conversationId };
+
+            if (ragMode === 'advanced' && advancedFilterFileName) {
+                payload.metadataFilter = { fileName: advancedFilterFileName };
+            }
+
+            const res = await fetch(ragMode === 'advanced' ? '/api/chat/advanced' : '/api/chat/conversation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: question, conversationId: conversationId })
+                body: JSON.stringify(payload)
             });
             
             const data = await res.json();
@@ -224,17 +323,18 @@
                 throw new Error(data.error || '问答请求失败');
             }
 
-            addMessage(data.answer || data.content || '处理中...', false, data.sources || []);
-            if (data.conversationId) {
+            const answer = data.answer || data.content || '处理中...';
+            addMessage(answer, false, data.sources || []);
+            if (ragMode === 'conversation' && data.conversationId) {
                 conversationId = data.conversationId;
                 localStorage.setItem(conversationIdKey, conversationId);
                 updateConversationStatus();
             }
             
             chatHistory.push({ role: 'user', content: question });
-            chatHistory.push({ role: 'assistant', content: data.answer || data.content });
+            chatHistory.push({ role: 'assistant', content: answer });
         } catch (e) {
-            addMessage('请求失败，请检查后端是否正常运行', false);
+            addMessage(`请求失败：${e.message}`, false);
         }
     }
 
@@ -432,6 +532,8 @@
                 docList.innerHTML = '';
 
                 const docs = data.documents || [];
+                uploadedDocuments = docs;
+                renderAdvancedDocumentFilter();
 
                 if (docs.length === 0) {
                     docList.innerHTML = '<div class="text-gray-400 text-sm text-center py-4">暂无文档</div>';
@@ -459,6 +561,8 @@
             })
             .catch(err => {
                 console.error('加载文档列表失败:', err);
+                uploadedDocuments = [];
+                renderAdvancedDocumentFilter();
                 const docList = document.getElementById('documentList');
                 docList.innerHTML = '<div class="text-red-400 text-sm text-center py-4">加载失败</div>';
             });
@@ -474,7 +578,8 @@
             </div>
         `;
         document.getElementById('chatContainer').innerHTML = welcome;
-        updateConversationStatus();
+        renderAdvancedDocumentFilter();
+        updateRagModeUI();
         initDocumentDetailResize();
         initDocumentDetailWidth();
         loadDocuments(); // 自动加载文档列表
