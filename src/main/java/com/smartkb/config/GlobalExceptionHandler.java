@@ -3,6 +3,7 @@ package com.smartkb.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -26,6 +27,21 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 处理静态资源 404，避免 favicon 等浏览器自动请求被记录为系统异常。
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException e) {
+        log.debug("静态资源不存在: {}", e.getResourcePath());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("error", "资源不存在");
+        response.put("code", "RESOURCE_NOT_FOUND");
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
 
     /**
      * 处理文件上传大小超限异常
