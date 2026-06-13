@@ -15,6 +15,7 @@
 - ✅ 向量存储服务（PostgreSQL + pgvector）
 - ✅ RAG 问答接口（`POST /api/chat`）
 - ✅ 多轮对话接口（`POST /api/chat/conversation`）
+- ✅ Advanced RAG 接口（`POST /api/chat/advanced`，查询改写 + 元数据过滤 + 重排序）
 - ✅ 文档管理接口（列表、详情、删除、统计）
 - ✅ Virtual Threads 配置（全局启用）
 - ✅ Spring AI Advisor 体系（QuestionAnswerAdvisor）
@@ -27,6 +28,7 @@
 - ✅ 文档详情窗口宽度调整
 - ✅ 对话界面（问答交互）
 - ✅ 前端会话 ID 持久化（支持连续追问和新会话）
+- ✅ Advanced RAG 模式切换与按文档过滤
 
 ### 4. 配置与部署
 - ✅ 混合模式配置（Chat 用中转站 + Embedding 用本地）
@@ -42,6 +44,7 @@
 - **普通问答**：`POST /api/chat` 可正常返回答案
 - **知识库问答**：`POST /api/test/rag` 可检索到 `virtual-threads-guide.md` 并生成答案
 - **多轮对话代码链路**：`POST /api/chat/conversation` 已接入 ChatMemory Advisor，前端会复用 conversationId
+- **Advanced RAG 代码链路**：查询改写、文档过滤、重排序已接入，生成阶段直接调用 ChatModel，避免二次触发普通 RAG Advisor
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
 - **自动化测试**：`mvn test` 通过（5 tests, 0 failures）
 
@@ -59,9 +62,9 @@
 - [x] 添加多轮对话支持（`POST /api/chat/conversation`）
 
 ### 阶段 2：Advanced RAG 功能
-- [ ] Query Rewriting（问题改写）
-- [ ] Metadata Filtering（元数据过滤）
-- [ ] Re-ranking（结果重排序）
+- [x] Query Rewriting（问题改写）
+- [x] Metadata Filtering（元数据过滤，前端支持按文档过滤）
+- [x] Re-ranking（结果重排序，当前为轻量规则版）
 - [ ] Hybrid Search（向量 + 全文检索）
 
 ### 阶段 3：Agent 功能
@@ -213,6 +216,6 @@ DELETE FROM vector_store;
 
 ---
 
-**当前最紧急任务**：重启应用后验证多轮对话真实效果，然后进入 Advanced RAG 联调。
+**当前最紧急任务**：重启应用后验证多轮对话和 Advanced RAG 真实效果，然后继续做 Hybrid Search 或答案来源片段展示。
 
 祝顺利！🚀
