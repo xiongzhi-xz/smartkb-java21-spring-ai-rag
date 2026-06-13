@@ -77,7 +77,10 @@
 </div>
 
 <div id="documentDetailOverlay" class="hidden fixed inset-0 z-50 bg-gray-900/40">
-    <div class="ml-auto h-full w-full max-w-3xl bg-white shadow-2xl flex flex-col">
+    <div id="documentDetailPanel" class="relative ml-auto h-full w-full bg-white shadow-2xl flex flex-col" style="max-width: 900px;">
+        <div id="documentDetailResizeHandle"
+             class="absolute left-0 top-0 h-full w-2 cursor-col-resize hover:bg-blue-200/70"
+             title="拖动调整宽度"></div>
         <div class="px-6 py-4 border-b flex items-center justify-between">
             <div class="min-w-0">
                 <h3 id="documentDetailTitle" class="font-semibold text-gray-800 truncate">文档详情</h3>
@@ -95,6 +98,9 @@
 <script>
     let chatHistory = [];
     let selectedDocumentFileName = null;
+    const documentDetailWidthKey = 'smartkb.documentDetailWidth';
+    const documentDetailMinWidth = 420;
+    const documentDetailMaxWidth = 900;
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -120,6 +126,51 @@
     function highlightSelectedDocument() {
         document.querySelectorAll('[data-document-file-name]').forEach(item => {
             item.className = getDocumentItemClass(item.dataset.documentFileName === selectedDocumentFileName);
+        });
+    }
+
+    function clampDocumentDetailWidth(width) {
+        const viewportMax = Math.max(documentDetailMinWidth, Math.min(documentDetailMaxWidth, window.innerWidth - 32));
+        return Math.max(documentDetailMinWidth, Math.min(width, viewportMax));
+    }
+
+    function setDocumentDetailWidth(width) {
+        const panel = document.getElementById('documentDetailPanel');
+        const nextWidth = clampDocumentDetailWidth(width);
+        panel.style.width = `${nextWidth}px`;
+        panel.style.maxWidth = `calc(100vw - 32px)`;
+        localStorage.setItem(documentDetailWidthKey, String(nextWidth));
+    }
+
+    function initDocumentDetailWidth() {
+        const savedWidth = Number(localStorage.getItem(documentDetailWidthKey));
+        setDocumentDetailWidth(Number.isFinite(savedWidth) && savedWidth > 0 ? savedWidth : 720);
+    }
+
+    function initDocumentDetailResize() {
+        const handle = document.getElementById('documentDetailResizeHandle');
+        let resizing = false;
+
+        handle.addEventListener('mousedown', function(e) {
+            resizing = true;
+            document.body.classList.add('select-none');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!resizing) return;
+            setDocumentDetailWidth(window.innerWidth - e.clientX);
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (!resizing) return;
+            resizing = false;
+            document.body.classList.remove('select-none');
+        });
+
+        window.addEventListener('resize', function() {
+            const panel = document.getElementById('documentDetailPanel');
+            setDocumentDetailWidth(panel.getBoundingClientRect().width);
         });
     }
 
@@ -266,6 +317,7 @@
     }
 
     function openDocumentDetail() {
+        initDocumentDetailWidth();
         document.getElementById('documentDetailOverlay').classList.remove('hidden');
     }
 
@@ -405,6 +457,8 @@
             </div>
         `;
         document.getElementById('chatContainer').innerHTML = welcome;
+        initDocumentDetailResize();
+        initDocumentDetailWidth();
         loadDocuments(); // 自动加载文档列表
     };
 </script>
