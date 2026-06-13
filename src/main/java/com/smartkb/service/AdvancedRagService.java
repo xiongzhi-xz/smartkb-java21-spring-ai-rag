@@ -1,10 +1,11 @@
 package com.smartkb.service;
 
 import com.smartkb.util.VirtualThreadInspector;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -30,12 +31,20 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AdvancedRagService {
 
     private final QueryRewritingService queryRewritingService;
     private final VectorStoreService vectorStoreService;
-    private final ChatClient chatClient;
+    private final ChatModel chatModel;
+
+    public AdvancedRagService(
+            QueryRewritingService queryRewritingService,
+            VectorStoreService vectorStoreService,
+            @Qualifier("openAiChatModel") ChatModel chatModel) {
+        this.queryRewritingService = queryRewritingService;
+        this.vectorStoreService = vectorStoreService;
+        this.chatModel = chatModel;
+    }
 
     /**
      * Advanced RAG 查询（完整链路）
@@ -176,7 +185,7 @@ public class AdvancedRagService {
     }
 
     /**
-     * 生成答案（使用 ChatClient）
+     * 生成答案（直接使用 ChatModel，避免再次触发默认 RAG Advisor）
      */
     private String generateAnswer(String question, String context) {
         String prompt = String.format("""
@@ -190,9 +199,9 @@ public class AdvancedRagService {
                 请用中文回答：
                 """, context, question);
 
-        return chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content();
+        return chatModel.call(new Prompt(prompt))
+                .getResult()
+                .getOutput()
+                .getContent();
     }
 }
