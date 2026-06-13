@@ -36,6 +36,11 @@ class DocumentLoaderServiceTest {
         assertNotNull(firstChunk.getContent());
         assertTrue(firstChunk.getContent().length() > 0);
 
+        String allContent = chunks.stream()
+                .map(Document::getContent)
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertTrue(allContent.contains("虚拟线程"), "Markdown 中文内容应该按 UTF-8 正确读取");
+
         System.out.println("测试通过: 文档切片数量 = " + chunks.size());
     }
 

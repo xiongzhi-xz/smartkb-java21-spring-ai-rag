@@ -11,6 +11,8 @@ import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -59,7 +61,8 @@ public class DocumentLoaderService {
             // 1. 根据文件类型选择合适的 DocumentReader
             List<Document> documents = switch (fileType.toLowerCase()) {
                 case "pdf" -> loadPdfDocument(resource);
-                case "docx", "doc", "md", "txt" -> loadGenericDocument(resource);
+                case "md", "txt" -> loadTextDocument(resource);
+                case "docx", "doc" -> loadGenericDocument(resource);
                 default -> throw new IllegalArgumentException("不支持的文件类型: " + fileType);
             };
 
@@ -150,7 +153,17 @@ public class DocumentLoaderService {
     }
 
     /**
-     * 加载通用文档（Word、Markdown、TXT等，使用 Apache Tika）
+     * 加载纯文本文件（Markdown/TXT），固定按 UTF-8 读取，避免 Tika 自动探测导致中文乱码
+     */
+    private List<Document> loadTextDocument(Resource resource) throws Exception {
+        try (InputStream inputStream = resource.getInputStream()) {
+            String content = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            return List.of(new Document(content));
+        }
+    }
+
+    /**
+     * 加载通用文档（Word 等，使用 Apache Tika）
      */
     private List<Document> loadGenericDocument(Resource resource) {
         TikaDocumentReader tikaReader = new TikaDocumentReader(resource);
