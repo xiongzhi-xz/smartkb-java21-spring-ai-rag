@@ -2,6 +2,7 @@ package com.smartkb.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartkb.domain.AdvancedRagResult;
+import com.smartkb.domain.ReferenceChunk;
 import com.smartkb.service.AdvancedRagService;
 import com.smartkb.service.DocumentManagementService;
 import com.smartkb.service.RagService;
@@ -441,6 +442,7 @@ public class SmartKbController {
             response.setAnswer(result.answer());
             response.setContent(result.answer());
             response.setSources(result.sources());
+            response.setReferences(result.references());
             response.setRewrittenQuery(result.rewrittenQuery());
             response.setRetrievedCount(result.retrievedCount());
             response.setSuccess(true);
@@ -534,6 +536,7 @@ public class SmartKbController {
         private String content;  // 兼容前端
         private String conversationId;
         private List<String> sources;
+        private List<ReferenceChunk> references;
         private String rewrittenQuery;
         private Integer retrievedCount;
         private boolean success;

@@ -30,7 +30,7 @@
 - ✅ 对话模式流式输出（SSE 增量显示）
 - ✅ 前端会话 ID 持久化（支持连续追问和新会话）
 - ✅ Advanced RAG 模式切换与按文档过滤
-- ✅ Advanced RAG 改写查询、命中片段数与来源文档展示
+- ✅ Advanced RAG 改写查询、命中片段数、来源文档与引用片段展示
 
 ### 4. 配置与部署
 - ✅ 混合模式配置（Chat 用中转站 + Embedding 用本地）
@@ -47,7 +47,7 @@
 - **知识库问答**：`POST /api/test/rag` 可检索到 `virtual-threads-guide.md` 并生成答案
 - **多轮对话代码链路**：`POST /api/chat/conversation` 已接入 ChatMemory Advisor，前端会复用 conversationId
 - **流式输出代码链路**：`POST /api/chat/conversation/stream` 使用 SSE 推送增量 token，前端实时追加到回答气泡
-- **Advanced RAG 代码链路**：查询改写、文档过滤、重排序已接入，生成阶段直接调用 ChatModel，避免二次触发普通 RAG Advisor
+- **Advanced RAG 代码链路**：查询改写、文档过滤、重排序、引用片段返回已接入，生成阶段直接调用 ChatModel，避免二次触发普通 RAG Advisor
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
 - **自动化测试**：`mvn test` 通过（5 tests, 0 failures）
 
@@ -208,10 +208,10 @@ DELETE FROM vector_store;
    - 继续追问："它和传统线程池相比有什么优势？"
    - 观察右上角会话 ID 是否保持不变
 
-3. **继续推进 Advanced RAG 联调**：
+3. **验证 Advanced RAG 引用片段**：
    - 验证 `POST /api/chat/advanced`
    - 确认 Query Rewriting、Metadata Filtering、Re-ranking 的日志和效果
-   - 视效果把 Advanced RAG 入口接到前端
+   - 前端切到 `Advanced` 后查看回答下方的引用片段折叠区
 
 4. **如果还有问题**：
    - 查看日志：`tail -50 /tmp/smartkb.log`
@@ -219,6 +219,6 @@ DELETE FROM vector_store;
 
 ---
 
-**当前最紧急任务**：重启应用后验证流式输出、多轮对话和 Advanced RAG 真实效果，然后继续做 Hybrid Search 或来源片段展开。
+**当前最紧急任务**：重启应用后验证流式输出、多轮对话和 Advanced RAG 引用片段，然后继续做 Hybrid Search。
 
 祝顺利！🚀

@@ -1,6 +1,7 @@
 package com.smartkb.service;
 
 import com.smartkb.domain.AdvancedRagResult;
+import com.smartkb.domain.ReferenceChunk;
 import com.smartkb.util.VirtualThreadInspector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
@@ -95,10 +96,11 @@ public class AdvancedRagService {
             String context = buildContext(retrievedDocs);
             String answer = generateAnswer(question, context);
             List<String> sources = extractSources(retrievedDocs);
+            List<ReferenceChunk> references = extractReferences(retrievedDocs);
 
             log.info("=== Advanced RAG 查询完成 ===");
             VirtualThreadInspector.logThreadInfo("Advanced RAG 查询完成");
-            return new AdvancedRagResult(answer, rewrittenQuery, sources, retrievedDocs.size());
+            return new AdvancedRagResult(answer, rewrittenQuery, sources, references, retrievedDocs.size());
 
         } catch (Exception e) {
             log.error("Advanced RAG 查询失败", e);
@@ -204,6 +206,33 @@ public class AdvancedRagService {
                 .map(String::valueOf)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 提取命中的引用片段，用于前端展示可解释性证据。
+     */
+    private List<ReferenceChunk> extractReferences(List<Document> documents) {
+        return documents.stream()
+                .limit(5)
+                .map(doc -> new ReferenceChunk(
+                        String.valueOf(doc.getMetadata().getOrDefault("fileName", "未知文档")),
+                        String.valueOf(doc.getId()),
+                        buildPreview(doc.getContent())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    private String buildPreview(String content) {
+        if (content == null || content.isBlank()) {
+            return "";
+        }
+
+        String compact = content.replaceAll("\\s+", " ").trim();
+        int maxLength = 260;
+        if (compact.length() <= maxLength) {
+            return compact;
+        }
+        return compact.substring(0, maxLength) + "...";
     }
 
     /**
