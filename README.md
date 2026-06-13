@@ -37,17 +37,20 @@ src/main/java/com/smartkb/
 ```
 
 ### 快速启动
+本地开发推荐使用 `hybrid` 模式：Docker Desktop 启动 PostgreSQL/Redis，Ollama 提供本地 Embedding，IDEA 启动 Spring Boot。
+
+完整步骤见 [STARTUP.md](STARTUP.md)。
+
 ```bash
-# 1. 启动基础设施
-docker compose up -d
-
-# 2. 启动应用
-./mvnw spring-boot:run
-
-# 3. 访问地址
-应用地址: http://localhost:8080
-Grafana: http://localhost:3000 (admin/admin123)
+docker compose -f docker-compose-minimal.yml up -d
+ollama pull nomic-embed-text
 ```
+
+IDEA 运行配置：
+
+- Active profiles: `hybrid`
+- Environment variables: `TRANSIT_API_KEY=你的Key;TRANSIT_BASE_URL=https://fufu.iqach.top`
+- 应用地址: http://localhost:8080
 
 ### 后续开发计划
 - [x] 项目初始化 + Virtual Threads 配置 + CLAUDE.md 规则
