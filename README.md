@@ -67,6 +67,8 @@ IDEA 运行配置：
 - [x] 技术博客大纲
 
 ### 项目文档
+- [STARTUP.md](STARTUP.md) - 本地启动指南
+- [DEMO.md](DEMO.md) - 5 分钟演示脚本
 - [TESTING.md](TESTING.md) - 完整测试指南
 - [PERFORMANCE_REPORT.md](docs/PERFORMANCE_REPORT.md) - 性能测试报告
 - [BLOG_OUTLINE.md](docs/BLOG_OUTLINE.md) - 技术博客系列大纲
