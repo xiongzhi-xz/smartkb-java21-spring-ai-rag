@@ -83,12 +83,12 @@
 
         <div class="p-6 bg-white border-t">
             <div class="flex gap-3">
-                <input type="text" id="userInput" 
-                       class="flex-1 border border-gray-300 rounded-2xl px-5 py-3 focus:outline-none focus:border-blue-500"
+                <input type="text" id="userInput"
+                       class="flex-1 border border-gray-300 rounded-2xl px-5 py-3 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                        placeholder="输入你的问题... (例如：请总结请假流程)"
                        onkeypress="if(event.key === 'Enter') sendMessage()">
-                <button onclick="sendMessage()" 
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-2xl font-medium">
+                <button id="sendButton" onclick="sendMessage()"
+                        class="min-w-24 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400 text-white px-8 rounded-2xl font-medium flex items-center justify-center">
                     发送
                 </button>
             </div>
@@ -126,6 +126,7 @@
     let advancedFilterFileName = localStorage.getItem(advancedFilterKey) || '';
     let uploadedDocuments = [];
     let selectedDocumentFileName = null;
+    let chatBusy = false;
     const documentDetailWidthKey = 'smartkb.documentDetailWidth';
     const documentDetailMinWidth = 420;
     const documentDetailMaxWidth = 900;
@@ -275,15 +276,21 @@
         });
     }
 
-    function addMessage(content, isUser, sources = [], details = {}) {
-        const container = document.getElementById('chatContainer');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} message`;
-        
+    function buildMessageHtml(content, isUser, sources = [], details = {}, loading = false) {
         let html = `
             <div class="${isUser ? 'user-msg' : 'ai-msg'} px-5 py-3.5 rounded-3xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}">
-                <div class="text-sm">${renderText(content)}</div>
         `;
+
+        if (loading) {
+            html += `
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                    <i class="fa-solid fa-spinner fa-spin text-blue-600"></i>
+                    <span>${escapeHtml(content)}</span>
+                </div>
+            `;
+        } else {
+            html += `<div class="text-sm">${renderText(content)}</div>`;
+        }
 
         if (!isUser) {
             const detailParts = [];
@@ -303,18 +310,56 @@
         }
         
         html += `</div>`;
-        msgDiv.innerHTML = html;
+        return html;
+    }
+
+    function addMessage(content, isUser, sources = [], details = {}, loading = false) {
+        const container = document.getElementById('chatContainer');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} message`;
+        msgDiv.innerHTML = buildMessageHtml(content, isUser, sources, details, loading);
         container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+        return msgDiv;
+    }
+
+    function updateAssistantMessage(msgDiv, content, sources = [], details = {}) {
+        msgDiv.innerHTML = buildMessageHtml(content, false, sources, details);
+        const container = document.getElementById('chatContainer');
         container.scrollTop = container.scrollHeight;
     }
 
+    function getPendingMessageText() {
+        return ragMode === 'advanced'
+            ? '正在改写查询、检索文档并生成回答...'
+            : '正在结合会话上下文检索并生成回答...';
+    }
+
+    function setChatBusy(isBusy) {
+        chatBusy = isBusy;
+        const input = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+
+        input.disabled = isBusy;
+        sendButton.disabled = isBusy;
+        sendButton.classList.toggle('opacity-70', isBusy);
+        sendButton.classList.toggle('cursor-not-allowed', isBusy);
+        sendButton.innerHTML = isBusy
+            ? '<i class="fa-solid fa-spinner fa-spin mr-2"></i>发送中'
+            : '发送';
+    }
+
     async function sendMessage() {
+        if (chatBusy) return;
+
         const input = document.getElementById('userInput');
         const question = input.value.trim();
         if (!question) return;
 
         addMessage(question, true);
         input.value = '';
+        const pendingMessage = addMessage(getPendingMessageText(), false, [], {}, true);
+        setChatBusy(true);
 
         try {
             const payload = ragMode === 'advanced'
@@ -337,7 +382,7 @@
             }
 
             const answer = data.answer || data.content || '处理中...';
-            addMessage(answer, false, data.sources || [], {
+            updateAssistantMessage(pendingMessage, answer, data.sources || [], {
                 retrievedCount: data.retrievedCount,
                 rewrittenQuery: data.rewrittenQuery
             });
@@ -350,7 +395,10 @@
             chatHistory.push({ role: 'user', content: question });
             chatHistory.push({ role: 'assistant', content: answer });
         } catch (e) {
-            addMessage(`请求失败：${e.message}`, false);
+            updateAssistantMessage(pendingMessage, `请求失败：${e.message}`);
+        } finally {
+            setChatBusy(false);
+            input.focus();
         }
     }
 
