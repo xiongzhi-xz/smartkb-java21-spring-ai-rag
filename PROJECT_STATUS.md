@@ -2,7 +2,7 @@
 
 ## 重要复盘文档
 
-- [docs/IMPROVEMENTS_AND_ISSUES.md](docs/IMPROVEMENTS_AND_ISSUES.md)：记录本阶段关键改进与踩坑，包括流式输出、Advanced RAG 检索命中优化、中文编码、引用片段、文档删除和本地运行问题。
+- [docs/IMPROVEMENTS_AND_ISSUES.md](docs/IMPROVEMENTS_AND_ISSUES.md)：记录本阶段关键改进与工程复盘，包括流式输出、Advanced RAG 检索命中优化、数据摄取可靠性、引用片段可解释性、RAG 回归评估和混合模型架构取舍。
 
 ## 2026-06-13 收尾记录
 
