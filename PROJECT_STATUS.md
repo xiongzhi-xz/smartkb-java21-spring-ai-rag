@@ -11,6 +11,7 @@
 - ✅ `fix: 提升 advanced rag 检索召回`：Advanced RAG 现在同时召回原始问题和改写问题，支持 metadata 过滤下推，并按关键词相关度重排序。
 - ✅ `feat: 增加 advanced rag hybrid search`：Advanced RAG 现在融合向量召回和关键词召回，减少核心章节被泛相关片段挤掉的概率。
 - ✅ `fix: 优化引用片段排序`：具体问题下优先展示正文依据章节，避免文档总览 chunk 排在引用片段章节前面。
+- ✅ `feat: 支持引用片段点击定位`：点击回答下方引用片段后，会打开文档详情并高亮滚动到对应 chunk。
 
 ### 明天继续前必须做
 - [ ] 在 IDEA 中重启 Spring Boot，让最新代码生效。
@@ -59,6 +60,7 @@
 - ✅ 前端会话 ID 持久化（支持连续追问和新会话）
 - ✅ Advanced RAG 模式切换与按文档过滤
 - ✅ Advanced RAG 改写查询、命中片段数、来源文档与引用片段展示
+- ✅ 引用片段点击后定位到文档详情中的对应 chunk
 
 ### 4. 配置与部署
 - ✅ 混合模式配置（Chat 用中转站 + Embedding 用本地）
@@ -250,6 +252,6 @@ DELETE FROM vector_store;
 
 ---
 
-**当前最紧急任务**：重启应用后回归验证 Hybrid Search、Advanced RAG 引用片段排序，然后继续做引用片段点击定位。
+**当前最紧急任务**：重启应用后回归验证 Hybrid Search、Advanced RAG 引用片段排序和点击定位，然后继续做 Advanced RAG 分阶段反馈。
 
 祝顺利！🚀

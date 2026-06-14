@@ -24,6 +24,7 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 - [x] Advanced RAG 查询改写
 - [x] Advanced RAG 按文档过滤
 - [x] Advanced RAG 引用片段展示
+- [x] Advanced RAG 引用片段点击定位到文档详情 chunk
 - [x] 已上传文档详情窗口可拖动调整宽度
 - [x] Markdown/TXT 按 UTF-8 读取，避免中文乱码
 - [x] Advanced RAG 双路召回、过滤下推、关键词重排序
@@ -61,8 +62,7 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 
 ## 下一步开发
 
-- [ ] 重启 Spring Boot 后在页面回归验证 Hybrid Search 和引用片段排序修正。
-- [ ] 引用片段点击后跳转到文档详情中的对应 chunk。
+- [ ] 重启 Spring Boot 后在页面回归验证 Hybrid Search、引用片段排序和点击定位。
 - [ ] Advanced RAG 分阶段反馈或流式输出。
 - [ ] Redis 会话记忆持久化。
 - [ ] 可观测性指标和性能压测报告。

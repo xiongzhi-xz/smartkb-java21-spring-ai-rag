@@ -145,6 +145,14 @@
         return escapeHtml(value).replace(/\n/g, '<br>');
     }
 
+    function normalizeChunkId(chunkId) {
+        return String(chunkId ?? '').trim();
+    }
+
+    function getChunkElementId(chunkId) {
+        return `document-chunk-${normalizeChunkId(chunkId).replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+    }
+
     function updateConversationStatus() {
         const status = document.getElementById('conversationStatus');
         let text;
@@ -317,13 +325,19 @@
                     </summary>
                     <div class="mt-3 space-y-3">
                         ${details.references.map((reference, index) => `
-                            <div class="rounded-lg border border-gray-200 bg-white p-3">
+                            <button
+                                type="button"
+                                class="w-full rounded-lg border border-gray-200 bg-white p-3 text-left transition hover:border-blue-300 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                                title="打开文档并定位该片段"
+                                data-reference-file-name="${escapeHtml(reference.fileName || '')}"
+                                data-reference-chunk-id="${escapeHtml(reference.chunkId || '')}"
+                            >
                                 <div class="flex items-center justify-between gap-3 text-gray-500">
                                     <span class="font-medium text-gray-700">片段 ${index + 1}</span>
                                     <span class="truncate">${escapeHtml(reference.fileName || '未知文档')} · ${escapeHtml(reference.chunkId || '')}</span>
                                 </div>
                                 <div class="mt-2 leading-6 text-gray-700">${renderText(reference.preview || '')}</div>
-                            </div>
+                            </button>
                         `).join('')}
                     </div>
                 </details>
@@ -614,7 +628,7 @@
         highlightSelectedDocument();
     }
 
-    async function showDocumentDetail(fileName) {
+    async function showDocumentDetail(fileName, targetChunkId = '') {
         selectedDocumentFileName = fileName;
         highlightSelectedDocument();
         openDocumentDetail();
@@ -639,7 +653,7 @@
                 throw new Error(data.error || '加载文档详情失败');
             }
 
-            renderDocumentDetail(data.document || { fileName, chunks: [] });
+            renderDocumentDetail(data.document || { fileName, chunks: [] }, targetChunkId);
         } catch (err) {
             meta.textContent = '加载失败';
             body.innerHTML = `
@@ -684,29 +698,67 @@
         }
     }
 
-    function renderDocumentDetail(documentDetail) {
+    function renderDocumentDetail(documentDetail, targetChunkId = '') {
         const title = document.getElementById('documentDetailTitle');
         const meta = document.getElementById('documentDetailMeta');
         const body = document.getElementById('documentDetailBody');
         const chunks = documentDetail.chunks || [];
+        const normalizedTargetChunkId = normalizeChunkId(targetChunkId);
+        const hasTargetChunk = normalizedTargetChunkId
+            ? chunks.some(chunk => normalizeChunkId(chunk.id) === normalizedTargetChunkId)
+            : false;
 
         title.textContent = documentDetail.fileName || selectedDocumentFileName || '文档详情';
-        meta.textContent = `${chunks.length} 个片段`;
+        meta.textContent = `${chunks.length} 个片段${hasTargetChunk ? ' · 已定位引用片段' : ''}${normalizedTargetChunkId && !hasTargetChunk ? ' · 未找到目标片段' : ''}`;
 
         if (chunks.length === 0) {
             body.innerHTML = '<div class="text-center text-sm text-gray-400 py-12">暂无可查看的文档片段</div>';
             return;
         }
 
-        body.innerHTML = chunks.map((chunk, index) => `
-            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        body.innerHTML = chunks.map((chunk, index) => {
+            const chunkId = normalizeChunkId(chunk.id);
+            const isTarget = chunkId && chunkId === normalizedTargetChunkId;
+            const cardClass = isTarget
+                ? 'bg-blue-50 border border-blue-300 ring-2 ring-blue-200'
+                : 'bg-white border border-gray-200';
+            return `
+            <div id="${escapeHtml(getChunkElementId(chunkId))}" class="${cardClass} rounded-lg overflow-hidden scroll-mt-6" data-document-chunk-id="${escapeHtml(chunkId)}">
                 <div class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-700">片段 ${index + 1}</span>
-                    <span class="text-xs text-gray-400">${escapeHtml(chunk.id || '')}</span>
+                    <span class="text-xs text-gray-400">${escapeHtml(chunkId)}</span>
                 </div>
                 <div class="p-4 text-sm text-gray-700 leading-7 whitespace-pre-wrap break-words">${escapeHtml(chunk.content || '')}</div>
             </div>
-        `).join('');
+        `;
+        }).join('');
+
+        if (hasTargetChunk) {
+            requestAnimationFrame(() => {
+                const target = document.getElementById(getChunkElementId(normalizedTargetChunkId));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+    }
+
+    function initReferenceNavigation() {
+        const chatContainer = document.getElementById('chatContainer');
+        chatContainer.addEventListener('click', function(e) {
+            const trigger = e.target.closest('[data-reference-file-name][data-reference-chunk-id]');
+            if (!trigger || !chatContainer.contains(trigger)) {
+                return;
+            }
+
+            const fileName = trigger.dataset.referenceFileName;
+            const chunkId = trigger.dataset.referenceChunkId;
+            if (!fileName) {
+                return;
+            }
+
+            showDocumentDetail(fileName, chunkId);
+        });
     }
 
     document.getElementById('documentDetailOverlay').addEventListener('click', function(e) {
@@ -809,6 +861,7 @@
         updateRagModeUI();
         initDocumentDetailResize();
         initDocumentDetailWidth();
+        initReferenceNavigation();
         loadDocuments(); // 自动加载文档列表
     };
 </script>
