@@ -220,7 +220,7 @@
 
     function getDocumentItemClass(isActive) {
         return [
-            'w-full p-3 text-left rounded-lg border transition group',
+            'w-full p-3 text-left rounded-lg border transition group cursor-pointer',
             isActive ? 'bg-blue-50 border-blue-200' : 'border-transparent hover:bg-gray-50'
         ].join(' ');
     }
@@ -650,6 +650,40 @@
         }
     }
 
+    async function deleteDocument(fileName, triggerButton) {
+        const confirmed = window.confirm(`确定删除“${fileName}”吗？删除后需要重新上传才能恢复。`);
+        if (!confirmed) {
+            return;
+        }
+
+        const originalHtml = triggerButton.innerHTML;
+        triggerButton.disabled = true;
+        triggerButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        try {
+            const res = await fetch(`/api/documents/${encodeURIComponent(fileName)}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (!res.ok || data.success === false) {
+                throw new Error(data.error || '删除文档失败');
+            }
+
+            if (selectedDocumentFileName === fileName) {
+                closeDocumentDetail();
+            }
+            if (advancedFilterFileName === fileName) {
+                setAdvancedFilter('');
+            }
+
+            loadDocuments();
+        } catch (err) {
+            triggerButton.disabled = false;
+            triggerButton.innerHTML = originalHtml;
+            alert(err.message);
+        }
+    }
+
     function renderDocumentDetail(documentDetail) {
         const title = document.getElementById('documentDetailTitle');
         const meta = document.getElementById('documentDetailMeta');
@@ -712,20 +746,43 @@
 
                 docs.forEach(doc => {
                     const fileName = doc.fileName || doc.name || '未知文档';
-                    const docDiv = document.createElement('button');
-                    docDiv.type = 'button';
+                    const docDiv = document.createElement('div');
+                    docDiv.role = 'button';
+                    docDiv.tabIndex = 0;
                     docDiv.dataset.documentFileName = fileName;
                     docDiv.className = getDocumentItemClass(fileName === selectedDocumentFileName);
                     docDiv.addEventListener('click', () => showDocumentDetail(fileName));
+                    docDiv.addEventListener('keydown', e => {
+                        if (e.target !== docDiv) {
+                            return;
+                        }
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            showDocumentDetail(fileName);
+                        }
+                    });
                     docDiv.innerHTML = `
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between gap-2">
                             <div class="flex-1 min-w-0">
                                 <div class="font-medium text-sm text-gray-900 truncate">${escapeHtml(fileName)}</div>
                                 <div class="text-xs text-gray-500 mt-1">${escapeHtml(doc.chunkCount || doc.chunks || 0)} 个片段</div>
                             </div>
                             <i class="fa-solid fa-file-alt text-gray-300 group-hover:text-blue-500"></i>
+                            <button
+                                type="button"
+                                class="document-delete-button flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-300 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                title="删除文档"
+                                aria-label="删除 ${escapeHtml(fileName)}"
+                            >
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
                         </div>
                     `;
+                    const deleteButton = docDiv.querySelector('.document-delete-button');
+                    deleteButton.addEventListener('click', e => {
+                        e.stopPropagation();
+                        deleteDocument(fileName, deleteButton);
+                    });
                     docList.appendChild(docDiv);
                 });
             })
