@@ -47,6 +47,11 @@ public class AdvancedRagService {
     private static final Set<String> CJK_STOP_WORDS = Set.of(
             "什么", "为什么", "如何", "怎么", "这个", "那个", "哪些", "是否", "可以", "系统", "问题"
     );
+    private static final Set<String> DOMAIN_ANCHOR_PHRASES = Set.of(
+            "查询改写", "引用片段", "元数据过滤", "重排序", "流式输出", "向量检索", "检索质量",
+            "Virtual Threads", "Advanced RAG", "Hybrid Search", "Spring AI", "PostgreSQL",
+            "pgvector", "Ollama", "Embedding", "可信度", "可解释性", "可追溯性"
+    );
 
     private final QueryRewritingService queryRewritingService;
     private final VectorStoreService vectorStoreService;
@@ -256,16 +261,17 @@ public class AdvancedRagService {
      */
     private List<Document> rerank(List<Document> documents, String originalQuery, String rewrittenQuery) {
         List<String> keywords = extractKeywords(originalQuery + " " + rewrittenQuery);
+        List<String> anchors = extractAnchorKeywords(originalQuery + " " + rewrittenQuery);
 
         return documents.stream()
                 .sorted(Comparator
-                        .comparingInt((Document doc) -> relevanceScore(doc.getContent(), keywords))
+                        .comparingInt((Document doc) -> relevanceScore(doc.getContent(), keywords, anchors))
                         .reversed()
                         .thenComparing(Comparator.comparingInt((Document doc) -> doc.getContent().length()).reversed()))
                 .collect(Collectors.toList());
     }
 
-    private int relevanceScore(String content, List<String> keywords) {
+    private int relevanceScore(String content, List<String> keywords, List<String> anchors) {
         if (content == null || content.isBlank() || keywords.isEmpty()) {
             return 0;
         }
@@ -278,9 +284,24 @@ public class AdvancedRagService {
                 score += occurrences * Math.min(keyword.length(), 8);
             }
         }
+        score = applyAnchorPriority(content, anchors, score);
         score += headingRelevanceScore(content, keywords) * HEADING_SCORE_WEIGHT;
         score -= questionCatalogPenalty(content);
         return score;
+    }
+
+    private int applyAnchorPriority(String content, List<String> anchors, int baseScore) {
+        if (anchors.isEmpty()) {
+            return baseScore;
+        }
+
+        int anchorScore = plainRelevanceScore(content, anchors);
+        int headingAnchorScore = headingRelevanceScore(content, anchors);
+        if (anchorScore == 0) {
+            return (baseScore / 4) - 240;
+        }
+
+        return baseScore + (anchorScore * 80) + (headingAnchorScore * 120);
     }
 
     private int headingRelevanceScore(String content, List<String> keywords) {
@@ -352,6 +373,18 @@ public class AdvancedRagService {
         return keywords.stream()
                 .sorted(Comparator.comparingInt(String::length).reversed())
                 .limit(80)
+                .collect(Collectors.toList());
+    }
+
+    private List<String> extractAnchorKeywords(String text) {
+        if (text == null || text.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        String lowerText = text.toLowerCase(Locale.ROOT);
+        return DOMAIN_ANCHOR_PHRASES.stream()
+                .filter(phrase -> lowerText.contains(phrase.toLowerCase(Locale.ROOT)))
+                .sorted(Comparator.comparingInt(String::length).reversed())
                 .collect(Collectors.toList());
     }
 
