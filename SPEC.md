@@ -27,6 +27,9 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 - [x] 已上传文档详情窗口可拖动调整宽度
 - [x] Markdown/TXT 按 UTF-8 读取，避免中文乱码
 - [x] Advanced RAG 双路召回、过滤下推、关键词重排序
+- [x] Advanced RAG 锚点词重排序，优先命中查询改写、引用片段等核心章节
+- [x] 前端文档删除入口与后端删除 SQL 修复
+- [x] 改进与问题复盘文档 `docs/IMPROVEMENTS_AND_ISSUES.md`
 - [x] 大文档演示语料 `test-docs/advanced-rag-demo.md`
 
 ## 当前已知状态
@@ -34,7 +37,7 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 - 本地服务启动方式：Docker Desktop 启动 PostgreSQL/Redis，Ollama 本机运行，Spring Boot 在 IDEA 中启动。
 - SmartKB 主页面：`http://localhost:8080`
 - 不是 Vue/Vite 独立前端，`http://localhost:3000` 不是主页面。
-- 当前自动化测试通过：`mvn test`，共 5 个测试。
+- 当前自动化测试通过：`mvn test`，共 7 个测试。
 - 如果数据库里有修复前上传的 `advanced-rag-demo.md`，内容可能仍是乱码，需要删除后重新上传。
 
 ## 明天优先验证

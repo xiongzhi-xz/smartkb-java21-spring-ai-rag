@@ -1,5 +1,9 @@
 # SmartKB 项目当前进度总结
 
+## 重要复盘文档
+
+- [docs/IMPROVEMENTS_AND_ISSUES.md](docs/IMPROVEMENTS_AND_ISSUES.md)：记录本阶段关键改进与踩坑，包括流式输出、Advanced RAG 检索命中优化、中文编码、引用片段、文档删除和本地运行问题。
+
 ## 2026-06-13 收尾记录
 
 ### 今日新增修复
@@ -71,7 +75,7 @@
 - **Advanced RAG 代码链路**：查询改写、文档过滤、重排序、引用片段返回已接入，生成阶段直接调用 ChatModel，避免二次触发普通 RAG Advisor
 - **文本编码链路**：Markdown/TXT 上传解析已固定 UTF-8，重新上传后文档详情和引用片段应显示正常中文
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
-- **自动化测试**：`mvn test` 通过（5 tests, 0 failures）
+- **自动化测试**：`mvn test` 通过（7 tests, 0 failures）
 
 ### 待关注
 - 中转站模型响应耗时有波动，长答案可能超过 30 秒
