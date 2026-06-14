@@ -39,6 +39,7 @@ public class AdvancedRagService {
 
     private static final int CANDIDATE_TOP_K = 12;
     private static final int FINAL_TOP_K = 5;
+    private static final int HEADING_SCORE_WEIGHT = 6;
     private static final double CANDIDATE_SIMILARITY_THRESHOLD = 0.55;
     private static final double FALLBACK_SIMILARITY_THRESHOLD = 0.0;
     private static final Pattern LATIN_TOKEN_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9+.#_-]*");
@@ -277,7 +278,46 @@ public class AdvancedRagService {
                 score += occurrences * Math.min(keyword.length(), 8);
             }
         }
+        score += headingRelevanceScore(content, keywords) * HEADING_SCORE_WEIGHT;
+        score -= questionCatalogPenalty(content);
         return score;
+    }
+
+    private int headingRelevanceScore(String content, List<String> keywords) {
+        return content.lines()
+                .filter(line -> line.stripLeading().startsWith("#"))
+                .mapToInt(line -> plainRelevanceScore(line, keywords))
+                .sum();
+    }
+
+    private int plainRelevanceScore(String content, List<String> keywords) {
+        String normalizedContent = content.toLowerCase(Locale.ROOT);
+        int score = 0;
+        for (String keyword : keywords) {
+            int occurrences = countOccurrences(normalizedContent, keyword.toLowerCase(Locale.ROOT));
+            if (occurrences > 0) {
+                score += occurrences * Math.min(keyword.length(), 8);
+            }
+        }
+        return score;
+    }
+
+    private int questionCatalogPenalty(String content) {
+        int penalty = 0;
+        if (content.contains("推荐测试问题")) {
+            penalty += 320;
+        }
+        if (content.contains("可以使用以下问题测试不同能力")) {
+            penalty += 180;
+        }
+        long questionLineCount = content.lines()
+                .map(String::trim)
+                .filter(line -> line.endsWith("？") || line.endsWith("?"))
+                .count();
+        if (questionLineCount >= 3) {
+            penalty += 120;
+        }
+        return penalty;
     }
 
     private int countOccurrences(String content, String keyword) {
