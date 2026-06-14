@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 public class AdvancedRagService {
 
     private static final int CANDIDATE_TOP_K = 12;
+    private static final int KEYWORD_SEARCH_TERM_LIMIT = 24;
     private static final int FINAL_TOP_K = 5;
     private static final int HEADING_SCORE_WEIGHT = 6;
     private static final double CANDIDATE_SIMILARITY_THRESHOLD = 0.55;
@@ -92,8 +93,8 @@ public class AdvancedRagService {
             String rewrittenQuery = queryRewritingService.rewriteQuery(question, history);
             log.info("改写后查询: {}", rewrittenQuery);
 
-            // 2. Vector Search - 双路召回，避免改写 query 偏离原问题
-            log.info("步骤 2: 向量检索");
+            // 2. Hybrid Search - 向量召回 + 关键词召回，避免单一路径漏掉核心章节
+            log.info("步骤 2: 混合检索");
             List<Document> retrievedDocs = retrieveCandidates(question, rewrittenQuery, metadataFilter);
             log.info("检索到 {} 条候选文档", retrievedDocs.size());
 
@@ -159,6 +160,7 @@ public class AdvancedRagService {
                 metadataFilter,
                 CANDIDATE_SIMILARITY_THRESHOLD
         );
+        mergeKeywordSearchResults(merged, question, rewrittenQuery, metadataFilter);
 
         if (merged.isEmpty()) {
             log.info("高阈值未召回文档，降低阈值重试");
@@ -168,6 +170,7 @@ public class AdvancedRagService {
                     metadataFilter,
                     FALLBACK_SIMILARITY_THRESHOLD
             );
+            mergeKeywordSearchResults(merged, question, rewrittenQuery, metadataFilter);
         }
 
         return new ArrayList<>(merged.values());
@@ -203,6 +206,38 @@ public class AdvancedRagService {
         for (Document document : documents) {
             merged.putIfAbsent(documentKey(document), document);
         }
+    }
+
+    private void mergeKeywordSearchResults(
+            Map<String, Document> merged,
+            String question,
+            String rewrittenQuery,
+            Map<String, Object> metadataFilter) {
+        List<String> terms = buildKeywordSearchTerms(question, rewrittenQuery);
+        if (terms.isEmpty()) {
+            return;
+        }
+
+        List<Document> documents = vectorStoreService.searchKeywordDocuments(
+                terms,
+                CANDIDATE_TOP_K,
+                metadataFilter
+        );
+
+        for (Document document : documents) {
+            merged.putIfAbsent(documentKey(document), document);
+        }
+    }
+
+    private List<String> buildKeywordSearchTerms(String question, String rewrittenQuery) {
+        String combinedQuery = question + " " + rewrittenQuery;
+        Set<String> terms = new LinkedHashSet<>();
+        terms.addAll(extractAnchorKeywords(combinedQuery));
+        terms.addAll(extractKeywords(combinedQuery));
+        return terms.stream()
+                .filter(term -> term.length() >= 2)
+                .limit(KEYWORD_SEARCH_TERM_LIMIT)
+                .collect(Collectors.toList());
     }
 
     private String documentKey(Document document) {

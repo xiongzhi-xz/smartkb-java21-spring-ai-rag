@@ -1,6 +1,7 @@
 package com.smartkb.service;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.document.Document;
 
 import java.lang.reflect.Method;
@@ -8,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class AdvancedRagServiceTest {
 
@@ -37,6 +40,71 @@ class AdvancedRagServiceTest {
         );
 
         assertTrue(ranked.get(0).getContent().contains("查询改写是 Advanced RAG 的第一步"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void retrieveCandidatesMergesKeywordSearchWithVectorSearch() throws Exception {
+        VectorStoreService vectorStoreService = mock(VectorStoreService.class);
+        AdvancedRagService service = new AdvancedRagService(null, vectorStoreService, null);
+        Map<String, Object> metadataFilter = Map.of("fileName", "advanced-rag-demo.md");
+
+        Document vectorHit = new Document(
+                "vector-hit",
+                "pgvector 可以配合 HNSW 索引提升检索性能。检索时常用参数包括 topK 和相似度阈值。",
+                Map.of("fileName", "advanced-rag-demo.md")
+        );
+        Document keywordHit = new Document(
+                "keyword-hit",
+                """
+                        ## 7. Advanced RAG：查询改写
+
+                        查询改写是 Advanced RAG 的第一步。用户的问题往往比较口语化。
+                        如果直接拿这些问题做向量检索，可能无法命中正确片段。
+                        """,
+                Map.of("fileName", "advanced-rag-demo.md")
+        );
+
+        when(vectorStoreService.searchSimilarDocuments(anyString(), eq(12), anyDouble(), eq(metadataFilter)))
+                .thenReturn(List.of(vectorHit));
+        when(vectorStoreService.searchKeywordDocuments(anyList(), eq(12), eq(metadataFilter)))
+                .thenReturn(List.of(keywordHit));
+
+        List<Document> candidates = retrieveCandidates(
+                service,
+                "查询改写在 Advanced RAG 中解决什么问题？",
+                "查询改写在 Advanced RAG 中用于提升检索质量",
+                metadataFilter
+        );
+
+        assertTrue(candidates.stream().anyMatch(doc -> "vector-hit".equals(doc.getId())));
+        assertTrue(candidates.stream().anyMatch(doc -> "keyword-hit".equals(doc.getId())));
+
+        ArgumentCaptor<List<String>> termsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(vectorStoreService).searchKeywordDocuments(termsCaptor.capture(), eq(12), eq(metadataFilter));
+        assertTrue(termsCaptor.getValue().contains("查询改写"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void keywordSearchTermsPutDomainAnchorsBeforeGenericNgrams() throws Exception {
+        AdvancedRagService service = new AdvancedRagService(null, null, null);
+        Method method = AdvancedRagService.class.getDeclaredMethod(
+                "buildKeywordSearchTerms",
+                String.class,
+                String.class
+        );
+        method.setAccessible(true);
+
+        List<String> terms = (List<String>) method.invoke(
+                service,
+                "为什么引用片段能提升 RAG 系统可信度？",
+                "引用片段如何增强 RAG 系统的可信度与可追溯性"
+        );
+
+        assertTrue(terms.contains("引用片段"));
+        assertTrue(terms.contains("可信度"));
+        assertTrue(terms.indexOf("引用片段") < terms.indexOf("引用片段如何"));
     }
 
     @Test
@@ -77,5 +145,21 @@ class AdvancedRagServiceTest {
         );
         rerank.setAccessible(true);
         return (List<Document>) rerank.invoke(service, documents, originalQuery, rewrittenQuery);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Document> retrieveCandidates(
+            AdvancedRagService service,
+            String originalQuery,
+            String rewrittenQuery,
+            Map<String, Object> metadataFilter) throws Exception {
+        Method method = AdvancedRagService.class.getDeclaredMethod(
+                "retrieveCandidates",
+                String.class,
+                String.class,
+                Map.class
+        );
+        method.setAccessible(true);
+        return (List<Document>) method.invoke(service, originalQuery, rewrittenQuery, metadataFilter);
     }
 }

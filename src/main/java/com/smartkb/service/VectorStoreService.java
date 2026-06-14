@@ -1,5 +1,7 @@
 package com.smartkb.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -10,8 +12,10 @@ import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 向量存储服务
@@ -35,6 +39,7 @@ public class VectorStoreService {
 
     private final PgVectorStore vectorStore;
     private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper;
 
     /**
      * 添加文档到向量库（批量）
@@ -108,6 +113,57 @@ public class VectorStoreService {
         }
     }
 
+    /**
+     * 关键词检索（Hybrid Search 的稀疏召回部分）。
+     * <p>
+     * 不改数据库 schema，直接在 vector_store.content 上做短语匹配，并复用 metadata 过滤条件。
+     * 这条链路用于补足向量召回对中文专有术语、章节标题、缩写词不稳定的问题。
+     *
+     * @param keywords       查询关键词或领域锚点词
+     * @param topK           返回 Top-K 最相关文档
+     * @param metadataFilter 元数据过滤条件
+     * @return 关键词命中的文档列表
+     */
+    public List<Document> searchKeywordDocuments(
+            List<String> keywords,
+            int topK,
+            Map<String, Object> metadataFilter) {
+        List<String> terms = normalizeKeywordTerms(keywords);
+        if (terms.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        log.debug("关键词检索: terms={}, topK={}", terms, topK);
+
+        try {
+            List<Object> params = new ArrayList<>();
+            String scoreExpression = buildKeywordScoreExpression(terms, params);
+            String matchExpression = buildKeywordMatchExpression(terms, params);
+            String metadataWhere = buildMetadataWhere(metadataFilter, params);
+            params.add(topK);
+
+            String sql = """
+                    SELECT
+                        id::text AS id,
+                        content,
+                        metadata::text AS metadata_json,
+                        (%s) AS keyword_score
+                    FROM vector_store
+                    WHERE (%s)
+                    %s
+                    ORDER BY keyword_score DESC, length(content) DESC
+                    LIMIT ?
+                    """.formatted(scoreExpression, matchExpression, metadataWhere);
+
+            List<Document> results = jdbcTemplate.query(sql, this::mapKeywordSearchDocument, params.toArray());
+            log.debug("关键词检索完成: 返回 {} 个文档", results.size());
+            return results;
+        } catch (Exception e) {
+            log.error("关键词检索失败: {}", terms, e);
+            throw new RuntimeException("关键词检索失败: " + e.getMessage(), e);
+        }
+    }
+
     private Filter.Expression buildFilterExpression(Map<String, Object> metadataFilter) {
         if (metadataFilter == null || metadataFilter.isEmpty()) {
             return null;
@@ -133,6 +189,86 @@ public class VectorStoreService {
             return false;
         }
         return !(value instanceof String text) || !text.isBlank();
+    }
+
+    private List<String> normalizeKeywordTerms(List<String> keywords) {
+        if (keywords == null || keywords.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return keywords.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(term -> term.length() >= 2)
+                .distinct()
+                .limit(24)
+                .collect(Collectors.toList());
+    }
+
+    private String buildKeywordScoreExpression(List<String> terms, List<Object> params) {
+        return terms.stream()
+                .map(term -> {
+                    params.add(toLikePattern(term));
+                    params.add(keywordWeight(term));
+                    return "CASE WHEN lower(content) LIKE ? THEN ? ELSE 0 END";
+                })
+                .collect(Collectors.joining(" + "));
+    }
+
+    private String buildKeywordMatchExpression(List<String> terms, List<Object> params) {
+        return terms.stream()
+                .map(term -> {
+                    params.add(toLikePattern(term));
+                    return "lower(content) LIKE ?";
+                })
+                .collect(Collectors.joining(" OR "));
+    }
+
+    private String buildMetadataWhere(Map<String, Object> metadataFilter, List<Object> params) {
+        if (metadataFilter == null || metadataFilter.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder where = new StringBuilder();
+        for (Map.Entry<String, Object> entry : metadataFilter.entrySet()) {
+            if (!hasFilterValue(entry.getValue())) {
+                continue;
+            }
+            where.append(" AND metadata ->> ? = ?");
+            params.add(entry.getKey());
+            params.add(String.valueOf(entry.getValue()));
+        }
+        return where.toString();
+    }
+
+    private String toLikePattern(String term) {
+        return "%" + term.toLowerCase(Locale.ROOT)
+                .replace("%", "")
+                .replace("_", "") + "%";
+    }
+
+    private int keywordWeight(String term) {
+        return Math.min(term.length(), 12);
+    }
+
+    private Document mapKeywordSearchDocument(ResultSet rs, int rowNum) throws SQLException {
+        String id = rs.getString("id");
+        String content = rs.getString("content");
+        Map<String, Object> metadata = parseMetadata(rs.getString("metadata_json"));
+        return new Document(id, content, metadata);
+    }
+
+    private Map<String, Object> parseMetadata(String metadataJson) throws SQLException {
+        if (metadataJson == null || metadataJson.isBlank()) {
+            return new HashMap<>();
+        }
+
+        try {
+            return objectMapper.readValue(metadataJson, new TypeReference<>() {
+            });
+        } catch (Exception e) {
+            throw new SQLException("解析向量元数据失败", e);
+        }
     }
 
     /**

@@ -9,6 +9,7 @@
 ### 今日新增修复
 - ✅ `fix: 修复文本文件编码解析`：Markdown/TXT 直接按 UTF-8 读取，避免中文文档上传后变成乱码。
 - ✅ `fix: 提升 advanced rag 检索召回`：Advanced RAG 现在同时召回原始问题和改写问题，支持 metadata 过滤下推，并按关键词相关度重排序。
+- ✅ `feat: 增加 advanced rag hybrid search`：Advanced RAG 现在融合向量召回和关键词召回，减少核心章节被泛相关片段挤掉的概率。
 
 ### 明天继续前必须做
 - [ ] 在 IDEA 中重启 Spring Boot，让最新代码生效。
@@ -22,7 +23,7 @@
 ### 当前判断
 - 如果页面仍显示 `æ¥è¯¢æ¹å` 这类文字，说明数据库里还是旧乱码数据，不是前端显示问题。
 - 代码修复不会自动修复已入库的旧向量内容，必须删除旧文档后重新上传。
-- 当前下一阶段建议先做 Hybrid Search，其次做引用片段点击跳转到对应 chunk。
+- 当前下一阶段建议先在页面回归验证 Hybrid Search，其次做引用片段点击跳转到对应 chunk。
 
 ## ✅ 已完成功能
 
@@ -41,6 +42,7 @@
 - ✅ 多轮对话接口（`POST /api/chat/conversation`）
 - ✅ Advanced RAG 接口（`POST /api/chat/advanced`，查询改写 + 元数据过滤 + 重排序）
 - ✅ Advanced RAG 检索召回优化（原始问题 + 改写问题双路召回，metadata 过滤下推）
+- ✅ Advanced RAG Hybrid Search（向量召回 + 关键词召回融合）
 - ✅ 文档管理接口（列表、详情、删除、统计）
 - ✅ Virtual Threads 配置（全局启用）
 - ✅ Spring AI Advisor 体系（QuestionAnswerAdvisor）
@@ -73,9 +75,10 @@
 - **多轮对话代码链路**：`POST /api/chat/conversation` 已接入 ChatMemory Advisor，前端会复用 conversationId
 - **流式输出代码链路**：`POST /api/chat/conversation/stream` 使用 SSE 推送增量 token，前端实时追加到回答气泡
 - **Advanced RAG 代码链路**：查询改写、文档过滤、重排序、引用片段返回已接入，生成阶段直接调用 ChatModel，避免二次触发普通 RAG Advisor
+- **Hybrid Search 代码链路**：Advanced RAG 候选集现在融合向量召回和关键词召回，关键词召回复用文档过滤条件
 - **文本编码链路**：Markdown/TXT 上传解析已固定 UTF-8，重新上传后文档详情和引用片段应显示正常中文
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
-- **自动化测试**：`mvn test` 通过（7 tests, 0 failures）
+- **自动化测试**：`mvn test` 通过（9 tests, 0 failures）
 
 ### 待关注
 - 中转站模型响应耗时有波动，长答案可能超过 30 秒
@@ -94,7 +97,7 @@
 - [x] Query Rewriting（问题改写）
 - [x] Metadata Filtering（元数据过滤，前端支持按文档过滤）
 - [x] Re-ranking（结果重排序，当前为轻量规则版）
-- [ ] Hybrid Search（向量 + 全文检索）
+- [x] Hybrid Search（向量召回 + 关键词召回融合，当前为 SQL LIKE 基础版）
 
 ### 阶段 3：Agent 功能
 - [ ] Tool-Calling 工具定义（搜索、总结、导出）
@@ -246,6 +249,6 @@ DELETE FROM vector_store;
 
 ---
 
-**当前最紧急任务**：重启应用后验证流式输出、多轮对话和 Advanced RAG 引用片段，然后继续做 Hybrid Search。
+**当前最紧急任务**：重启应用后回归验证 Hybrid Search、Advanced RAG 引用片段，然后继续做引用片段点击定位。
 
 祝顺利！🚀
