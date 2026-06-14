@@ -1,10 +1,12 @@
 package com.smartkb.service;
 
+import com.smartkb.domain.AdvancedRagStage;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.document.Document;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -164,6 +166,32 @@ class AdvancedRagServiceTest {
         );
 
         assertTrue(ranked.get(0).getContent().contains("## 11. 引用片段与可解释性"));
+    }
+
+    @Test
+    void queryAdvancedReportsProgressStagesWhenNoDocumentsFound() {
+        QueryRewritingService queryRewritingService = mock(QueryRewritingService.class);
+        VectorStoreService vectorStoreService = mock(VectorStoreService.class);
+        AdvancedRagService service = new AdvancedRagService(queryRewritingService, vectorStoreService, null);
+
+        when(queryRewritingService.rewriteQuery(anyString(), any()))
+                .thenReturn("查询改写在 Advanced RAG 中解决什么问题");
+        when(vectorStoreService.searchSimilarDocuments(anyString(), anyInt(), anyDouble(), any()))
+                .thenReturn(List.of());
+        when(vectorStoreService.searchKeywordDocuments(anyList(), anyInt(), any()))
+                .thenReturn(List.of());
+
+        List<AdvancedRagStage> stages = new ArrayList<>();
+        service.queryAdvancedWithDetails(
+                "查询改写在 Advanced RAG 中解决什么问题？",
+                Map.of("fileName", "advanced-rag-demo.md"),
+                "",
+                stages::add
+        );
+
+        assertTrue(stages.stream().anyMatch(stage -> "rewrite_done".equals(stage.stage())));
+        assertTrue(stages.stream().anyMatch(stage -> "retrieval_done".equals(stage.stage())));
+        assertTrue(stages.stream().anyMatch(stage -> "no_result".equals(stage.stage())));
     }
 
     @SuppressWarnings("unchecked")

@@ -145,6 +145,27 @@
         return escapeHtml(value).replace(/\n/g, '<br>');
     }
 
+    function getStageDetailText(stage) {
+        const details = stage.details || {};
+        const parts = [];
+        if (details.metadataFilter && details.metadataFilter.fileName) {
+            parts.push(`文档：${details.metadataFilter.fileName}`);
+        }
+        if (details.rewrittenQuery) {
+            parts.push(`改写：${details.rewrittenQuery}`);
+        }
+        if (Number.isFinite(Number(details.candidateCount))) {
+            parts.push(`候选 ${Number(details.candidateCount)} 个`);
+        }
+        if (Number.isFinite(Number(details.retrievedCount))) {
+            parts.push(`命中 ${Number(details.retrievedCount)} 个`);
+        }
+        if (Number.isFinite(Number(details.referenceCount))) {
+            parts.push(`引用 ${Number(details.referenceCount)} 个`);
+        }
+        return parts.join(' · ');
+    }
+
     function normalizeChunkId(chunkId) {
         return String(chunkId ?? '').trim();
     }
@@ -312,6 +333,29 @@
                 html += `<div class="mt-2 text-xs text-gray-400">${detailParts.join(' · ')}</div>`;
             }
         }
+
+        if (!isUser && Array.isArray(details.stages) && details.stages.length > 0) {
+            html += `
+                <div class="mt-3 space-y-2 rounded-lg border border-gray-200 bg-white/70 p-3 text-xs text-gray-600">
+                    ${details.stages.map((stage, index) => {
+                        const isActive = loading && index === details.stages.length - 1;
+                        const icon = isActive
+                            ? '<i class="fa-solid fa-spinner fa-spin text-blue-600"></i>'
+                            : '<i class="fa-solid fa-check text-green-600"></i>';
+                        const detailText = getStageDetailText(stage);
+                        return `
+                            <div class="flex items-start gap-2">
+                                <span class="mt-0.5 w-4 shrink-0">${icon}</span>
+                                <div class="min-w-0">
+                                    <div class="${isActive ? 'text-blue-700 font-medium' : 'text-gray-700'}">${escapeHtml(stage.message || '处理中')}</div>
+                                    ${detailText ? `<div class="mt-0.5 text-gray-400 break-words">${escapeHtml(detailText)}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
         
         if (!isUser && sources.length > 0) {
             html += `<div class="mt-3 text-xs text-gray-500">参考来源：${sources.map(escapeHtml).join('、')}</div>`;
@@ -358,8 +402,8 @@
         return msgDiv;
     }
 
-    function updateAssistantMessage(msgDiv, content, sources = [], details = {}) {
-        msgDiv.innerHTML = buildMessageHtml(content, false, sources, details);
+    function updateAssistantMessage(msgDiv, content, sources = [], details = {}, loading = false) {
+        msgDiv.innerHTML = buildMessageHtml(content, false, sources, details, loading);
         const container = document.getElementById('chatContainer');
         container.scrollTop = container.scrollHeight;
     }
@@ -467,6 +511,101 @@
         };
     }
 
+    async function streamAdvancedMessage(payload, pendingMessage) {
+        const res = await fetch('/api/chat/advanced/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok || !res.body) {
+            throw new Error('Advanced RAG 分阶段请求失败');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let answer = '';
+        let sources = [];
+        let references = [];
+        let rewrittenQuery = '';
+        let retrievedCount;
+        const stages = [];
+
+        function renderStage(message) {
+            updateAssistantMessage(pendingMessage, message || '正在处理...', [], {
+                stages,
+                rewrittenQuery,
+                retrievedCount
+            }, true);
+        }
+
+        function handleAdvancedEvent(event) {
+            const data = event.data ? JSON.parse(event.data) : {};
+
+            if (event.type === 'stage') {
+                const stage = {
+                    stage: data.stage,
+                    message: data.message,
+                    details: data.details || {}
+                };
+                stages.push(stage);
+                if (stage.details.rewrittenQuery) {
+                    rewrittenQuery = stage.details.rewrittenQuery;
+                }
+                if (Number.isFinite(Number(stage.details.retrievedCount))) {
+                    retrievedCount = Number(stage.details.retrievedCount);
+                }
+                renderStage(stage.message);
+                return false;
+            }
+
+            if (event.type === 'done') {
+                answer = data.answer || data.content || '未生成回答';
+                sources = data.sources || [];
+                references = data.references || [];
+                rewrittenQuery = data.rewrittenQuery || rewrittenQuery;
+                retrievedCount = data.retrievedCount;
+                updateAssistantMessage(pendingMessage, answer, sources, {
+                    retrievedCount,
+                    rewrittenQuery,
+                    references,
+                    stages
+                });
+                return true;
+            }
+
+            if (event.type === 'error') {
+                throw new Error(data.error || 'Advanced RAG 分阶段请求失败');
+            }
+
+            return false;
+        }
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            let boundaryIndex;
+            while ((boundaryIndex = buffer.indexOf('\n\n')) >= 0) {
+                const block = buffer.slice(0, boundaryIndex).trim();
+                buffer = buffer.slice(boundaryIndex + 2);
+                if (!block) continue;
+
+                handleAdvancedEvent(parseSseBlock(block));
+            }
+        }
+
+        if (buffer.trim()) {
+            handleAdvancedEvent(parseSseBlock(buffer.trim()));
+        }
+
+        return {
+            answer: answer || '未生成回答'
+        };
+    }
+
     async function sendMessage() {
         if (chatBusy) return;
 
@@ -493,23 +632,8 @@
                 const streamResult = await streamConversationMessage(payload, pendingMessage);
                 answer = streamResult.answer;
             } else {
-                const res = await fetch('/api/chat/advanced', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await res.json();
-                if (!res.ok || data.success === false) {
-                    throw new Error(data.error || '问答请求失败');
-                }
-
-                answer = data.answer || data.content || '处理中...';
-                updateAssistantMessage(pendingMessage, answer, data.sources || [], {
-                    retrievedCount: data.retrievedCount,
-                    rewrittenQuery: data.rewrittenQuery,
-                    references: data.references || []
-                });
+                const streamResult = await streamAdvancedMessage(payload, pendingMessage);
+                answer = streamResult.answer;
             }
 
             chatHistory.push({ role: 'user', content: question });

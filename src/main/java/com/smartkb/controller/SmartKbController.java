@@ -459,6 +459,51 @@ public class SmartKbController {
     }
 
     /**
+     * Advanced RAG 分阶段流式反馈。
+     * <p>
+     * SSE 事件：
+     * - stage：返回查询改写、检索、过滤、重排序、生成等阶段状态
+     * - done：返回完整 Advanced RAG 结果
+     * - error：返回失败原因
+     */
+    @PostMapping(value = "/chat/advanced/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<StreamingResponseBody> chatAdvancedStream(@RequestBody AdvancedChatRequest request) {
+        log.info("接收 Advanced RAG 流式请求: {}", request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
+
+        StreamingResponseBody body = outputStream -> {
+            try {
+                AdvancedRagResult result = advancedRagService.queryAdvancedWithDetails(
+                        request.getQuestion(),
+                        request.getMetadataFilter(),
+                        request.getHistory(),
+                        stage -> writeSseEventUnchecked(outputStream, "stage", stage)
+                );
+
+                writeSseEvent(outputStream, "done", buildAdvancedResponsePayload(result));
+            } catch (Exception e) {
+                log.error("Advanced RAG 流式问答失败: {}", request.getQuestion(), e);
+                writeSseEvent(outputStream, "error", Map.of("error", e.getMessage()));
+            }
+        };
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_EVENT_STREAM)
+                .body(body);
+    }
+
+    private Map<String, Object> buildAdvancedResponsePayload(AdvancedRagResult result) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("answer", result.answer());
+        payload.put("content", result.answer());
+        payload.put("sources", result.sources());
+        payload.put("references", result.references());
+        payload.put("rewrittenQuery", result.rewrittenQuery());
+        payload.put("retrievedCount", result.retrievedCount());
+        payload.put("success", true);
+        return payload;
+    }
+
+    /**
      * 测试专用 RAG 接口（带详细调试信息）
      * <p>
      * 用于验证整个 RAG 链路是否正常工作：
