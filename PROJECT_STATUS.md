@@ -10,6 +10,7 @@
 - ✅ `fix: 修复文本文件编码解析`：Markdown/TXT 直接按 UTF-8 读取，避免中文文档上传后变成乱码。
 - ✅ `fix: 提升 advanced rag 检索召回`：Advanced RAG 现在同时召回原始问题和改写问题，支持 metadata 过滤下推，并按关键词相关度重排序。
 - ✅ `feat: 增加 advanced rag hybrid search`：Advanced RAG 现在融合向量召回和关键词召回，减少核心章节被泛相关片段挤掉的概率。
+- ✅ `fix: 优化引用片段排序`：具体问题下优先展示正文依据章节，避免文档总览 chunk 排在引用片段章节前面。
 
 ### 明天继续前必须做
 - [ ] 在 IDEA 中重启 Spring Boot，让最新代码生效。
@@ -78,7 +79,7 @@
 - **Hybrid Search 代码链路**：Advanced RAG 候选集现在融合向量召回和关键词召回，关键词召回复用文档过滤条件
 - **文本编码链路**：Markdown/TXT 上传解析已固定 UTF-8，重新上传后文档详情和引用片段应显示正常中文
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
-- **自动化测试**：`mvn test` 通过（9 tests, 0 failures）
+- **自动化测试**：`mvn test` 通过（10 tests, 0 failures）
 
 ### 待关注
 - 中转站模型响应耗时有波动，长答案可能超过 30 秒
@@ -249,6 +250,6 @@ DELETE FROM vector_store;
 
 ---
 
-**当前最紧急任务**：重启应用后回归验证 Hybrid Search、Advanced RAG 引用片段，然后继续做引用片段点击定位。
+**当前最紧急任务**：重启应用后回归验证 Hybrid Search、Advanced RAG 引用片段排序，然后继续做引用片段点击定位。
 
 祝顺利！🚀

@@ -134,6 +134,38 @@ class AdvancedRagServiceTest {
         assertTrue(ranked.get(0).getContent().contains("查询改写是 Advanced RAG 的第一步"));
     }
 
+    @Test
+    void rerankPrefersCitationSectionOverDocumentOverview() throws Exception {
+        Document documentOverview = new Document("""
+                # SmartKB Advanced RAG 演示知识文档
+
+                本文档用于 SmartKB 本地演示和回归测试。它刻意写得比普通测试文档更长，
+                覆盖 Java 21 Virtual Threads、Spring AI、pgvector、Advanced RAG、
+                流式输出、引用片段和排障经验，上传后应该能切分出多个 chunk。
+
+                ## 1. 项目背景
+
+                SmartKB 是一个面向企业知识库场景的 RAG 预研项目。
+                """, Map.of("fileName", "advanced-rag-demo.md"));
+
+        Document citationSection = new Document("""
+                ## 11. 引用片段与可解释性
+
+                RAG 系统最常见的问题是答案看起来合理，但用户不知道依据是什么。
+                SmartKB 在 Advanced 模式中返回引用片段，前端在回答下方显示“查看引用片段”。
+                引用片段让系统具备可解释性：用户可以检查答案是否真的来自知识库，
+                也可以发现检索是否命中了错误片段。
+                """, Map.of("fileName", "advanced-rag-demo.md"));
+
+        List<Document> ranked = rerank(
+                List.of(documentOverview, citationSection),
+                "为什么引用片段能提升 RAG 系统可信度？",
+                "在 Advanced RAG 中，引用片段如何增强回答可信度与可解释性？"
+        );
+
+        assertTrue(ranked.get(0).getContent().contains("## 11. 引用片段与可解释性"));
+    }
+
     @SuppressWarnings("unchecked")
     private List<Document> rerank(List<Document> documents, String originalQuery, String rewrittenQuery) throws Exception {
         AdvancedRagService service = new AdvancedRagService(null, null, null);

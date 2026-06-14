@@ -38,7 +38,7 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 - 本地服务启动方式：Docker Desktop 启动 PostgreSQL/Redis，Ollama 本机运行，Spring Boot 在 IDEA 中启动。
 - SmartKB 主页面：`http://localhost:8080`
 - 不是 Vue/Vite 独立前端，`http://localhost:3000` 不是主页面。
-- 当前自动化测试通过：`mvn test`，共 9 个测试。
+- 当前自动化测试通过：`mvn test`，共 10 个测试。
 - 如果数据库里有修复前上传的 `advanced-rag-demo.md`，内容可能仍是乱码，需要删除后重新上传。
 
 ## 当前演示验证
@@ -61,7 +61,7 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 
 ## 下一步开发
 
-- [ ] 重启 Spring Boot 后在页面回归验证 Hybrid Search 效果。
+- [ ] 重启 Spring Boot 后在页面回归验证 Hybrid Search 和引用片段排序修正。
 - [ ] 引用片段点击后跳转到文档详情中的对应 chunk。
 - [ ] Advanced RAG 分阶段反馈或流式输出。
 - [ ] Redis 会话记忆持久化。
