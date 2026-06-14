@@ -1,5 +1,6 @@
 package com.smartkb.service;
 
+import com.smartkb.domain.AdvancedRagResult;
 import com.smartkb.domain.AdvancedRagStage;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -182,16 +184,31 @@ class AdvancedRagServiceTest {
                 .thenReturn(List.of());
 
         List<AdvancedRagStage> stages = new ArrayList<>();
-        service.queryAdvancedWithDetails(
+        AdvancedRagResult result = service.queryAdvancedWithDetails(
                 "查询改写在 Advanced RAG 中解决什么问题？",
                 Map.of("fileName", "advanced-rag-demo.md"),
                 "",
                 stages::add
         );
 
+        assertNotNull(result.metrics());
+        assertTrue(result.metrics().totalMs() >= 0);
+        assertTrue(result.metrics().rewriteMs() >= 0);
+        assertTrue(result.metrics().retrievalMs() >= 0);
         assertTrue(stages.stream().anyMatch(stage -> "rewrite_done".equals(stage.stage())));
         assertTrue(stages.stream().anyMatch(stage -> "retrieval_done".equals(stage.stage())));
         assertTrue(stages.stream().anyMatch(stage -> "no_result".equals(stage.stage())));
+        assertTrue(stages.stream().anyMatch(stage ->
+                "rewrite_done".equals(stage.stage()) && hasNonNegativeNumber(stage, "durationMs")));
+        assertTrue(stages.stream().anyMatch(stage ->
+                "retrieval_done".equals(stage.stage()) && hasNonNegativeNumber(stage, "durationMs")));
+        assertTrue(stages.stream().anyMatch(stage ->
+                "no_result".equals(stage.stage()) && hasNonNegativeNumber(stage, "totalMs")));
+    }
+
+    private boolean hasNonNegativeNumber(AdvancedRagStage stage, String key) {
+        Object value = stage.details().get(key);
+        return value instanceof Number number && number.longValue() >= 0;
     }
 
     @SuppressWarnings("unchecked")

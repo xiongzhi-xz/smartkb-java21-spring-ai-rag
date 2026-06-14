@@ -23,6 +23,7 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 - [x] 对话发送后等待反馈
 - [x] Advanced RAG 查询改写
 - [x] Advanced RAG 分阶段反馈（查询改写、检索、过滤、重排序、生成）
+- [x] Advanced RAG 阶段耗时指标（改写、召回、过滤、重排序、生成、总耗时）
 - [x] Advanced RAG 按文档过滤
 - [x] Advanced RAG 引用片段展示
 - [x] Advanced RAG 引用片段点击定位到文档详情 chunk
@@ -50,6 +51,7 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 - [x] 回答命中第 7 节附近，首个引用片段包含“查询改写是 Advanced RAG 的第一步”。
 - [x] 再提问：`为什么引用片段能提升 RAG 系统可信度？`
 - [x] 首个引用片段来自第 11 节“引用片段与可解释性”附近。
+- [x] Advanced RAG 分阶段反馈已显示查询改写、混合检索、重排序和生成状态。
 
 ## 明天优先验证
 
@@ -60,12 +62,13 @@ Docker 启动 PostgreSQL/Redis -> Ollama 提供 Embedding -> IDEA 启动 Spring 
 - [ ] 确认回答命中第 7 节附近，引用片段包含“查询改写是 Advanced RAG 的第一步”。
 - [ ] 再提问：`为什么引用片段能提升 RAG 系统可信度？`
 - [ ] 确认引用片段来自第 11 节附近。
+- [ ] 确认 Advanced RAG 回答下方显示总耗时与各阶段耗时。
 
 ## 下一步开发
 
-- [ ] 重启 Spring Boot 后在页面回归验证 Hybrid Search、引用片段排序和点击定位。
+- [ ] 重启 Spring Boot 后在页面回归验证 Hybrid Search、引用片段排序、点击定位和阶段耗时展示。
 - [ ] Redis 会话记忆持久化。
-- [ ] 可观测性指标和性能压测报告。
+- [ ] 生产级可观测性指标和性能压测报告。
 
 ## 新对话接续方式
 

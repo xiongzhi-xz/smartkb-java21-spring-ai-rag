@@ -145,6 +145,35 @@
         return escapeHtml(value).replace(/\n/g, '<br>');
     }
 
+    function formatDurationMs(value) {
+        const duration = Number(value);
+        if (!Number.isFinite(duration)) {
+            return '';
+        }
+        return `${Math.max(0, Math.round(duration))} ms`;
+    }
+
+    function getMetricsDetailParts(metrics) {
+        if (!metrics || typeof metrics !== 'object') {
+            return [];
+        }
+
+        return [
+            ['totalMs', '总耗时'],
+            ['rewriteMs', '改写'],
+            ['retrievalMs', '召回'],
+            ['filterMs', '过滤'],
+            ['rerankMs', '重排'],
+            ['generationMs', '生成']
+        ].reduce((parts, [key, label]) => {
+            const formatted = formatDurationMs(metrics[key]);
+            if (formatted && (key === 'totalMs' || Number(metrics[key]) > 0)) {
+                parts.push(`${label} ${formatted}`);
+            }
+            return parts;
+        }, []);
+    }
+
     function getStageDetailText(stage) {
         const details = stage.details || {};
         const parts = [];
@@ -162,6 +191,14 @@
         }
         if (Number.isFinite(Number(details.referenceCount))) {
             parts.push(`引用 ${Number(details.referenceCount)} 个`);
+        }
+        const durationText = formatDurationMs(details.durationMs);
+        if (durationText) {
+            parts.push(`耗时 ${durationText}`);
+        }
+        const totalText = formatDurationMs(details.totalMs);
+        if (totalText) {
+            parts.push(`总耗时 ${totalText}`);
         }
         return parts.join(' · ');
     }
@@ -329,6 +366,7 @@
             if (details.rewrittenQuery) {
                 detailParts.push(`改写：${escapeHtml(details.rewrittenQuery)}`);
             }
+            detailParts.push(...getMetricsDetailParts(details.metrics).map(escapeHtml));
             if (detailParts.length > 0) {
                 html += `<div class="mt-2 text-xs text-gray-400">${detailParts.join(' · ')}</div>`;
             }
@@ -530,6 +568,7 @@
         let references = [];
         let rewrittenQuery = '';
         let retrievedCount;
+        let metrics = null;
         const stages = [];
 
         function renderStage(message) {
@@ -566,9 +605,11 @@
                 references = data.references || [];
                 rewrittenQuery = data.rewrittenQuery || rewrittenQuery;
                 retrievedCount = data.retrievedCount;
+                metrics = data.metrics || null;
                 updateAssistantMessage(pendingMessage, answer, sources, {
                     retrievedCount,
                     rewrittenQuery,
+                    metrics,
                     references,
                     stages
                 });

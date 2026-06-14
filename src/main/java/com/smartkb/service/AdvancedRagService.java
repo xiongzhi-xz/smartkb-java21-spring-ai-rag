@@ -1,6 +1,7 @@
 package com.smartkb.service;
 
 import com.smartkb.domain.AdvancedRagResult;
+import com.smartkb.domain.AdvancedRagMetrics;
 import com.smartkb.domain.AdvancedRagStage;
 import com.smartkb.domain.ReferenceChunk;
 import com.smartkb.util.VirtualThreadInspector;
@@ -103,64 +104,106 @@ public class AdvancedRagService {
         VirtualThreadInspector.logThreadInfo("Advanced RAG 查询开始");
         Consumer<AdvancedRagStage> progress = stageConsumer == null ? stage -> {
         } : stageConsumer;
+        long totalStart = System.currentTimeMillis();
+        long rewriteMs = 0;
+        long retrievalMs = 0;
+        long filterMs = 0;
+        long rerankMs = 0;
+        long generationMs = 0;
 
         try {
             // 1. Query Rewriting - 查询改写
             log.info("步骤 1: 查询改写");
             emitStage(progress, "rewrite_started", "正在改写查询", Map.of());
+            long stageStart = System.currentTimeMillis();
             String rewrittenQuery = queryRewritingService.rewriteQuery(question, history);
+            rewriteMs = elapsedMs(stageStart);
             log.info("改写后查询: {}", rewrittenQuery);
-            emitStage(progress, "rewrite_done", "查询已改写", Map.of("rewrittenQuery", rewrittenQuery));
+            emitStage(progress, "rewrite_done", "查询已改写", Map.of(
+                    "rewrittenQuery", rewrittenQuery,
+                    "durationMs", rewriteMs
+            ));
 
             // 2. Hybrid Search - 向量召回 + 关键词召回，避免单一路径漏掉核心章节
             log.info("步骤 2: 混合检索");
             emitStage(progress, "retrieval_started", "正在混合检索文档片段", buildFilterStageDetails(metadataFilter));
+            stageStart = System.currentTimeMillis();
             List<Document> retrievedDocs = retrieveCandidates(question, rewrittenQuery, metadataFilter);
+            retrievalMs = elapsedMs(stageStart);
             log.info("检索到 {} 条候选文档", retrievedDocs.size());
-            emitStage(progress, "retrieval_done", "候选片段召回完成", Map.of("candidateCount", retrievedDocs.size()));
+            emitStage(progress, "retrieval_done", "候选片段召回完成", Map.of(
+                    "candidateCount", retrievedDocs.size(),
+                    "durationMs", retrievalMs
+            ));
 
             // 3. Metadata Filtering - 过滤下推后再做一次内存校验，防止异常数据漏出
             if (metadataFilter != null && !metadataFilter.isEmpty()) {
                 log.info("步骤 3: 元数据过滤校验 - {}", metadataFilter);
+                stageStart = System.currentTimeMillis();
                 retrievedDocs = filterByMetadata(retrievedDocs, metadataFilter);
+                filterMs = elapsedMs(stageStart);
                 log.info("过滤后剩余 {} 条文档", retrievedDocs.size());
-                emitStage(progress, "filter_done", "文档范围过滤完成", Map.of("candidateCount", retrievedDocs.size()));
+                emitStage(progress, "filter_done", "文档范围过滤完成", Map.of(
+                        "candidateCount", retrievedDocs.size(),
+                        "durationMs", filterMs
+                ));
             }
 
             // 4. Re-ranking - 按关键词相关度 + 内容完整度重排序
             log.info("步骤 4: 结果重排序");
+            stageStart = System.currentTimeMillis();
             retrievedDocs = rerank(retrievedDocs, question, rewrittenQuery).stream()
                     .limit(FINAL_TOP_K)
                     .collect(Collectors.toList());
-            emitStage(progress, "rerank_done", "引用片段重排序完成", Map.of("retrievedCount", retrievedDocs.size()));
+            rerankMs = elapsedMs(stageStart);
+            emitStage(progress, "rerank_done", "引用片段重排序完成", Map.of(
+                    "retrievedCount", retrievedDocs.size(),
+                    "durationMs", rerankMs
+            ));
 
             if (retrievedDocs.isEmpty()) {
                 log.warn("Advanced RAG 未检索到相关片段: {}", question);
-                emitStage(progress, "no_result", "未检索到可用于回答的文档片段", Map.of("retrievedCount", 0));
+                long totalMs = elapsedMs(totalStart);
+                AdvancedRagMetrics metrics = new AdvancedRagMetrics(
+                        rewriteMs, retrievalMs, filterMs, rerankMs, generationMs, totalMs);
+                emitStage(progress, "no_result", "未检索到可用于回答的文档片段", Map.of(
+                        "retrievedCount", 0,
+                        "totalMs", totalMs
+                ));
                 return new AdvancedRagResult(
                         "未检索到与问题相关的文档片段。请确认已上传正确文档，或换一种更具体的问法。",
                         rewrittenQuery,
                         Collections.emptyList(),
                         Collections.emptyList(),
-                        0
+                        0,
+                        metrics
                 );
             }
 
             // 5. 构建上下文并生成答案
             log.info("步骤 5: LLM 生成答案");
             emitStage(progress, "generation_started", "正在基于引用片段生成回答", Map.of("retrievedCount", retrievedDocs.size()));
+            stageStart = System.currentTimeMillis();
             String context = buildContext(retrievedDocs);
             String answer = generateAnswer(question, context);
+            generationMs = elapsedMs(stageStart);
             List<String> sources = extractSources(retrievedDocs);
             List<ReferenceChunk> references = extractReferences(retrievedDocs);
+            long totalMs = elapsedMs(totalStart);
+            AdvancedRagMetrics metrics = new AdvancedRagMetrics(
+                    rewriteMs, retrievalMs, filterMs, rerankMs, generationMs, totalMs);
             emitStage(progress, "generation_done", "回答生成完成", Map.of(
                     "retrievedCount", retrievedDocs.size(),
-                    "referenceCount", references.size()
+                    "referenceCount", references.size(),
+                    "durationMs", generationMs,
+                    "totalMs", totalMs
             ));
 
             log.info("=== Advanced RAG 查询完成 ===");
+            log.info("Advanced RAG 耗时: total={}ms, rewrite={}ms, retrieval={}ms, filter={}ms, rerank={}ms, generation={}ms",
+                    totalMs, rewriteMs, retrievalMs, filterMs, rerankMs, generationMs);
             VirtualThreadInspector.logThreadInfo("Advanced RAG 查询完成");
-            return new AdvancedRagResult(answer, rewrittenQuery, sources, references, retrievedDocs.size());
+            return new AdvancedRagResult(answer, rewrittenQuery, sources, references, retrievedDocs.size(), metrics);
 
         } catch (Exception e) {
             log.error("Advanced RAG 查询失败", e);
@@ -188,6 +231,10 @@ public class AdvancedRagService {
             String message,
             Map<String, Object> details) {
         stageConsumer.accept(new AdvancedRagStage(stage, message, details == null ? Map.of() : details));
+    }
+
+    private long elapsedMs(long startedAtMs) {
+        return Math.max(0, System.currentTimeMillis() - startedAtMs);
     }
 
     private Map<String, Object> buildFilterStageDetails(Map<String, Object> metadataFilter) {

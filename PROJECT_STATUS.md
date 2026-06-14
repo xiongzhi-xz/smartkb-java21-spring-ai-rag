@@ -13,6 +13,7 @@
 - ✅ `fix: 优化引用片段排序`：具体问题下优先展示正文依据章节，避免文档总览 chunk 排在引用片段章节前面。
 - ✅ `feat: 支持引用片段点击定位`：点击回答下方引用片段后，会打开文档详情并高亮滚动到对应 chunk。
 - ✅ `feat: 支持 advanced rag 分阶段反馈`：Advanced 模式现在通过 SSE 展示查询改写、混合检索、过滤、重排序和生成阶段。
+- ✅ `feat: 增加 advanced rag 耗时观测`：Advanced RAG 返回改写、召回、过滤、重排序、生成和总耗时，页面可直接看到慢在哪个阶段。
 
 ### 明天继续前必须做
 - [ ] 在 IDEA 中重启 Spring Boot，让最新代码生效。
@@ -46,6 +47,7 @@
 - ✅ Advanced RAG 接口（`POST /api/chat/advanced`，查询改写 + 元数据过滤 + 重排序）
 - ✅ Advanced RAG 检索召回优化（原始问题 + 改写问题双路召回，metadata 过滤下推）
 - ✅ Advanced RAG Hybrid Search（向量召回 + 关键词召回融合）
+- ✅ Advanced RAG 阶段耗时指标（改写、召回、过滤、重排序、生成、总耗时）
 - ✅ 文档管理接口（列表、详情、删除、统计）
 - ✅ Virtual Threads 配置（全局启用）
 - ✅ Spring AI Advisor 体系（QuestionAnswerAdvisor）
@@ -63,6 +65,7 @@
 - ✅ Advanced RAG 改写查询、命中片段数、来源文档与引用片段展示
 - ✅ 引用片段点击后定位到文档详情中的对应 chunk
 - ✅ Advanced RAG 分阶段状态展示
+- ✅ Advanced RAG 总耗时与阶段耗时展示
 
 ### 4. 配置与部署
 - ✅ 混合模式配置（Chat 用中转站 + Embedding 用本地）
@@ -81,6 +84,7 @@
 - **流式输出代码链路**：`POST /api/chat/conversation/stream` 使用 SSE 推送增量 token，前端实时追加到回答气泡
 - **Advanced RAG 代码链路**：查询改写、文档过滤、重排序、引用片段返回已接入，生成阶段直接调用 ChatModel，避免二次触发普通 RAG Advisor
 - **Advanced RAG 分阶段反馈**：`POST /api/chat/advanced/stream` 使用 SSE 发送 stage/done/error 事件，前端显示查询改写、检索、过滤、重排序和生成阶段
+- **Advanced RAG 耗时观测**：后端返回阶段耗时 metrics，前端展示总耗时、改写、召回、过滤、重排序和生成耗时，便于定位慢查询瓶颈
 - **Hybrid Search 代码链路**：Advanced RAG 候选集现在融合向量召回和关键词召回，关键词召回复用文档过滤条件
 - **文本编码链路**：Markdown/TXT 上传解析已固定 UTF-8，重新上传后文档详情和引用片段应显示正常中文
 - **Virtual Threads**：Controller 请求线程已确认为虚拟线程
@@ -255,6 +259,6 @@ DELETE FROM vector_store;
 
 ---
 
-**当前最紧急任务**：重启应用后回归验证 Advanced RAG 分阶段反馈、引用片段排序和点击定位，然后继续做 Redis 会话记忆持久化或可观测性指标。
+**当前最紧急任务**：重启应用后回归验证 Advanced RAG 分阶段反馈、阶段耗时、引用片段排序和点击定位，然后继续做 Redis 会话记忆持久化或生产级可观测性。
 
 祝顺利！🚀

@@ -1,6 +1,7 @@
 package com.smartkb.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartkb.domain.AdvancedRagMetrics;
 import com.smartkb.domain.AdvancedRagResult;
 import com.smartkb.domain.ReferenceChunk;
 import com.smartkb.service.AdvancedRagService;
@@ -445,6 +446,7 @@ public class SmartKbController {
             response.setReferences(result.references());
             response.setRewrittenQuery(result.rewrittenQuery());
             response.setRetrievedCount(result.retrievedCount());
+            response.setMetrics(result.metrics());
             response.setSuccess(true);
 
             return ResponseEntity.ok(response);
@@ -499,6 +501,7 @@ public class SmartKbController {
         payload.put("references", result.references());
         payload.put("rewrittenQuery", result.rewrittenQuery());
         payload.put("retrievedCount", result.retrievedCount());
+        payload.put("metrics", result.metrics());
         payload.put("success", true);
         return payload;
     }
@@ -584,6 +587,7 @@ public class SmartKbController {
         private List<ReferenceChunk> references;
         private String rewrittenQuery;
         private Integer retrievedCount;
+        private AdvancedRagMetrics metrics;
         private boolean success;
         private String error;
     }
