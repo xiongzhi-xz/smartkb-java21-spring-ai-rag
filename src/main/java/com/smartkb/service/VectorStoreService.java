@@ -7,11 +7,11 @@ import org.springframework.ai.vectorstore.PgVectorStore;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * 向量存储服务
@@ -34,6 +34,7 @@ import java.util.Optional;
 public class VectorStoreService {
 
     private final PgVectorStore vectorStore;
+    private final JdbcTemplate jdbcTemplate;
 
     /**
      * 添加文档到向量库（批量）
@@ -143,8 +144,8 @@ public class VectorStoreService {
         log.info("删除文档: {}", documentId);
 
         try {
-            vectorStore.delete(List.of(documentId));
-            log.info("文档删除成功: {}", documentId);
+            int deletedCount = deleteById(documentId);
+            log.info("文档删除成功: {}, 删除 {} 条记录", documentId, deletedCount);
         } catch (Exception e) {
             log.error("文档删除失败: {}", documentId, e);
             throw new RuntimeException("文档删除失败: " + e.getMessage(), e);
@@ -164,11 +165,18 @@ public class VectorStoreService {
         log.info("批量删除文档: {} 个", documentIds.size());
 
         try {
-            vectorStore.delete(documentIds);
-            log.info("批量删除成功: {} 个文档", documentIds.size());
+            int deletedCount = documentIds.stream()
+                    .mapToInt(this::deleteById)
+                    .sum();
+            log.info("批量删除成功: 请求删除 {} 个文档，实际删除 {} 条记录", documentIds.size(), deletedCount);
         } catch (Exception e) {
             log.error("批量删除失败", e);
             throw new RuntimeException("批量删除失败: " + e.getMessage(), e);
         }
+    }
+
+    private int deleteById(String documentId) {
+        String sql = "DELETE FROM vector_store WHERE id::text = ?";
+        return jdbcTemplate.update(sql, documentId);
     }
 }
