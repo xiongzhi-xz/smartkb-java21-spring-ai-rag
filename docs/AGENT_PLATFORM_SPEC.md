@@ -440,6 +440,7 @@ GET /api/agent/eval/report
 - [x] `rg` 关键词检索
 - [x] Git diff 检索
 - [x] 代码 chunk 提取
+- [x] Code Context 前端面板
 - [ ] RAG 语义补充
 - [x] 来源路径展示
 

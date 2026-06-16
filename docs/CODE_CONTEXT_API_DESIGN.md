@@ -110,3 +110,4 @@ Common codes:
 - Web tests cover `/api/agent/code/tree`, `/api/agent/code/search`, `/api/agent/code/diff`, `/api/agent/code/chunks`, and Code Context error response.
 - `mvn -Dtest=CodeContextServiceTest,CodeContextControllerTest test`: 10 tests, 0 failures.
 - `mvn test`: 52 tests, 0 failures.
+- Static frontend panel syntax check: inline script syntax ok.
