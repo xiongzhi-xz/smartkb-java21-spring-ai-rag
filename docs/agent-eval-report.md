@@ -70,7 +70,7 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 | E01 | 接管 TicketRush 项目 | 通过 | 2 | 0 | 准确识别阶段、已完成/未完成、风险和下一步 |
 | E02 | 解释 RocketMQ 异步下单链路 | 通过 | 2 | 0 | 找到发送、消费、订单幂等、重试配置、补偿和测试证据 |
 | E03 | 解释 Redis Lua 防超卖方案 | 通过 | 2 | 0 | 找到 Lua 脚本、库存 Hash、幂等 Key、失败映射和策略差异 |
-| E04 | 判断 Docker Compose 启动前置条件 | 未执行 | - | - | - |
+| E04 | 判断 Docker Compose 启动前置条件 | 通过 | 2 | 0 | 准确识别本地 JAR 挂载、核心依赖和健康验证方式 |
 | E05 | 生成 k6 最小压测步骤 | 未执行 | - | - | - |
 | E06 | 找出当前未完成任务 | 未执行 | - | - | - |
 | E07 | 评审一次小改动风险 | 未执行 | - | - | - |
@@ -204,13 +204,13 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 
 | 字段 | 内容 |
 | --- | --- |
-| 状态 | 未执行 |
-| 得分 | - |
-| 耗时 | - |
-| 工具调用次数 | - |
-| 人工介入次数 | - |
-| 实际产出摘要 | - |
-| 失败原因 | - |
+| 状态 | 通过 |
+| 得分 | 2 |
+| 耗时 | 未单独计时 |
+| 工具调用次数 | 4（读取 `docker-compose.yml`、`Dockerfile`、项目文档验证记录和 TicketRush 工作区状态） |
+| 人工介入次数 | 0 |
+| 实际产出摘要 | 当前 `docker-compose.yml` 的 `app` 服务使用 `image: eclipse-temurin:21-jre`，不是 `build:`，并通过 `./target/ticketrush-0.0.1-SNAPSHOT.jar:/app/ticketrush.jar:ro` 挂载本地 JAR，入口命令是 `java $JAVA_OPTS -jar /app/ticketrush.jar`。因此启动前需要先在本机执行 `mvn clean package`、`mvn clean verify` 或确保 `target/ticketrush-0.0.1-SNAPSHOT.jar` 已存在。核心依赖是 `mysql`、`redis`、`nacos`、`rocketmq-namesrv`、`rocketmq-broker`，其中 app 的 `depends_on` 等待 MySQL/Redis healthy、Nacos/Broker started；Prometheus/Grafana 是观测依赖，不是抢票主链路启动前置。健康验证可看 `docker compose ps`，访问 `/actuator/health`、`/api/system/health`，以及 `/actuator/prometheus`。当前 compose 没有 app 自身 healthcheck，HANDOFF 记录的验证方式是 `docker compose up -d` 10/10 容器运行、接口 health UP、库存预热和抢票成功。 |
+| 失败原因 | 无 |
 
 ### E05 生成 k6 最小压测步骤
 
@@ -412,17 +412,17 @@ TicketRush 工作区出现 docker/rocketmq/store/ 未跟踪目录。
 | 指标 | 当前值 |
 | --- | --- |
 | Eval case 总数 | 10 |
-| 已执行 | 3 |
-| 通过 | 3 |
+| 已执行 | 4 |
+| 通过 | 4 |
 | 部分通过 | 0 |
 | 失败 | 0 |
-| 总分 | 6 / 20 |
+| 总分 | 8 / 20 |
 | 平均分 | 2.00 |
 | 总人工介入次数 | 0 |
 
 ## 8. 初步结论
 
-E01-E03 已通过，说明当前接管提示词可以稳定产出项目目标、阶段、已完成/未完成、工作区状态、风险点和单一下一步，也能在真实 Java 项目中跨应用层、基础设施层、配置、数据库和测试文件追踪核心业务链路。
+E01-E04 已通过，说明当前接管提示词可以稳定产出项目目标、阶段、已完成/未完成、工作区状态、风险点和单一下一步，也能在真实 Java 项目中跨应用层、基础设施层、配置、数据库、测试和 Docker Compose 文件追踪核心业务链路。
 
 当前判断：
 
@@ -430,11 +430,12 @@ E01-E03 已通过，说明当前接管提示词可以稳定产出项目目标、
 - 首个 case 验证了“项目理解、交接文档提取、git 状态读取、风险判断和下一步收敛”。
 - E02 验证了 RocketMQ 异步下单链路的上下文检索能力，能把消息发送、消费者绑定、订单幂等、失败重试、库存补偿和集成测试串起来。
 - E03 验证了 Redis Lua 防超卖方案的实现级解释能力，能定位脚本、Key 结构、失败码映射，并和 Redis Lock、MySQL 乐观锁方案区分。
+- E04 验证了 Docker Compose 配置判断能力，能识别当前 app 服务依赖本地 JAR 挂载，而不是 compose 自动构建镜像。
 - E01 的下一步建议聚焦真实 k6 压测，符合 TicketRush 当前最缺真实数据报告的状态。
-- 暂不评测自动大规模改代码，后续 E04 先继续验证配置上下文检索和解释能力。
+- 暂不评测自动大规模改代码，后续可以继续验证压测步骤生成、未完成任务汇总和风险评审能力。
 
 ## 9. 下一步
 
-1. 执行 E04，继续验证 Docker Compose 场景的配置上下文检索策略。
-2. 根据 E01-E03 结果固化项目接管与链路解释输出格式。
+1. 执行 E05-E07，验证压测步骤生成、未完成任务汇总和风险评审能力。
+2. 根据 E01-E04 结果固化项目接管与链路解释输出格式。
 3. 形成第一版 `Project Intake` 后端接口设计。
