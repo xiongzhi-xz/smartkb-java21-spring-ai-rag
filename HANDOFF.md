@@ -246,3 +246,15 @@ Completed:
 Verified:
 - `mvn -Dtest=ProjectIntakeTextExtractorTest test`: 4 tests passed.
 - `mvn test`: 88 tests passed.
+
+## 2026-06-17 Work Log - Project Intake Detector Tests
+
+Completed:
+- Added direct unit coverage for `ProjectIntakeDetector`.
+- Covered stack detection for Java 21, Spring Boot, Maven, Docker Compose, Redis, RocketMQ, Prometheus, and Grafana.
+- Covered build tool priority, test command suggestions, package manager evidence order, evidence type classification, and empty unknown stack behavior.
+- Marked detector coverage in `SPEC.md`.
+
+Verified:
+- `mvn -Dtest=ProjectIntakeDetectorTest test`: 5 tests passed.
+- `mvn test`: 93 tests passed.
