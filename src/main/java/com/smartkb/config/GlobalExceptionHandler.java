@@ -1,5 +1,6 @@
 package com.smartkb.config;
 
+import com.smartkb.agent.domain.AgentTaskException;
 import com.smartkb.agent.domain.ProjectIntakeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.retry.NonTransientAiException;
@@ -38,6 +39,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ProjectIntakeException.class)
     public ResponseEntity<Map<String, Object>> handleProjectIntakeException(ProjectIntakeException e) {
         log.warn("Project Intake 请求失败: code={}, message={}", e.code(), e.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("error", e.getMessage());
+        response.put("code", e.code());
+
+        return ResponseEntity.status(e.status()).body(response);
+    }
+
+    @ExceptionHandler(AgentTaskException.class)
+    public ResponseEntity<Map<String, Object>> handleAgentTaskException(AgentTaskException e) {
+        log.warn("Agent Task 请求失败: code={}, message={}", e.code(), e.getMessage());
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);
