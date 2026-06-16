@@ -281,3 +281,14 @@ Completed:
 Verified:
 - `mvn -Dtest=InMemoryEvalCaseRunStoreTest test`: 4 tests passed.
 - `mvn test`: 95 tests passed.
+
+## 2026-06-17 Work Log - MemoryRecord Normalization Test
+
+Completed:
+- Added MemoryRecord service coverage for trimming projectId, sourceType, sourcePath, content, and tags.
+- Verified list filters also normalize projectId and sourceType.
+- Marked MemoryRecord normalization coverage in `SPEC.md`.
+
+Verified:
+- `mvn -Dtest=MemoryRecordServiceTest test`: 6 tests passed.
+- `mvn test`: 96 tests passed.

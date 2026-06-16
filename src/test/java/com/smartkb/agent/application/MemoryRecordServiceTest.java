@@ -52,6 +52,28 @@ class MemoryRecordServiceTest {
     }
 
     @Test
+    void shouldTrimFieldsAndFilters() {
+        MemoryRecordResponse memory = service.create(new CreateMemoryRecordRequest(
+                " ticket-project ",
+                MemoryAuthorityLevel.HIGH,
+                " SPEC ",
+                " SPEC.md ",
+                " Keep k6 benchmark as the next TicketRush task. ",
+                List.of(" benchmark ", "benchmark")
+        ));
+
+        List<MemoryRecordResponse> filtered = service.list(" ticket-project ", null, " SPEC ");
+
+        assertEquals("ticket-project", memory.projectId());
+        assertEquals("SPEC", memory.sourceType());
+        assertEquals("SPEC.md", memory.sourcePath());
+        assertEquals("Keep k6 benchmark as the next TicketRush task.", memory.content());
+        assertEquals(List.of("benchmark"), memory.tags());
+        assertEquals(1, filtered.size());
+        assertEquals(memory.id(), filtered.getFirst().id());
+    }
+
+    @Test
     void shouldFilterMemoriesByProjectAuthorityAndSource() {
         service.create(new CreateMemoryRecordRequest(
                 "ticket-project",
