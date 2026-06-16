@@ -102,3 +102,40 @@ git log --oneline -5
 工作区是否有未提交改动：
 我下一步只做：
 ```
+
+## 2026-06-17 Work Log - Eval Run JDBC
+
+Current goal:
+- Continue SmartKB v2 Agent Platform phase F, focusing on structured Eval Run records and persistence.
+
+Completed:
+- Added switchable Eval Run store abstraction.
+- Added default `InMemoryEvalCaseRunStore`.
+- Added optional `JdbcEvalCaseRunStore`, enabled by `smartkb.agent.eval-run.persistence=jdbc`.
+- Added in-memory store tests for save, read, newest-first ordering, and filters.
+- Added `docs/EVAL_RUN_JDBC_VERIFICATION.md`.
+- Ran local JDBC smoke test with Docker Compose PostgreSQL/Redis and temporary app container `smartkb-jdbc-smoke`.
+
+Verified:
+- `mvn -Dtest=InMemoryEvalCaseRunStoreTest,EvalCaseRunServiceTest,EvalCaseRunImportServiceTest,EvalReportServiceTest test`: 14 tests passed.
+- `mvn test`: 74 tests passed.
+- `git diff --check`: only LF/CRLF warnings.
+- Docker health endpoint in JDBC mode: `UP`.
+- Eval API create/list/import/report in JDBC mode.
+- Restart persistence: `E-JDBC` remained after app restart.
+- Re-import after restart: `importedAfterRestart=0`, `skippedAfterRestart=10`.
+- PostgreSQL table count: `total_runs=11`, `jdbc_smoke_runs=1`.
+
+Modified files in latest JDBC verification stage:
+- `docs/EVAL_RUN_JDBC_VERIFICATION.md`
+- `SPEC.md`
+- `docs/AGENT_PLATFORM_SPEC.md`
+- `HANDOFF.md`
+
+Cleanup:
+- Removed temporary app container `smartkb-jdbc-smoke`.
+- Stopped PostgreSQL and Redis containers.
+- Did not delete Docker volumes or database rows.
+
+Next step:
+- Add an Eval Run JDBC automated integration test plan first. Do not introduce Testcontainers or new dependencies without a small design note and explicit reason.

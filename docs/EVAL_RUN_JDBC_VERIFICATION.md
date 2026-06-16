@@ -118,6 +118,43 @@ Covered by automated tests:
 Not covered yet:
 
 - Live PostgreSQL integration test for `JdbcEvalCaseRunStore`.
-- Restart persistence smoke test.
 
 Add a live repository test later when the project has a standard Testcontainers or integration-test profile.
+
+## Local Verification Record
+
+Date: 2026-06-17
+
+Environment:
+
+- PostgreSQL and Redis started with Docker Compose.
+- Temporary SmartKB app container started as `smartkb-jdbc-smoke`.
+- App mapped to `http://localhost:18082`.
+- `SMARTKB_AGENT_EVAL_RUN_PERSISTENCE=jdbc`.
+- `SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/smartkb`.
+
+Commands verified:
+
+- `docker compose build smartkb-app`
+- `GET /actuator/health`
+- `POST /api/agent/eval/runs`
+- `GET /api/agent/eval/runs?projectId=ticket-project&caseId=E-JDBC`
+- `POST /api/agent/eval/runs/import-ticket-rush-report`
+- `GET /api/agent/eval/report?projectId=ticket-project`
+- PostgreSQL query against `agent_eval_case_run`
+
+Results:
+
+- Health status: `UP`.
+- Created JDBC smoke run: `caseId=E-JDBC`.
+- Initial list count for `E-JDBC`: `1`.
+- TicketRush import result: `importedCount=10`, `skippedCount=0`.
+- Aggregate report after import: `totalRuns=11`, `passedRuns=11`, `successRate=1.0`.
+- After app restart: `listedAfterRestart=1`, `importedAfterRestart=0`, `skippedAfterRestart=10`, `reportTotalRuns=11`.
+- PostgreSQL table count: `total_runs=11`, `jdbc_smoke_runs=1`.
+
+Cleanup:
+
+- Removed temporary app container `smartkb-jdbc-smoke`.
+- Stopped PostgreSQL and Redis containers.
+- Did not delete Docker volumes or database rows.
