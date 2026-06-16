@@ -462,6 +462,7 @@ GET /api/agent/eval/report
 - [x] 面试讲法总结（见 `docs/EVAL_INTERVIEW_SUMMARY.md`）
 - [x] Eval Run 持久化方案设计（见 `docs/EVAL_RUN_PERSISTENCE_DESIGN.md`）
 - [x] Eval Run 可切换 JDBC 持久化实现
+- [x] Eval Run JDBC 验证手册（见 `docs/EVAL_RUN_JDBC_VERIFICATION.md`）
 
 验收：
 
@@ -487,7 +488,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-继续阶段 F，下一步补 Eval Run JDBC 集成验证方式。
+继续阶段 F，下一步执行 Eval Run JDBC 本地 smoke test。
 ```
 
 不要马上写复杂多 Agent 编排。先让既有评测结果和 API 记录口径对齐，再考虑持久化。

@@ -1,6 +1,6 @@
 # Eval Case Run API Design
 
-Eval Case Run is the first structured record layer for SmartKB v2 evaluation results. The first version stores runs in memory and focuses on recording what happened, how it was verified, and where the evidence lives.
+Eval Case Run is the first structured record layer for SmartKB v2 evaluation results. The default mode stores runs in memory, and JDBC persistence can be enabled with `smartkb.agent.eval-run.persistence=jdbc`.
 
 ## 1. Scope
 
@@ -8,8 +8,9 @@ Eval Case Run is the first structured record layer for SmartKB v2 evaluation res
 - List runs with optional `projectId`, `caseId`, and `status` filters.
 - Read one run by id.
 - Keep the API honest about partial and failed runs by supporting `failureReason`.
+- Keep controller behavior independent from the active store implementation.
 
-This version does not persist runs to a database and does not generate aggregate reports yet.
+The current implementation supports both in-memory and JDBC-backed stores. See `docs/EVAL_RUN_PERSISTENCE_DESIGN.md` and `docs/EVAL_RUN_JDBC_VERIFICATION.md`.
 
 ## 2. API
 
@@ -93,7 +94,7 @@ GET /api/agent/eval/runs/{id}
 POST /api/agent/eval/runs/import-ticket-rush-report
 ```
 
-Imports the existing E01-E10 TicketRush records from `docs/agent-eval-report.md` into the in-memory Eval Run store. The import is idempotent per `projectId + caseId`; repeated calls skip records that already exist.
+Imports the existing E01-E10 TicketRush records from `docs/agent-eval-report.md` into the active Eval Run store. The import is idempotent per `projectId + caseId`; repeated calls skip records that already exist.
 
 ### Generate Eval Report
 
@@ -123,4 +124,4 @@ GET /api/agent/eval/report?projectId=ticket-project
 
 ## 4. Next Step
 
-Add the interview-facing summary for how Eval Run records and the report API make Agent work measurable.
+Run the JDBC smoke test from `docs/EVAL_RUN_JDBC_VERIFICATION.md` when PostgreSQL is available.
