@@ -11,7 +11,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
  * Spring AI Advisor 配置类
@@ -47,10 +47,10 @@ public class AdvisorConfig {
 
     private final ChatModel chatModel;
     private final VectorStore vectorStore;
-    private final RedisTemplate<String, String> stringRedisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     public AdvisorConfig(ChatModel chatModel, VectorStore vectorStore,
-                         RedisTemplate<String, String> stringRedisTemplate) {
+                         StringRedisTemplate stringRedisTemplate) {
         this.chatModel = chatModel;
         this.vectorStore = vectorStore;
         this.stringRedisTemplate = stringRedisTemplate;

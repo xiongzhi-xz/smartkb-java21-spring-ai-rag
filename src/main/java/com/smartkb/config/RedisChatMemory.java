@@ -6,7 +6,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -57,15 +57,15 @@ public class RedisChatMemory implements ChatMemory {
     /** 每个会话最大保留消息数，防止列表无限增长 */
     private static final int MAX_MESSAGES_PER_CONVERSATION = 100;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private final long ttlHours;
 
     /**
      * 构造函数（使用默认 24 小时 TTL）
      *
-     * @param redisTemplate Redis 操作模板
+     * @param redisTemplate Redis 操作模板（Spring Boot 自动配置的 StringRedisTemplate）
      */
-    public RedisChatMemory(RedisTemplate<String, String> redisTemplate) {
+    public RedisChatMemory(StringRedisTemplate redisTemplate) {
         this(redisTemplate, DEFAULT_TTL_HOURS);
     }
 
@@ -75,7 +75,7 @@ public class RedisChatMemory implements ChatMemory {
      * @param redisTemplate Redis 操作模板
      * @param ttlHours      会话过期时间（小时）
      */
-    public RedisChatMemory(RedisTemplate<String, String> redisTemplate, long ttlHours) {
+    public RedisChatMemory(StringRedisTemplate redisTemplate, long ttlHours) {
         this.redisTemplate = redisTemplate;
         this.ttlHours = ttlHours;
         log.info("初始化 RedisChatMemory, TTL={}h", ttlHours);
