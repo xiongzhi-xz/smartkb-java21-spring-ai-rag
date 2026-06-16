@@ -52,6 +52,8 @@ services:
       # 使用 Docker 网络内部 DNS 连接 PostgreSQL 和 Redis
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartkb
       SPRING_DATA_REDIS_HOST: redis
+      # Ollama 在宿主机运行，容器内通过 host.docker.internal 访问
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
       # AI 模型配置（通过环境变量注入，不硬编码）
       OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-your-api-key-here}
       TRANSIT_BASE_URL: ${TRANSIT_BASE_URL:-https://elysiver.h-e.top}
