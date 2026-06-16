@@ -188,3 +188,19 @@ Verified:
 
 Still not verified:
 - The SPEC Redis ChatMemory checklist remains unchecked because it requires a running SmartKB app plus real conversation/Advanced RAG calls.
+
+## 2026-06-17 Work Log - Redis Live Smoke Attempt
+
+Attempted:
+- Start SmartKB Docker Compose app to verify Redis ChatMemory mode and backend clear endpoint without LLM calls.
+
+Result:
+- `docker compose up -d --build smartkb-app` timed out after 5 minutes.
+- Residual Docker build/compose child processes were stopped.
+- After that, Docker Desktop endpoints `npipe:////./pipe/dockerDesktopLinuxEngine` and `npipe:////./pipe/docker_engine` were unavailable.
+- Did not restart Docker Desktop because TicketRush containers had been running and this could disrupt the user's other environment.
+
+Still not verified:
+- Redis ChatMemory live startup log.
+- Redis key creation through a real conversation request.
+- Backend DELETE `/api/chat/memory/{conversationId}` against a running app.
