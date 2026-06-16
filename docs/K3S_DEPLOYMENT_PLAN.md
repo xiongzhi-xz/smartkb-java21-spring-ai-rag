@@ -11,6 +11,7 @@ Existing files:
 - `Dockerfile`: builds the Spring Boot app inside Docker with Maven and runs as a non-root user.
 - `docker-compose.yml`: verified local full-chain deployment for PostgreSQL, Redis, app, Prometheus, and Grafana.
 - `k8s/deployment.yaml`: draft Kubernetes manifest for namespace, PostgreSQL, Redis, SmartKB app, service, and ingress.
+- `k8s/k3s-demo.yaml`: K3s demo manifest with explicit app environment variables and Secret references.
 - `k8s/README.md`: generic Kubernetes deployment notes.
 
 The current `k8s/deployment.yaml` should be treated as a draft, not a verified K3s manifest.
@@ -156,6 +157,21 @@ Do not delete PVCs in a shared environment without an explicit data-retention de
 - No secrets manager integration.
 - No automatic data migration framework.
 
+## Demo Manifest
+
+`k8s/k3s-demo.yaml` provides a demo-focused K3s manifest:
+
+- Does not commit real Secret values.
+- References `smartkb-secrets` for PostgreSQL and model API credentials.
+- Sets `SPRING_DATASOURCE_URL`, `SPRING_DATA_REDIS_HOST`, and `SMARTKB_AGENT_EVAL_RUN_PERSISTENCE`.
+- Uses `smartkb:local` with `imagePullPolicy: IfNotPresent`.
+- Uses Traefik ingress through `ingressClassName: traefik`.
+
+Local syntax check:
+
+- `npx --yes js-yaml k8s/k3s-demo.yaml` passed.
+- `kubectl apply --dry-run=client` could not run without a reachable Kubernetes API server in this environment.
+
 ## Next Implementation Step
 
-Create a K3s-specific manifest or overlay that fixes the app environment variables and secret flow, then verify it against a disposable local K3s or K3d cluster.
+Verify `k8s/k3s-demo.yaml` against a disposable local K3s or K3d cluster, then decide whether to replace the older draft `k8s/deployment.yaml` or keep both with clearer naming.

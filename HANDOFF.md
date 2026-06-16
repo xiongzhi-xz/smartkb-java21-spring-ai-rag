@@ -162,12 +162,15 @@ Next step:
 
 Completed:
 - Added `docs/K3S_DEPLOYMENT_PLAN.md`.
+- Added `k8s/k3s-demo.yaml`.
 - Marked K3s deployment plan as complete in `SPEC.md`.
 - Linked the plan from `k8s/README.md`.
 
 Important note:
 - `k8s/deployment.yaml` is still a draft and was not modified in this step.
-- The draft manifest currently needs app environment variables, Secret flow, and K3s verification before it should be applied.
+- `k8s/k3s-demo.yaml` has corrected app environment variables and Secret references, but still needs real K3s/K3d verification before being treated as deploy-ready.
+- YAML syntax check passed with `npx --yes js-yaml k8s/k3s-demo.yaml`.
+- `kubectl apply --dry-run=client` could not run because no Kubernetes API server is reachable in this environment.
 
 Next step:
-- If continuing K3s work, create a K3s-specific manifest or overlay and verify it on a disposable local K3s/K3d cluster.
+- If continuing K3s work, verify `k8s/k3s-demo.yaml` on a disposable local K3s/K3d cluster.
