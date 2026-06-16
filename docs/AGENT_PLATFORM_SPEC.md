@@ -422,8 +422,8 @@ GET /api/agent/eval/report
 
 产出：
 
-- [ ] MemoryRecord 模型
-- [ ] 高/中/低权威记忆列表
+- [x] MemoryRecord 模型
+- [x] 高/中/低权威记忆列表
 - [ ] 从 SPEC/HANDOFF 生成高权威记忆
 - [ ] 冲突提示规则
 
@@ -479,7 +479,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-进入阶段 D，先设计并实现 MemoryRecord 模型与最小 API。
+为 MemoryRecord 增加从 SPEC/HANDOFF 生成高权威记忆的导入能力。
 ```
 
-不要马上写复杂多 Agent 编排。先把记忆分层做成可测试、可展示的最小闭环，再把 SPEC/HANDOFF 等高权威来源接入。
+不要马上写复杂多 Agent 编排。先让高权威记忆从真实项目文档产生，再处理冲突提示规则。
