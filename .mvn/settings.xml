@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0
+                              https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+  <mirrors>
+    <!-- 阿里云公共镜像 — 覆盖 Maven Central，国内下载速度快 -->
+    <mirror>
+      <id>aliyun-public</id>
+      <name>Aliyun Public Maven Mirror</name>
+      <mirrorOf>central</mirrorOf>
+      <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+
+    <!-- 阿里云 Spring 仓库镜像 — 不覆盖 spring-milestones（阿里云未同步 Spring AI milestone 包） -->
+    <mirror>
+      <id>aliyun-spring</id>
+      <name>Aliyun Spring Maven Mirror</name>
+      <mirrorOf>spring-release</mirrorOf>
+      <url>https://maven.aliyun.com/repository/spring</url>
+    </mirror>
+  </mirrors>
+
+</settings>
