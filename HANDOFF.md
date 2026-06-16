@@ -270,3 +270,14 @@ Completed:
 Verified:
 - `mvn -Dtest=EvalReportServiceTest test`: 4 tests passed.
 - `mvn test`: 94 tests passed.
+
+## 2026-06-17 Work Log - Eval Run Store Idempotent Save Test
+
+Completed:
+- Added in-memory Eval Run store coverage for repeated saves with the same run id.
+- Verified duplicate saves replace the stored run and do not duplicate the run order list.
+- Marked the store idempotency coverage in `SPEC.md`.
+
+Verified:
+- `mvn -Dtest=InMemoryEvalCaseRunStoreTest test`: 4 tests passed.
+- `mvn test`: 95 tests passed.

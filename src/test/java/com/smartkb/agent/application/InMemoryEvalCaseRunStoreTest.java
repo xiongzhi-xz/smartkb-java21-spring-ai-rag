@@ -44,6 +44,18 @@ class InMemoryEvalCaseRunStoreTest {
         assertTrue(store.findById("missing").isEmpty());
     }
 
+    @Test
+    void shouldReplaceExistingRunWithoutDuplicatingOrder() {
+        store.save(run("run-1", "ticket-project", "E01", EvalCaseRunStatus.FAILED));
+        store.save(run("run-1", "ticket-project", "E01", EvalCaseRunStatus.PASSED));
+
+        List<EvalCaseRunResponse> runs = store.findAll(null, null, null);
+
+        assertEquals(1, runs.size());
+        assertEquals(EvalCaseRunStatus.PASSED, runs.getFirst().status());
+        assertEquals(EvalCaseRunStatus.PASSED, store.findById("run-1").orElseThrow().status());
+    }
+
     private EvalCaseRunResponse run(String id, String projectId, String caseId, EvalCaseRunStatus status) {
         return new EvalCaseRunResponse(
                 id,
