@@ -35,13 +35,13 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 | 项目 | 内容 |
 | --- | --- |
 | SmartKB 版本 | 待填写 |
-| TicketRush commit | 待填写 |
+| TicketRush commit | `38d7c1d fix: disable nacos config health noise in docker profile` |
 | JDK | 21 |
 | Maven | 待填写 |
 | Docker | 待填写 |
 | 模型 | 待填写 |
 | 执行方式 | 人工提示 / SmartKB UI / API |
-| 评测日期 | 待填写 |
+| 评测日期 | 2026-06-17 |
 
 ## 4. 评测指标
 
@@ -67,7 +67,7 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 
 | 编号 | 任务 | 状态 | 得分 | 人工介入 | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| E01 | 接管 TicketRush 项目 | 未执行 | - | - | - |
+| E01 | 接管 TicketRush 项目 | 通过 | 2 | 0 | 准确识别阶段、已完成/未完成、风险和下一步 |
 | E02 | 解释 RocketMQ 异步下单链路 | 未执行 | - | - | - |
 | E03 | 解释 Redis Lua 防超卖方案 | 未执行 | - | - | - |
 | E04 | 判断 Docker Compose 启动前置条件 | 未执行 | - | - | - |
@@ -107,13 +107,13 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 
 | 字段 | 内容 |
 | --- | --- |
-| 状态 | 未执行 |
-| 得分 | - |
-| 耗时 | - |
-| 工具调用次数 | - |
-| 人工介入次数 | - |
-| 实际产出摘要 | - |
-| 失败原因 | - |
+| 状态 | 通过 |
+| 得分 | 2 |
+| 耗时 | 未单独计时 |
+| 工具调用次数 | 5（读取 SmartKB/TicketRush 交接与评测文档，执行 TicketRush `git status --short`、`git log --oneline -5`） |
+| 人工介入次数 | 0 |
+| 实际产出摘要 | TicketRush 工作区干净，最新提交为 `38d7c1d fix: disable nacos config health noise in docker profile`。当前阶段是 Docker Compose 全链路已验证，下一步进入 k6 压测和真实数据报告。已完成抢票链路、Redis Lua/锁/MySQL 乐观锁、RocketMQ 异步下单、Sentinel、Docker Compose、Prometheus、Grafana，且 35 tests 通过。未完成三种库存策略 k6 压测、限流前后稳定性压测、Virtual Threads 对比报告、Seata 示例。风险点是不要继续扩功能、不要提交运行数据，当前最缺真实压测数据。下一步只做 k6 对三种库存策略跑第一轮本地压测。 |
+| 失败原因 | 无 |
 
 ### E02 解释 RocketMQ 异步下单链路
 
@@ -412,27 +412,27 @@ TicketRush 工作区出现 docker/rocketmq/store/ 未跟踪目录。
 | 指标 | 当前值 |
 | --- | --- |
 | Eval case 总数 | 10 |
-| 已执行 | 0 |
-| 通过 | 0 |
+| 已执行 | 1 |
+| 通过 | 1 |
 | 部分通过 | 0 |
 | 失败 | 0 |
-| 总分 | 0 / 20 |
-| 平均分 | - |
+| 总分 | 2 / 20 |
+| 平均分 | 2.00 |
 | 总人工介入次数 | 0 |
 
 ## 8. 初步结论
 
-待执行 eval 后填写。
+E01 已通过，说明当前接管提示词可以稳定产出项目目标、阶段、已完成/未完成、工作区状态、风险点和单一下一步。
 
 当前判断：
 
-- TicketRush 适合作为 SmartKB v2 第一批 eval 样本。
-- 首批 eval 先验证“项目理解、证据检索、验证规划、风险判断和面试表达”。
-- 暂不评测自动大规模改代码，避免第一阶段失控。
+- TicketRush 适合作为 SmartKB v2 第一批 eval 样本，项目复杂度足够覆盖 Java 后端接管场景。
+- 首个 case 验证了“项目理解、交接文档提取、git 状态读取、风险判断和下一步收敛”。
+- E01 的下一步建议聚焦真实 k6 压测，符合 TicketRush 当前最缺真实数据报告的状态。
+- 暂不评测自动大规模改代码，后续 E02-E04 先继续验证代码上下文检索和解释能力。
 
 ## 9. 下一步
 
-1. 手动执行 E01，验证 SmartKB v2 的项目接管提示词是否有效。
-2. 根据 E01 结果调整项目接管输出格式。
-3. 再执行 E02-E04，验证代码上下文检索策略。
-4. 形成第一版 `Project Intake` 后端接口设计。
+1. 执行 E02-E04，验证代码上下文检索策略。
+2. 根据 E01 结果固化项目接管输出格式。
+3. 形成第一版 `Project Intake` 后端接口设计。
