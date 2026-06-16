@@ -460,6 +460,7 @@ GET /api/agent/eval/report
 - [x] 10 个 TicketRush eval case 执行记录结构化导入入口
 - [x] 成功率和失败原因统计 API
 - [x] 面试讲法总结（见 `docs/EVAL_INTERVIEW_SUMMARY.md`）
+- [x] Eval Run 持久化方案设计（见 `docs/EVAL_RUN_PERSISTENCE_DESIGN.md`）
 
 验收：
 
@@ -485,7 +486,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-继续阶段 F，下一步评估 Eval Run 持久化方案。
+继续阶段 F，下一步实现 Eval Run JDBC 持久化。
 ```
 
 不要马上写复杂多 Agent 编排。先让既有评测结果和 API 记录口径对齐，再考虑持久化。
