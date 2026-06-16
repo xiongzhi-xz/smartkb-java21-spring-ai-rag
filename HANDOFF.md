@@ -157,3 +157,17 @@ Verified:
 
 Next step:
 - Phase F Eval Run persistence is closed. Next safe work is to choose the next SmartKB v2 Agent platform capability without expanding TicketRush scope.
+
+## 2026-06-17 Work Log - K3s Plan
+
+Completed:
+- Added `docs/K3S_DEPLOYMENT_PLAN.md`.
+- Marked K3s deployment plan as complete in `SPEC.md`.
+- Linked the plan from `k8s/README.md`.
+
+Important note:
+- `k8s/deployment.yaml` is still a draft and was not modified in this step.
+- The draft manifest currently needs app environment variables, Secret flow, and K3s verification before it should be applied.
+
+Next step:
+- If continuing K3s work, create a K3s-specific manifest or overlay and verify it on a disposable local K3s/K3d cluster.

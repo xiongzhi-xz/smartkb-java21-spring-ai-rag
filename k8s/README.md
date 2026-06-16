@@ -1,5 +1,9 @@
 # Kubernetes 部署指南
 
+K3s 部署方案和现有 manifest 审计见：`../docs/K3S_DEPLOYMENT_PLAN.md`。
+
+当前 `k8s/deployment.yaml` 是草案，应用到 K3s 前需要先补齐应用环境变量、Secret 注入和本地集群验证。
+
 ## 前置要求
 
 - Kubernetes 集群（K3s/Minikube/EKS/AKS）
