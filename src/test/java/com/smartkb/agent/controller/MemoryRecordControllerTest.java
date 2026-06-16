@@ -1,11 +1,14 @@
 package com.smartkb.agent.controller;
 
 import com.smartkb.agent.application.HighAuthorityMemoryImportService;
+import com.smartkb.agent.application.MemoryConflictService;
 import com.smartkb.agent.application.MemoryRecordService;
 import com.smartkb.agent.domain.CreateMemoryRecordRequest;
 import com.smartkb.agent.domain.ImportHighAuthorityMemoryRequest;
 import com.smartkb.agent.domain.ImportHighAuthorityMemoryResponse;
 import com.smartkb.agent.domain.MemoryAuthorityLevel;
+import com.smartkb.agent.domain.MemoryConflictCheckRequest;
+import com.smartkb.agent.domain.MemoryConflictCheckResponse;
 import com.smartkb.agent.domain.MemoryRecordException;
 import com.smartkb.agent.domain.MemoryRecordResponse;
 import com.smartkb.config.GlobalExceptionHandler;
@@ -43,6 +46,9 @@ class MemoryRecordControllerTest {
 
     @MockBean
     private HighAuthorityMemoryImportService highAuthorityMemoryImportService;
+
+    @MockBean
+    private MemoryConflictService memoryConflictService;
 
     @Test
     void shouldCreateMemory() throws Exception {
@@ -130,6 +136,37 @@ class MemoryRecordControllerTest {
                 ArgumentCaptor.forClass(ImportHighAuthorityMemoryRequest.class);
         verify(highAuthorityMemoryImportService).importFromProjectDocs(captor.capture());
         assertEquals("ticket-project", captor.getValue().projectId());
+    }
+
+    @Test
+    void shouldCheckMemoryConflicts() throws Exception {
+        when(memoryConflictService.check(any(MemoryConflictCheckRequest.class)))
+                .thenReturn(new MemoryConflictCheckResponse(
+                        true,
+                        memory(),
+                        List.of(memory()),
+                        "Use HIGH memory from SPEC SPEC.md before accepting lower-authority input."
+                ));
+
+        mockMvc.perform(post("/api/agent/memories/conflicts/check")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "projectId": "ticket-project",
+                                  "authorityLevel": "LOW",
+                                  "content": "Maybe expand scope now.",
+                                  "tags": ["scope"]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasConflict").value(true))
+                .andExpect(jsonPath("$.preferredMemory.sourcePath").value("SPEC.md"))
+                .andExpect(jsonPath("$.recommendation").value("Use HIGH memory from SPEC SPEC.md before accepting lower-authority input."));
+
+        ArgumentCaptor<MemoryConflictCheckRequest> captor =
+                ArgumentCaptor.forClass(MemoryConflictCheckRequest.class);
+        verify(memoryConflictService).check(captor.capture());
+        assertEquals(MemoryAuthorityLevel.LOW, captor.getValue().authorityLevel());
     }
 
     private MemoryRecordResponse memory() {

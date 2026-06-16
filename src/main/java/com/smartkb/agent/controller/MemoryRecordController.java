@@ -1,11 +1,14 @@
 package com.smartkb.agent.controller;
 
 import com.smartkb.agent.application.HighAuthorityMemoryImportService;
+import com.smartkb.agent.application.MemoryConflictService;
 import com.smartkb.agent.application.MemoryRecordService;
 import com.smartkb.agent.domain.CreateMemoryRecordRequest;
 import com.smartkb.agent.domain.ImportHighAuthorityMemoryRequest;
 import com.smartkb.agent.domain.ImportHighAuthorityMemoryResponse;
 import com.smartkb.agent.domain.MemoryAuthorityLevel;
+import com.smartkb.agent.domain.MemoryConflictCheckRequest;
+import com.smartkb.agent.domain.MemoryConflictCheckResponse;
 import com.smartkb.agent.domain.MemoryRecordResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,13 +27,16 @@ public class MemoryRecordController {
 
     private final MemoryRecordService memoryRecordService;
     private final HighAuthorityMemoryImportService highAuthorityMemoryImportService;
+    private final MemoryConflictService memoryConflictService;
 
     public MemoryRecordController(
             MemoryRecordService memoryRecordService,
-            HighAuthorityMemoryImportService highAuthorityMemoryImportService
+            HighAuthorityMemoryImportService highAuthorityMemoryImportService,
+            MemoryConflictService memoryConflictService
     ) {
         this.memoryRecordService = memoryRecordService;
         this.highAuthorityMemoryImportService = highAuthorityMemoryImportService;
+        this.memoryConflictService = memoryConflictService;
     }
 
     @PostMapping
@@ -57,5 +63,10 @@ public class MemoryRecordController {
             @RequestBody ImportHighAuthorityMemoryRequest request
     ) {
         return ResponseEntity.ok(highAuthorityMemoryImportService.importFromProjectDocs(request));
+    }
+
+    @PostMapping("/conflicts/check")
+    public ResponseEntity<MemoryConflictCheckResponse> checkConflict(@RequestBody MemoryConflictCheckRequest request) {
+        return ResponseEntity.ok(memoryConflictService.check(request));
     }
 }
