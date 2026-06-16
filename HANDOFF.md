@@ -174,3 +174,17 @@ Important note:
 
 Next step:
 - If continuing K3s work, verify `k8s/k3s-demo.yaml` on a disposable local K3s/K3d cluster.
+
+## 2026-06-17 Work Log - RedisChatMemory Unit Coverage
+
+Completed:
+- Added `RedisChatMemoryTest`.
+- Fixed JSON escape handling in `RedisChatMemory.extractJsonValue` so escaped values such as `\n` survive deserialization.
+- Covered Redis list append, TTL refresh, max-message trim, latest-message read, and clear behavior with Mockito tests.
+
+Verified:
+- `mvn -Dtest=RedisChatMemoryTest test`: 5 tests passed.
+- `mvn test`: 79 tests passed.
+
+Still not verified:
+- The SPEC Redis ChatMemory checklist remains unchecked because it requires a running SmartKB app plus real conversation/Advanced RAG calls.

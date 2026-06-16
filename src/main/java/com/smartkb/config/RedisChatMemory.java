@@ -299,6 +299,7 @@ public class RedisChatMemory implements ChatMemory {
         for (int i = start; i < json.length(); i++) {
             char c = json.charAt(i);
             if (escaped) {
+                value.append('\\');
                 value.append(c);
                 escaped = false;
             } else if (c == '\\') {
