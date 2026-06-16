@@ -1,5 +1,6 @@
 package com.smartkb.config;
 
+import com.smartkb.agent.domain.ProjectIntakeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
@@ -30,6 +31,21 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 处理 Project Intake 参数和安全边界异常。
+     */
+    @ExceptionHandler(ProjectIntakeException.class)
+    public ResponseEntity<Map<String, Object>> handleProjectIntakeException(ProjectIntakeException e) {
+        log.warn("Project Intake 请求失败: code={}, message={}", e.code(), e.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("error", e.getMessage());
+        response.put("code", e.code());
+
+        return ResponseEntity.status(e.status()).body(response);
+    }
 
     /**
      * 处理 AI 模型非瞬态异常（如 API Key 无效、模型不存在、配额耗尽等）
