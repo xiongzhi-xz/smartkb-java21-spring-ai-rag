@@ -87,6 +87,23 @@ All query parameters are optional. Results are sorted by `createdAt` descending.
 GET /api/agent/eval/runs/{id}
 ```
 
+### Generate Eval Report
+
+```http
+GET /api/agent/eval/report?projectId=ticket-project
+```
+
+`projectId` is optional. The report aggregates the currently recorded runs and returns:
+
+- `totalRuns`, `passedRuns`, `partialRuns`, `failedRuns`
+- `successRate`
+- `scoreRate`
+- `averageDurationSeconds`
+- `totalHumanInterventions`
+- `totalToolCallCount`
+- latest status per eval case
+- failure reason distribution
+
 ## 3. Validation
 
 - `caseId`, `title`, and `status` are required.
@@ -98,4 +115,4 @@ GET /api/agent/eval/runs/{id}
 
 ## 4. Next Step
 
-Use these run records to build a report aggregation API with success rate, failure reason distribution, total runs, average score, and average duration.
+Add a small frontend report panel and keep the API intentionally read-only until a persistence layer is introduced.

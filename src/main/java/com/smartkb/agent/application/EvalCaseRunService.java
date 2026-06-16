@@ -10,13 +10,16 @@ import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.IntStream;
 
 @Service
 public class EvalCaseRunService {
 
     private final ConcurrentMap<String, EvalCaseRunResponse> runs = new ConcurrentHashMap<>();
+    private final CopyOnWriteArrayList<String> runIds = new CopyOnWriteArrayList<>();
 
     public EvalCaseRunResponse create(CreateEvalCaseRunRequest request) {
         String caseId = requireText(request == null ? null : request.caseId(), "EVAL_CASE_ID_REQUIRED", "caseId is required");
@@ -44,6 +47,7 @@ public class EvalCaseRunService {
                 now()
         );
         runs.put(run.id(), run);
+        runIds.add(run.id());
         return run;
     }
 
@@ -59,11 +63,14 @@ public class EvalCaseRunService {
     public List<EvalCaseRunResponse> list(String projectId, String caseId, EvalCaseRunStatus status) {
         String normalizedProjectId = normalize(projectId);
         String normalizedCaseId = normalize(caseId);
-        return runs.values().stream()
+        int size = runIds.size();
+        return IntStream.range(0, size)
+                .mapToObj(index -> runIds.get(size - index - 1))
+                .map(runs::get)
+                .filter(run -> run != null)
                 .filter(run -> normalizedProjectId == null || normalizedProjectId.equals(run.projectId()))
                 .filter(run -> normalizedCaseId == null || normalizedCaseId.equals(run.caseId()))
                 .filter(run -> status == null || status == run.status())
-                .sorted((left, right) -> right.createdAt().compareTo(left.createdAt()))
                 .toList();
     }
 
