@@ -204,3 +204,19 @@ Still not verified:
 - Redis ChatMemory live startup log.
 - Redis key creation through a real conversation request.
 - Backend DELETE `/api/chat/memory/{conversationId}` against a running app.
+
+## 2026-06-17 Work Log - ChatMemory Clear Endpoint Test
+
+Completed:
+- Added `SmartKbControllerTest` WebMvc slice coverage for DELETE `/api/chat/memory/{conversationId}`.
+- Covered successful `chatMemory.clear(conversationId)` delegation.
+- Covered failed clear response when the ChatMemory layer throws.
+- Marked the backend clear endpoint regression test in `SPEC.md`.
+
+Verified:
+- `mvn -Dtest=SmartKbControllerTest,RedisChatMemoryTest test`: 7 tests passed.
+- `mvn test`: 81 tests passed.
+
+Still not verified:
+- The running-app Redis live smoke remains blocked by unavailable Docker Desktop endpoints.
+- The SPEC Redis ChatMemory live checklist still needs a real SmartKB app plus Redis.
