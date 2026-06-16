@@ -1,10 +1,12 @@
 package com.smartkb.agent.controller;
 
 import com.smartkb.agent.application.EvalCaseRunService;
+import com.smartkb.agent.application.EvalCaseRunImportService;
 import com.smartkb.agent.domain.CreateEvalCaseRunRequest;
 import com.smartkb.agent.domain.EvalCaseRunException;
 import com.smartkb.agent.domain.EvalCaseRunResponse;
 import com.smartkb.agent.domain.EvalCaseRunStatus;
+import com.smartkb.agent.domain.ImportEvalCaseRunsResponse;
 import com.smartkb.config.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -37,6 +39,9 @@ class EvalCaseRunControllerTest {
 
     @MockBean
     private EvalCaseRunService evalCaseRunService;
+
+    @MockBean
+    private EvalCaseRunImportService evalCaseRunImportService;
 
     @Test
     void shouldCreateRun() throws Exception {
@@ -109,6 +114,20 @@ class EvalCaseRunControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("EVAL_RUN_NOT_FOUND"))
                 .andExpect(jsonPath("$.error").value("eval run not found"));
+    }
+
+    @Test
+    void shouldImportTicketRushReportRuns() throws Exception {
+        when(evalCaseRunImportService.importTicketRushReport())
+                .thenReturn(new ImportEvalCaseRunsResponse(10, 0, List.of(run(EvalCaseRunStatus.PASSED))));
+
+        mockMvc.perform(post("/api/agent/eval/runs/import-ticket-rush-report"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.importedCount").value(10))
+                .andExpect(jsonPath("$.skippedCount").value(0))
+                .andExpect(jsonPath("$.runs[0].caseId").value("E01"));
+
+        verify(evalCaseRunImportService).importTicketRushReport();
     }
 
     private EvalCaseRunResponse run(EvalCaseRunStatus status) {

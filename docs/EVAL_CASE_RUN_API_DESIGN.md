@@ -87,6 +87,14 @@ All query parameters are optional. Results are sorted by `createdAt` descending.
 GET /api/agent/eval/runs/{id}
 ```
 
+### Import TicketRush Eval Report
+
+```http
+POST /api/agent/eval/runs/import-ticket-rush-report
+```
+
+Imports the existing E01-E10 TicketRush records from `docs/agent-eval-report.md` into the in-memory Eval Run store. The import is idempotent per `projectId + caseId`; repeated calls skip records that already exist.
+
 ### Generate Eval Report
 
 ```http

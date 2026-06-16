@@ -249,6 +249,11 @@
                                     title="Refresh eval data">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
+                            <button onclick="importTicketRushEvalReport()"
+                                    class="h-10 w-10 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                                    title="Import TicketRush eval report">
+                                <i class="fa-solid fa-file-import"></i>
+                            </button>
                         </div>
                     </div>
                     <label class="block">
@@ -1152,6 +1157,33 @@ git diff --check</textarea>
             result.innerHTML = `
                 <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                     <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, 'Eval run failed')}
+                </div>
+            `;
+        } finally {
+            setEvalLoading(false);
+        }
+    }
+
+    async function importTicketRushEvalReport() {
+        if (evalCaseBusy) return;
+
+        const result = document.getElementById('evalResult');
+        result.classList.remove('hidden');
+        setEvalLoading(true);
+        try {
+            const response = await requestEval('/api/agent/eval/runs/import-ticket-rush-report', {
+                method: 'POST'
+            });
+            result.innerHTML = `
+                <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+                    <i class="fa-solid fa-file-import mr-1.5"></i>Imported ${formatEvalNumber(response.importedCount)}, skipped ${formatEvalNumber(response.skippedCount)}.
+                </div>
+            `;
+            await loadEvalData();
+        } catch (e) {
+            result.innerHTML = `
+                <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, 'Eval import failed')}
                 </div>
             `;
         } finally {

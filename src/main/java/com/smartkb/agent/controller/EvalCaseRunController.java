@@ -1,9 +1,11 @@
 package com.smartkb.agent.controller;
 
 import com.smartkb.agent.application.EvalCaseRunService;
+import com.smartkb.agent.application.EvalCaseRunImportService;
 import com.smartkb.agent.domain.CreateEvalCaseRunRequest;
 import com.smartkb.agent.domain.EvalCaseRunResponse;
 import com.smartkb.agent.domain.EvalCaseRunStatus;
+import com.smartkb.agent.domain.ImportEvalCaseRunsResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,9 +22,14 @@ import java.util.List;
 public class EvalCaseRunController {
 
     private final EvalCaseRunService evalCaseRunService;
+    private final EvalCaseRunImportService evalCaseRunImportService;
 
-    public EvalCaseRunController(EvalCaseRunService evalCaseRunService) {
+    public EvalCaseRunController(
+            EvalCaseRunService evalCaseRunService,
+            EvalCaseRunImportService evalCaseRunImportService
+    ) {
         this.evalCaseRunService = evalCaseRunService;
+        this.evalCaseRunImportService = evalCaseRunImportService;
     }
 
     @PostMapping
@@ -42,5 +49,10 @@ public class EvalCaseRunController {
     @GetMapping("/{id}")
     public ResponseEntity<EvalCaseRunResponse> get(@PathVariable String id) {
         return ResponseEntity.ok(evalCaseRunService.get(id));
+    }
+
+    @PostMapping("/import-ticket-rush-report")
+    public ResponseEntity<ImportEvalCaseRunsResponse> importTicketRushReport() {
+        return ResponseEntity.ok(evalCaseRunImportService.importTicketRushReport());
     }
 }
