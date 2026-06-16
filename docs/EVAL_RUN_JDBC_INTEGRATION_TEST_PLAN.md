@@ -24,16 +24,16 @@ Manual JDBC smoke coverage already verified:
 
 See `docs/EVAL_RUN_JDBC_VERIFICATION.md`.
 
-## Recommended Approach
+## Implemented Approach
 
 Introduce a separate integration-test profile instead of putting JDBC container tests in the default unit-test lifecycle.
 
-Recommended Maven shape:
+Implemented Maven shape:
 
 - Keep Surefire for fast unit and MVC tests.
-- Add Failsafe for `*IT.java` tests.
-- Add a Maven profile such as `integration-tests`.
-- Add Testcontainers dependencies only under that profile if the project wants the dependency isolated.
+- Add Failsafe for `*IT.java` tests under the `integration-tests` profile.
+- Add Testcontainers as `test` scope dependencies so `src/test/java` can compile in the default lifecycle.
+- Guard Testcontainers execution with `@Testcontainers(disabledWithoutDocker = true)`.
 
 Example command:
 
@@ -47,9 +47,9 @@ Default command remains:
 mvn test
 ```
 
-## Proposed Test
+## Implemented Test
 
-Add `JdbcEvalCaseRunStoreIT` with PostgreSQL Testcontainers.
+`JdbcEvalCaseRunStoreIT` uses PostgreSQL Testcontainers.
 
 Test cases:
 
@@ -70,18 +70,14 @@ Test cases:
 - The current default test suite is fast and deterministic.
 - JDBC persistence is optional; memory remains the default store.
 
-## Dependencies To Add Later
-
-Candidate dependencies:
+## Dependencies Added
 
 - `org.testcontainers:junit-jupiter`
 - `org.testcontainers:postgresql`
 
-Candidate plugin:
+Plugin added under the `integration-tests` profile:
 
 - `maven-failsafe-plugin`
-
-Do not add these dependencies until the project is ready to support an explicit integration-test profile.
 
 ## Acceptance Criteria
 
@@ -89,3 +85,14 @@ Do not add these dependencies until the project is ready to support an explicit 
 - `mvn -Pintegration-tests verify` runs `JdbcEvalCaseRunStoreIT`.
 - The integration test creates an isolated PostgreSQL database and does not depend on local Docker Compose volumes.
 - The integration test does not print secrets or environment values.
+
+## Verification Record
+
+Date: 2026-06-17
+
+- `mvn test`: passed, 74 tests.
+- `mvn -Pintegration-tests verify`: passed.
+- `JdbcEvalCaseRunStoreIT`: skipped on this Windows Docker Desktop environment because Testcontainers could not find a valid Java Docker client configuration through npipe.
+- Manual Docker Compose JDBC smoke test already verified live PostgreSQL behavior; see `docs/EVAL_RUN_JDBC_VERIFICATION.md`.
+
+On a standard Docker environment supported by Testcontainers, `JdbcEvalCaseRunStoreIT` should run through Failsafe and validate the JDBC store against an isolated PostgreSQL container.

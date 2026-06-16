@@ -139,3 +139,21 @@ Cleanup:
 
 Next step:
 - Add an Eval Run JDBC automated integration test plan first. Do not introduce Testcontainers or new dependencies without a small design note and explicit reason.
+
+## 2026-06-17 Work Log - Eval Run JDBC IT
+
+Completed:
+- Added `integration-tests` Maven profile with Failsafe for `*IT.java`.
+- Added Testcontainers test-scope dependencies.
+- Added `JdbcEvalCaseRunStoreIT`.
+- Guarded the integration test with `@Testcontainers(disabledWithoutDocker = true)`.
+- Updated `docs/EVAL_RUN_JDBC_INTEGRATION_TEST_PLAN.md` from proposal to implementation notes.
+
+Verified:
+- `mvn test`: passed, 74 tests.
+- `mvn -Pintegration-tests verify`: passed.
+- On this Windows Docker Desktop environment, `JdbcEvalCaseRunStoreIT` was skipped because Testcontainers could not find a valid Java Docker client configuration through npipe.
+- Live JDBC behavior is still covered by the Docker Compose smoke record in `docs/EVAL_RUN_JDBC_VERIFICATION.md`.
+
+Next step:
+- Phase F is close to complete. Next safe work is to refresh Eval docs/indexes and then choose the next Agent platform capability without expanding TicketRush scope.

@@ -465,6 +465,7 @@ GET /api/agent/eval/report
 - [x] Eval Run JDBC 验证手册（见 `docs/EVAL_RUN_JDBC_VERIFICATION.md`）
 - [x] Eval Run JDBC 本地 smoke test（启动、创建、导入、聚合、重启持久化、数据库查询）
 - [x] Eval Run JDBC 自动化集成测试方案（见 `docs/EVAL_RUN_JDBC_INTEGRATION_TEST_PLAN.md`）
+- [x] Eval Run JDBC 集成测试 profile 与 Testcontainers 用例
 
 验收：
 
@@ -490,7 +491,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-继续阶段 F，下一步按集成测试方案决定是否引入 Maven profile、Failsafe 和 Testcontainers。
+继续阶段 F，下一步收口 Eval Run 持久化文档和交接状态，然后进入下一个 Agent 平台能力点。
 ```
 
 不要马上写复杂多 Agent 编排。先让既有评测结果和 API 记录口径对齐，再考虑持久化。
