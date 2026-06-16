@@ -78,6 +78,10 @@
                         class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
                     <i class="fa-solid fa-list-check"></i> 任务状态
                 </button>
+                <button onclick="toggleEvalPanel()"
+                        class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-chart-simple"></i> Eval
+                </button>
                 <button onclick="toggleCodeContextPanel()"
                         class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
                     <i class="fa-solid fa-code"></i> Code Context
@@ -208,6 +212,119 @@
             </div>
         </div>
 
+        <div id="evalPanel" class="hidden border-b bg-white px-6 py-4">
+            <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,340px)_minmax(300px,420px)]">
+                <div class="space-y-3">
+                    <div class="grid gap-3 md:grid-cols-[minmax(140px,200px)_minmax(110px,150px)_minmax(140px,180px)_minmax(90px,120px)]">
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Project ID</span>
+                            <input id="evalProjectId" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="ticket-project"
+                                   placeholder="ticket-project">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Case ID</span>
+                            <input id="evalCaseId" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="E01"
+                                   placeholder="E01">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Status</span>
+                            <select id="evalStatus"
+                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">
+                                <option value="PASSED">PASSED</option>
+                                <option value="PARTIAL">PARTIAL</option>
+                                <option value="FAILED">FAILED</option>
+                            </select>
+                        </label>
+                        <div class="flex items-end gap-2">
+                            <button id="evalCreateButton" onclick="createEvalRun()"
+                                    class="h-10 min-w-20 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
+                                <i class="fa-solid fa-plus mr-1.5"></i> Add
+                            </button>
+                            <button onclick="loadEvalData()"
+                                    class="h-10 w-10 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                                    title="Refresh eval data">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <label class="block">
+                        <span class="mb-1 block text-xs font-medium text-gray-500">Title</span>
+                        <input id="evalTitle" type="text"
+                               class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                               value="TicketRush intake"
+                               placeholder="TicketRush intake">
+                    </label>
+                    <div class="grid gap-3 md:grid-cols-5">
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Score</span>
+                            <input id="evalScore" type="number" min="0"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="9">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Max</span>
+                            <input id="evalMaxScore" type="number" min="1"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="10">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Human</span>
+                            <input id="evalHumanInterventions" type="number" min="0"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="0">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Tools</span>
+                            <input id="evalToolCallCount" type="number" min="0"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="12">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Seconds</span>
+                            <input id="evalDurationSeconds" type="number" min="0"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="180">
+                        </label>
+                    </div>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Evidence paths</span>
+                            <textarea id="evalEvidencePaths" rows="3"
+                                      class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">HANDOFF.md
+docs/agent-eval-report.md</textarea>
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Verification commands</span>
+                            <textarea id="evalVerificationCommands" rows="3"
+                                      class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">git status --short
+git diff --check</textarea>
+                        </label>
+                    </div>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Summary</span>
+                            <textarea id="evalSummary" rows="3"
+                                      class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                      placeholder="What happened in this run"></textarea>
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Failure reason</span>
+                            <textarea id="evalFailureReason" rows="3"
+                                      class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                      placeholder="Required for failed or partial runs"></textarea>
+                        </label>
+                    </div>
+                    <div id="evalResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm"></div>
+                </div>
+                <div id="evalRunList" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                <div id="evalReport" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+            </div>
+        </div>
+
         <div id="codeContextPanel" class="hidden border-b bg-white px-6 py-4">
             <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
                 <div class="space-y-3">
@@ -302,6 +419,7 @@
     let chatBusy = false;
     let projectIntakeBusy = false;
     let agentTaskBusy = false;
+    let evalCaseBusy = false;
     let codeContextBusy = false;
     let activeAgentTask = null;
     const documentDetailWidthKey = 'smartkb.documentDetailWidth';
@@ -776,6 +894,269 @@
             throw new Error(data.error || data.message || `任务请求失败（HTTP ${res.status}）`);
         }
         return data;
+    }
+
+    function toggleEvalPanel() {
+        const panel = document.getElementById('evalPanel');
+        panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            document.getElementById('evalCaseId').focus();
+            loadEvalData();
+        }
+    }
+
+    function setEvalLoading(isLoading) {
+        evalCaseBusy = isLoading;
+        const button = document.getElementById('evalCreateButton');
+        button.disabled = isLoading;
+        button.innerHTML = isLoading
+            ? '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Add'
+            : '<i class="fa-solid fa-plus mr-1.5"></i> Add';
+    }
+
+    function readEvalLines(id) {
+        return document.getElementById(id).value
+            .split(/\r?\n/)
+            .map(item => item.trim())
+            .filter(Boolean);
+    }
+
+    function readEvalNumber(id) {
+        const value = document.getElementById(id).value.trim();
+        if (!value) {
+            return null;
+        }
+        const number = Number(value);
+        return Number.isFinite(number) ? number : null;
+    }
+
+    function formatEvalNumber(value, suffix = '') {
+        if (value === null || value === undefined || value === '') {
+            return '<span class="text-gray-400">n/a</span>';
+        }
+        return `${escapeHtml(value)}${suffix}`;
+    }
+
+    function formatEvalPercent(value) {
+        if (value === null || value === undefined) {
+            return '<span class="text-gray-400">n/a</span>';
+        }
+        return `${Math.round(Number(value) * 1000) / 10}%`;
+    }
+
+    function getEvalStatusClass(status) {
+        const classes = {
+            PASSED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+            PARTIAL: 'border-amber-200 bg-amber-50 text-amber-700',
+            FAILED: 'border-red-200 bg-red-50 text-red-700'
+        };
+        return classes[status] || 'border-gray-200 bg-gray-50 text-gray-600';
+    }
+
+    function renderEvalStatusBadge(status) {
+        return `
+            <span class="rounded-full border px-2.5 py-1 text-xs font-medium ${getEvalStatusClass(status)}">
+                ${escapeHtml(status || 'NONE')}
+            </span>
+        `;
+    }
+
+    function renderEvalRuns(runs) {
+        const list = document.getElementById('evalRunList');
+        if (!Array.isArray(runs) || runs.length === 0) {
+            list.innerHTML = `
+                <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">Runs</h3>
+                <p class="text-gray-400">No eval runs yet.</p>
+            `;
+            return;
+        }
+
+        list.innerHTML = `
+            <div class="mb-3 flex items-center justify-between gap-2">
+                <h3 class="text-xs font-semibold uppercase text-gray-500">Runs</h3>
+                <span class="text-xs text-gray-400">${runs.length} total</span>
+            </div>
+            <div class="max-h-[28rem] space-y-2 overflow-auto">
+                ${runs.map(run => `
+                    <div class="rounded-md border border-gray-200 bg-white p-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-gray-700">${renderProjectIntakeValue(run.title, 'Untitled')}</p>
+                                <p class="mt-0.5 text-xs text-gray-500">${renderText(run.caseId || '')}</p>
+                            </div>
+                            ${renderEvalStatusBadge(run.status)}
+                        </div>
+                        <div class="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-500">
+                            <span>score ${formatEvalNumber(run.score)}/${formatEvalNumber(run.maxScore)}</span>
+                            <span>human ${formatEvalNumber(run.humanInterventions)}</span>
+                            <span>${formatEvalNumber(run.durationSeconds, 's')}</span>
+                        </div>
+                        ${run.summary ? `<p class="mt-2 text-xs text-gray-600">${renderText(run.summary)}</p>` : ''}
+                        ${run.failureReason ? `<p class="mt-2 rounded border border-red-100 bg-red-50 p-2 text-xs text-red-700">${renderText(run.failureReason)}</p>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function renderEvalReport(report) {
+        const target = document.getElementById('evalReport');
+        if (!report || typeof report !== 'object') {
+            target.innerHTML = '<p class="text-gray-400">No report loaded.</p>';
+            return;
+        }
+
+        const cases = Array.isArray(report.cases) ? report.cases : [];
+        const failureReasons = Array.isArray(report.failureReasons) ? report.failureReasons : [];
+        target.innerHTML = `
+            <div class="mb-3 flex items-start justify-between gap-2">
+                <div>
+                    <h3 class="text-xs font-semibold uppercase text-gray-500">Report</h3>
+                    <p class="mt-1 text-xs text-gray-400">${renderProjectIntakeValue(report.projectId, 'all projects')}</p>
+                </div>
+                <span class="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                    ${formatEvalPercent(report.successRate)}
+                </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="rounded-md border border-gray-200 bg-white p-3">
+                    <p class="text-xs text-gray-400">Total</p>
+                    <p class="mt-1 text-xl font-semibold text-gray-800">${formatEvalNumber(report.totalRuns)}</p>
+                </div>
+                <div class="rounded-md border border-gray-200 bg-white p-3">
+                    <p class="text-xs text-gray-400">Score rate</p>
+                    <p class="mt-1 text-xl font-semibold text-gray-800">${formatEvalPercent(report.scoreRate)}</p>
+                </div>
+                <div class="rounded-md border border-gray-200 bg-white p-3">
+                    <p class="text-xs text-gray-400">Passed / Partial / Failed</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-800">
+                        ${formatEvalNumber(report.passedRuns)} / ${formatEvalNumber(report.partialRuns)} / ${formatEvalNumber(report.failedRuns)}
+                    </p>
+                </div>
+                <div class="rounded-md border border-gray-200 bg-white p-3">
+                    <p class="text-xs text-gray-400">Avg duration</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-800">${formatEvalNumber(report.averageDurationSeconds, 's')}</p>
+                </div>
+                <div class="rounded-md border border-gray-200 bg-white p-3">
+                    <p class="text-xs text-gray-400">Human interventions</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-800">${formatEvalNumber(report.totalHumanInterventions)}</p>
+                </div>
+                <div class="rounded-md border border-gray-200 bg-white p-3">
+                    <p class="text-xs text-gray-400">Tool calls</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-800">${formatEvalNumber(report.totalToolCallCount)}</p>
+                </div>
+            </div>
+            <section class="mt-4">
+                <h4 class="mb-2 text-xs font-semibold uppercase text-gray-500">Latest cases</h4>
+                <div class="space-y-2">
+                    ${cases.map(item => `
+                        <div class="rounded-md border border-gray-200 bg-white p-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-medium text-gray-700">${renderText(item.caseId || '')}</span>
+                                ${renderEvalStatusBadge(item.latestStatus)}
+                            </div>
+                            <p class="mt-1 truncate text-xs text-gray-500">${renderProjectIntakeValue(item.title, 'Untitled')}</p>
+                        </div>
+                    `).join('') || '<p class="text-gray-400">No cases.</p>'}
+                </div>
+            </section>
+            <section class="mt-4">
+                <h4 class="mb-2 text-xs font-semibold uppercase text-gray-500">Failure reasons</h4>
+                <div class="space-y-2">
+                    ${failureReasons.map(item => `
+                        <div class="flex items-center justify-between gap-2 rounded-md border border-red-100 bg-red-50 p-2 text-xs text-red-700">
+                            <span class="break-words">${renderText(item.reason || '')}</span>
+                            <span class="font-semibold">${formatEvalNumber(item.count)}</span>
+                        </div>
+                    `).join('') || '<p class="text-gray-400">No failure reasons.</p>'}
+                </div>
+            </section>
+        `;
+    }
+
+    async function requestEval(url, options = {}) {
+        const fetchOptions = {
+            method: options.method || 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        };
+        if (options.body) {
+            fetchOptions.body = JSON.stringify(options.body);
+        }
+        const res = await fetch(url, fetchOptions);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.success === false) {
+            throw new Error(data.error || data.message || `Eval request failed (HTTP ${res.status})`);
+        }
+        return data;
+    }
+
+    async function loadEvalData() {
+        const projectId = document.getElementById('evalProjectId').value.trim();
+        const suffix = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+        try {
+            const [runs, report] = await Promise.all([
+                requestEval(`/api/agent/eval/runs${suffix}`),
+                requestEval(`/api/agent/eval/report${suffix}`)
+            ]);
+            renderEvalRuns(runs);
+            renderEvalReport(report);
+        } catch (e) {
+            document.getElementById('evalRunList').innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, 'Eval runs failed')}</p>`;
+            document.getElementById('evalReport').innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, 'Eval report failed')}</p>`;
+        }
+    }
+
+    async function createEvalRun() {
+        if (evalCaseBusy) return;
+
+        const caseIdInput = document.getElementById('evalCaseId');
+        const titleInput = document.getElementById('evalTitle');
+        const caseId = caseIdInput.value.trim();
+        const title = titleInput.value.trim();
+        const result = document.getElementById('evalResult');
+
+        result.classList.remove('hidden');
+        if (!caseId || !title) {
+            result.innerHTML = '<p class="text-sm text-red-600">Case ID and title are required.</p>';
+            (!caseId ? caseIdInput : titleInput).focus();
+            return;
+        }
+
+        setEvalLoading(true);
+        try {
+            const run = await requestEval('/api/agent/eval/runs', {
+                method: 'POST',
+                body: {
+                    projectId: document.getElementById('evalProjectId').value.trim(),
+                    caseId,
+                    title,
+                    status: document.getElementById('evalStatus').value,
+                    score: readEvalNumber('evalScore'),
+                    maxScore: readEvalNumber('evalMaxScore'),
+                    humanInterventions: readEvalNumber('evalHumanInterventions'),
+                    toolCallCount: readEvalNumber('evalToolCallCount'),
+                    durationSeconds: readEvalNumber('evalDurationSeconds'),
+                    evidencePaths: readEvalLines('evalEvidencePaths'),
+                    verificationCommands: readEvalLines('evalVerificationCommands'),
+                    summary: document.getElementById('evalSummary').value.trim(),
+                    failureReason: document.getElementById('evalFailureReason').value.trim()
+                }
+            });
+            result.innerHTML = `
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+                    <i class="fa-solid fa-circle-check mr-1.5"></i>Recorded ${renderText(run.caseId)} as ${renderText(run.status)}.
+                </div>
+            `;
+            await loadEvalData();
+        } catch (e) {
+            result.innerHTML = `
+                <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, 'Eval run failed')}
+                </div>
+            `;
+        } finally {
+            setEvalLoading(false);
+        }
     }
 
     function toggleCodeContextPanel() {

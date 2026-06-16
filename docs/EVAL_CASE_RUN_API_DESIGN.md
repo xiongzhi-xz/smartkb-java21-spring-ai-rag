@@ -115,4 +115,4 @@ GET /api/agent/eval/report?projectId=ticket-project
 
 ## 4. Next Step
 
-Add a small frontend report panel and keep the API intentionally read-only until a persistence layer is introduced.
+Add the interview-facing summary for how Eval Run records and the report API make Agent work measurable.
