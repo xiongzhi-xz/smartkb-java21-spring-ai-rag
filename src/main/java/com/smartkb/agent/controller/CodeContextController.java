@@ -1,6 +1,8 @@
 package com.smartkb.agent.controller;
 
 import com.smartkb.agent.application.CodeContextService;
+import com.smartkb.agent.domain.CodeDiffRequest;
+import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
 import com.smartkb.agent.domain.CodeSearchResponse;
 import com.smartkb.agent.domain.CodeTreeRequest;
@@ -32,5 +34,10 @@ public class CodeContextController {
     @PostMapping("/search")
     public ResponseEntity<CodeSearchResponse> search(@RequestBody CodeSearchRequest request) {
         return ResponseEntity.ok(codeContextService.search(request));
+    }
+
+    @PostMapping("/diff")
+    public ResponseEntity<CodeDiffResponse> diff(@RequestBody CodeDiffRequest request) {
+        return ResponseEntity.ok(codeContextService.diff(request));
     }
 }

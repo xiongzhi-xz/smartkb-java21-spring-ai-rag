@@ -1,12 +1,15 @@
 package com.smartkb.agent.application;
 
 import com.smartkb.agent.domain.CodeContextException;
+import com.smartkb.agent.domain.CodeDiffRequest;
+import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
 import com.smartkb.agent.domain.CodeSearchResponse;
 import com.smartkb.agent.domain.CodeTreeRequest;
 import com.smartkb.agent.domain.CodeTreeResponse;
 import com.smartkb.agent.domain.ProjectIntakeResponse;
 import com.smartkb.agent.infrastructure.filesystem.ProjectPathGuard;
+import com.smartkb.agent.infrastructure.git.GitDiffReader;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +22,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -31,11 +38,15 @@ public class CodeContextService {
     private static final int DEFAULT_MAX_DEPTH = 8;
     private static final int DEFAULT_MAX_RESULTS = 100;
     private static final int DEFAULT_MAX_FILE_BYTES = 1_048_576;
+    private static final int DEFAULT_MAX_DIFF_LINES = 200;
+    private static final Pattern HUNK_HEADER = Pattern.compile("@@ -(\\d+)(?:,\\d+)? \\+(\\d+)(?:,\\d+)? @@.*");
 
     private final ProjectPathGuard pathGuard;
+    private final GitDiffReader gitDiffReader;
 
-    public CodeContextService(ProjectPathGuard pathGuard) {
+    public CodeContextService(ProjectPathGuard pathGuard, GitDiffReader gitDiffReader) {
         this.pathGuard = pathGuard;
+        this.gitDiffReader = gitDiffReader;
     }
 
     public CodeTreeResponse tree(CodeTreeRequest request) {
@@ -91,6 +102,45 @@ public class CodeContextService {
                 skippedFiles,
                 warnings
         );
+    }
+
+    public CodeDiffResponse diff(CodeDiffRequest request) {
+        CodeDiffRequest safeRequest = request == null
+                ? new CodeDiffRequest(null, null, null)
+                : request;
+        Path root = pathGuard.validateProjectRoot(safeRequest.rootPath());
+        String query = safeRequest.query() == null || safeRequest.query().isBlank()
+                ? null
+                : safeRequest.query().strip();
+        int maxLines = positiveOrDefault(safeRequest.maxLines(), DEFAULT_MAX_DIFF_LINES);
+        List<ProjectIntakeResponse.SkippedFile> skippedFiles = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+
+        if (!gitDiffReader.isGitRepository(root)) {
+            warnings.add("not a git repository");
+            return new CodeDiffResponse(true, normalizePath(root), false, query, List.of(), skippedFiles, warnings);
+        }
+
+        Map<String, List<CodeDiffResponse.DiffLine>> linesByPath = new LinkedHashMap<>();
+        for (String relativePath : gitDiffReader.changedFiles(root, warnings)) {
+            Path path = root.resolve(relativePath).normalize();
+            if (!path.startsWith(root) || pathGuard.shouldSkip(root, path)) {
+                String reason = path.startsWith(root) ? pathGuard.skipReason(root, path) : "outside project root";
+                skippedFiles.add(new ProjectIntakeResponse.SkippedFile(relativePath, reason));
+                continue;
+            }
+            addDiffLines(relativePath, gitDiffReader.diff(root, relativePath, false), query, maxLines, linesByPath);
+            addDiffLines(relativePath, gitDiffReader.diff(root, relativePath, true), query, maxLines, linesByPath);
+            if (totalLines(linesByPath) >= maxLines) {
+                warnings.add("max diff lines reached");
+                break;
+            }
+        }
+
+        List<CodeDiffResponse.DiffFile> files = linesByPath.entrySet().stream()
+                .map(entry -> new CodeDiffResponse.DiffFile(entry.getKey(), entry.getValue()))
+                .toList();
+        return new CodeDiffResponse(true, normalizePath(root), true, query, files, skippedFiles, warnings);
     }
 
     private void scanTree(
@@ -201,6 +251,66 @@ public class CodeContextService {
         } catch (IOException exception) {
             warnings.add("failed to search file: " + relative);
         }
+    }
+
+    private void addDiffLines(
+            String relativePath,
+            String diffOutput,
+            String query,
+            int maxLines,
+            Map<String, List<CodeDiffResponse.DiffLine>> linesByPath
+    ) {
+        if (diffOutput == null || diffOutput.isBlank()) {
+            return;
+        }
+        int oldLine = 0;
+        int newLine = 0;
+        for (String rawLine : diffOutput.lines().toList()) {
+            if (totalLines(linesByPath) >= maxLines) {
+                return;
+            }
+            Matcher matcher = HUNK_HEADER.matcher(rawLine);
+            if (matcher.matches()) {
+                oldLine = Integer.parseInt(matcher.group(1));
+                newLine = Integer.parseInt(matcher.group(2));
+                continue;
+            }
+            if (rawLine.startsWith("+++") || rawLine.startsWith("---")
+                    || rawLine.startsWith("diff --git") || rawLine.startsWith("index ")) {
+                continue;
+            }
+            CodeDiffResponse.DiffLine line = parseDiffLine(rawLine, oldLine, newLine);
+            if (line == null) {
+                continue;
+            }
+            if ("add".equals(line.type()) || "context".equals(line.type())) {
+                newLine++;
+            }
+            if ("delete".equals(line.type()) || "context".equals(line.type())) {
+                oldLine++;
+            }
+            if (query != null && !line.content().contains(query)) {
+                continue;
+            }
+            linesByPath.computeIfAbsent(relativePath, ignored -> new ArrayList<>()).add(line);
+        }
+    }
+
+    private CodeDiffResponse.DiffLine parseDiffLine(String rawLine, int oldLine, int newLine) {
+        if (rawLine.startsWith("+")) {
+            return new CodeDiffResponse.DiffLine("add", null, newLine, rawLine.substring(1).strip());
+        }
+        if (rawLine.startsWith("-")) {
+            return new CodeDiffResponse.DiffLine("delete", oldLine, null, rawLine.substring(1).strip());
+        }
+        if (rawLine.startsWith(" ")) {
+            return new CodeDiffResponse.DiffLine("context", oldLine, newLine, rawLine.substring(1).strip());
+        }
+        return null;
+    }
+
+    private int totalLines(Map<String, List<CodeDiffResponse.DiffLine>> linesByPath) {
+        return linesByPath.values().stream().mapToInt(List::size).sum();
     }
 
     private String normalizeQuery(String query) {

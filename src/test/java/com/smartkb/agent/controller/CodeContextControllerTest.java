@@ -2,6 +2,8 @@ package com.smartkb.agent.controller;
 
 import com.smartkb.agent.application.CodeContextService;
 import com.smartkb.agent.domain.CodeContextException;
+import com.smartkb.agent.domain.CodeDiffRequest;
+import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
 import com.smartkb.agent.domain.CodeSearchResponse;
 import com.smartkb.agent.domain.CodeTreeRequest;
@@ -99,6 +101,43 @@ class CodeContextControllerTest {
         verify(codeContextService).search(captor.capture());
         assertEquals("TicketService", captor.getValue().query());
         assertEquals(20, captor.getValue().maxResults());
+    }
+
+    @Test
+    void shouldReturnCodeDiffEvidence() throws Exception {
+        when(codeContextService.diff(any(CodeDiffRequest.class))).thenReturn(new CodeDiffResponse(
+                true,
+                "E:/project/work/job/demo",
+                true,
+                "reserveTicket",
+                List.of(new CodeDiffResponse.DiffFile(
+                        "src/main/java/TicketService.java",
+                        List.of(new CodeDiffResponse.DiffLine("add", null, 12, "void reserveTicket() {}"))
+                )),
+                List.of(),
+                List.of()
+        ));
+
+        mockMvc.perform(post("/api/agent/code/diff")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "rootPath": "E:/project/work/job/demo",
+                                  "query": "reserveTicket",
+                                  "maxLines": 20
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.gitRepository").value(true))
+                .andExpect(jsonPath("$.files[0].path").value("src/main/java/TicketService.java"))
+                .andExpect(jsonPath("$.files[0].lines[0].type").value("add"))
+                .andExpect(jsonPath("$.files[0].lines[0].newLineNumber").value(12));
+
+        ArgumentCaptor<CodeDiffRequest> captor = ArgumentCaptor.forClass(CodeDiffRequest.class);
+        verify(codeContextService).diff(captor.capture());
+        assertEquals("reserveTicket", captor.getValue().query());
+        assertEquals(20, captor.getValue().maxLines());
     }
 
     @Test

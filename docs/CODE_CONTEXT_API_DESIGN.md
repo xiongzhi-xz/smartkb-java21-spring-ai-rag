@@ -47,6 +47,24 @@ Request:
 
 Search responses return `path`, `lineNumber`, and `line` for each match.
 
+### Git Diff Search
+
+```http
+POST /api/agent/code/diff
+```
+
+Request:
+
+```json
+{
+  "rootPath": "E:/project/work/job/ticketrush-java21-high-concurrency",
+  "query": "reserveTicket",
+  "maxLines": 200
+}
+```
+
+Diff responses return changed files and diff lines with `type`, `oldLineNumber`, `newLineNumber`, and `content`. The API reads both unstaged and staged diffs, and filters sensitive files before reading diff content.
+
 ## 3. Errors
 
 Errors use the global response shape:
@@ -69,7 +87,7 @@ Common codes:
 
 ## 4. Verified
 
-- Service tests cover safe tree indexing, keyword matches with line numbers, and blank query rejection.
-- Web tests cover `/api/agent/code/tree`, `/api/agent/code/search`, and Code Context error response.
-- `mvn -Dtest=CodeContextServiceTest,CodeContextControllerTest test`: 6 tests, 0 failures.
-- `mvn test`: 48 tests, 0 failures.
+- Service tests cover safe tree indexing, keyword matches with line numbers, Git diff evidence, sensitive diff skipping, and blank query rejection.
+- Web tests cover `/api/agent/code/tree`, `/api/agent/code/search`, `/api/agent/code/diff`, and Code Context error response.
+- `mvn -Dtest=CodeContextServiceTest,CodeContextControllerTest test`: 8 tests, 0 failures.
+- `mvn test`: 50 tests, 0 failures.
