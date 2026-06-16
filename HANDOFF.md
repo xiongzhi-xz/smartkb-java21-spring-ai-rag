@@ -258,3 +258,15 @@ Completed:
 Verified:
 - `mvn -Dtest=ProjectIntakeDetectorTest test`: 5 tests passed.
 - `mvn test`: 93 tests passed.
+
+## 2026-06-17 Work Log - Eval Report Aggregation Edge Test
+
+Completed:
+- Added Eval report coverage for trimmed project IDs and normalized failure reasons.
+- Covered failure reason grouping by count and deterministic secondary ordering.
+- Covered null score, max score, duration, human intervention, and tool-call metrics in aggregate reports.
+- Marked the Eval report aggregation edge coverage in `SPEC.md`.
+
+Verified:
+- `mvn -Dtest=EvalReportServiceTest test`: 4 tests passed.
+- `mvn test`: 94 tests passed.

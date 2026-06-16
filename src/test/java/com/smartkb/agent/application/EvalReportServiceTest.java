@@ -65,6 +65,27 @@ class EvalReportServiceTest {
         assertEquals(List.of(), report.failureReasons());
     }
 
+    @Test
+    void shouldNormalizeAndSortFailureReasonSummary() {
+        runService.create(runWithNullableMetrics("ticket-project", "E01", " Missing evidence "));
+        runService.create(runWithNullableMetrics("ticket-project", "E02", "Build failed"));
+        runService.create(runWithNullableMetrics("ticket-project", "E03", "Missing evidence"));
+
+        EvalReportResponse report = reportService.generate(" ticket-project ");
+
+        assertEquals("ticket-project", report.projectId());
+        assertEquals(3, report.totalRuns());
+        assertEquals(3, report.failedRuns());
+        assertNull(report.scoreRate());
+        assertNull(report.averageDurationSeconds());
+        assertEquals(0, report.totalHumanInterventions());
+        assertEquals(0, report.totalToolCallCount());
+        assertEquals("Missing evidence", report.failureReasons().getFirst().reason());
+        assertEquals(2L, report.failureReasons().getFirst().count());
+        assertEquals("Build failed", report.failureReasons().get(1).reason());
+        assertEquals(1L, report.failureReasons().get(1).count());
+    }
+
     private CreateEvalCaseRunRequest run(
             String projectId,
             String caseId,
@@ -88,6 +109,24 @@ class EvalReportServiceTest {
                 durationSeconds,
                 List.of("docs/agent-eval-report.md"),
                 List.of("git diff --check"),
+                "Recorded " + caseId,
+                failureReason
+        );
+    }
+
+    private CreateEvalCaseRunRequest runWithNullableMetrics(String projectId, String caseId, String failureReason) {
+        return new CreateEvalCaseRunRequest(
+                projectId,
+                caseId,
+                "Eval " + caseId,
+                EvalCaseRunStatus.FAILED,
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of(),
+                List.of(),
                 "Recorded " + caseId,
                 failureReason
         );
