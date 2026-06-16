@@ -2,6 +2,7 @@ package com.smartkb.config;
 
 import com.smartkb.agent.domain.AgentTaskException;
 import com.smartkb.agent.domain.CodeContextException;
+import com.smartkb.agent.domain.EvalCaseRunException;
 import com.smartkb.agent.domain.MemoryRecordException;
 import com.smartkb.agent.domain.ProjectIntakeException;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MemoryRecordException.class)
     public ResponseEntity<Map<String, Object>> handleMemoryRecordException(MemoryRecordException e) {
         log.warn("Memory Record 请求失败: code={}, message={}", e.code(), e.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("error", e.getMessage());
+        response.put("code", e.code());
+
+        return ResponseEntity.status(e.status()).body(response);
+    }
+
+    @ExceptionHandler(EvalCaseRunException.class)
+    public ResponseEntity<Map<String, Object>> handleEvalCaseRunException(EvalCaseRunException e) {
+        log.warn("Eval Case Run request failed: code={}, message={}", e.code(), e.getMessage());
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);
