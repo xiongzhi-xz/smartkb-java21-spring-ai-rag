@@ -10,6 +10,7 @@ import com.smartkb.service.RagService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +52,7 @@ public class SmartKbController {
     private final RagService ragService;
     private final AdvancedRagService advancedRagService;
     private final DocumentManagementService documentManagementService;
+    private final ChatMemory chatMemory;
     private final ObjectMapper objectMapper;
 
     /**
@@ -175,10 +177,7 @@ public class SmartKbController {
 
         try {
             // 如果没有提供 conversationId，生成一个新的
-            String conversationId = request.getConversationId();
-            if (conversationId == null || conversationId.isEmpty()) {
-                conversationId = UUID.randomUUID().toString();
-            }
+            String conversationId = resolveConversationId(request.getConversationId());
 
             // 调用 RagService 进行多轮 RAG 问答
             String answer = ragService.queryWithContext(request.getQuestion(), conversationId);
@@ -216,10 +215,7 @@ public class SmartKbController {
                 request.getConversationId(),
                 request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
 
-        String conversationId = request.getConversationId();
-        if (conversationId == null || conversationId.isEmpty()) {
-            conversationId = UUID.randomUUID().toString();
-        }
+        String conversationId = resolveConversationId(request.getConversationId());
 
         String finalConversationId = conversationId;
         StreamingResponseBody body = outputStream -> {
@@ -276,6 +272,40 @@ public class SmartKbController {
         String message = "event: " + event + "\n" + "data: " + payload + "\n\n";
         outputStream.write(message.getBytes(StandardCharsets.UTF_8));
         outputStream.flush();
+    }
+
+    // ========== 会话记忆管理接口 ==========
+
+    /**
+     * 清除指定会话的 ChatMemory
+     * <p>
+     * 当用户点击"新会话"时，前端调用此接口清除 Redis 中对应的会话数据。
+     * 确保新建会话后不会再读取到旧对话上下文。
+     *
+     * @param conversationId 会话 ID
+     * @return 清除结果
+     */
+    @DeleteMapping("/chat/memory/{conversationId}")
+    public ResponseEntity<Map<String, Object>> clearChatMemory(@PathVariable String conversationId) {
+        log.info("清除会话记忆: conversationId={}", conversationId);
+
+        try {
+            chatMemory.clear(conversationId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("conversationId", conversationId);
+            response.put("message", "会话记忆已清除");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("清除会话记忆失败: conversationId={}", conversationId, e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
     }
 
     // ========== 文档管理接口 ==========
@@ -412,6 +442,21 @@ public class SmartKbController {
     }
 
     /**
+     * 解析 conversationId：如果为空则生成新的 UUID
+     * <p>
+     * 统一 conversation / advanced 两种模式的 conversationId 生成逻辑
+     *
+     * @param conversationId 前端传入的 conversationId（可能为 null）
+     * @return 有效的 conversationId
+     */
+    private String resolveConversationId(String conversationId) {
+        if (conversationId == null || conversationId.isEmpty()) {
+            return UUID.randomUUID().toString();
+        }
+        return conversationId;
+    }
+
+    /**
      * Advanced RAG 问答（支持查询改写 + 元数据过滤）
      * <p>
      * 与普通 /api/chat 的区别：
@@ -432,16 +477,20 @@ public class SmartKbController {
         log.info("接收 Advanced RAG 请求: {}", request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
 
         try {
-            // 调用 AdvancedRagService
+            // 生成/确认 conversationId
+            String conversationId = resolveConversationId(request.getConversationId());
+
+            // 调用 AdvancedRagService（使用 ChatMemory 管理历史）
             AdvancedRagResult result = advancedRagService.queryAdvancedWithDetails(
                     request.getQuestion(),
                     request.getMetadataFilter(),
-                    request.getHistory()
+                    conversationId
             );
 
             ChatResponse response = new ChatResponse();
             response.setAnswer(result.answer());
             response.setContent(result.answer());
+            response.setConversationId(conversationId);
             response.setSources(result.sources());
             response.setReferences(result.references());
             response.setRewrittenQuery(result.rewrittenQuery());
@@ -464,24 +513,33 @@ public class SmartKbController {
      * Advanced RAG 分阶段流式反馈。
      * <p>
      * SSE 事件：
+     * - conversation：返回 conversationId
      * - stage：返回查询改写、检索、过滤、重排序、生成等阶段状态
-     * - done：返回完整 Advanced RAG 结果
+     * - done：返回完整 Advanced RAG 结果（含 conversationId）
      * - error：返回失败原因
      */
     @PostMapping(value = "/chat/advanced/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<StreamingResponseBody> chatAdvancedStream(@RequestBody AdvancedChatRequest request) {
         log.info("接收 Advanced RAG 流式请求: {}", request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
 
+        String conversationId = resolveConversationId(request.getConversationId());
+        String finalConversationId = conversationId;
+
         StreamingResponseBody body = outputStream -> {
             try {
+                // 发送 conversationId 给前端（与 conversation 模式一致）
+                writeSseEvent(outputStream, "conversation", Map.of("conversationId", finalConversationId));
+
                 AdvancedRagResult result = advancedRagService.queryAdvancedWithDetails(
                         request.getQuestion(),
                         request.getMetadataFilter(),
-                        request.getHistory(),
+                        finalConversationId,
                         stage -> writeSseEventUnchecked(outputStream, "stage", stage)
                 );
 
-                writeSseEvent(outputStream, "done", buildAdvancedResponsePayload(result));
+                Map<String, Object> donePayload = buildAdvancedResponsePayload(result);
+                donePayload.put("conversationId", finalConversationId);
+                writeSseEvent(outputStream, "done", donePayload);
             } catch (Exception e) {
                 log.error("Advanced RAG 流式问答失败: {}", request.getQuestion(), e);
                 writeSseEvent(outputStream, "error", Map.of("error", e.getMessage()));
@@ -572,7 +630,8 @@ public class SmartKbController {
     public static class AdvancedChatRequest {
         private String question;
         private Map<String, Object> metadataFilter;  // 元数据过滤条件（可选）
-        private String history;  // 对话历史（可选）
+        private String history;  // 对话历史（可选，兼容旧调用）
+        private String conversationId;  // 会话 ID（新增，用于 ChatMemory 读写）
     }
 
     /**

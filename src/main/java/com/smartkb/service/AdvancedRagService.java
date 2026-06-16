@@ -6,6 +6,10 @@ import com.smartkb.domain.AdvancedRagStage;
 import com.smartkb.domain.ReferenceChunk;
 import com.smartkb.util.VirtualThreadInspector;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
@@ -58,46 +62,83 @@ public class AdvancedRagService {
     );
     private static final Set<String> BROAD_CONTEXT_ANCHORS = Set.of("Advanced RAG");
 
+    /** ChatMemory 历史消息条数：用于查询改写的上下文窗口 */
+    private static final int HISTORY_WINDOW_SIZE = 10;
+
     private final QueryRewritingService queryRewritingService;
     private final VectorStoreService vectorStoreService;
     private final ChatModel chatModel;
+    private final ChatMemory chatMemory;
 
+    /**
+     * 构造函数
+     *
+     * @param queryRewritingService 查询改写服务
+     * @param vectorStoreService    向量存储服务
+     * @param chatModel             OpenAI 兼容 ChatModel（Advanced RAG 专用，避免触发默认 RAG Advisor）
+     * @param chatMemory            会话记忆（Redis 持久化）
+     */
     public AdvancedRagService(
             QueryRewritingService queryRewritingService,
             VectorStoreService vectorStoreService,
-            @Qualifier("openAiChatModel") ChatModel chatModel) {
+            @Qualifier("openAiChatModel") ChatModel chatModel,
+            ChatMemory chatMemory) {
         this.queryRewritingService = queryRewritingService;
         this.vectorStoreService = vectorStoreService;
         this.chatModel = chatModel;
+        this.chatMemory = chatMemory;
     }
 
     /**
-     * Advanced RAG 查询（完整链路）
+     * Advanced RAG 查询（使用 ChatMemory 管理对话历史）
      * <p>
-     * 执行流程：
-     * 1. Query Rewriting - 改写用户查询
-     * 2. Metadata Filtering - 基于元数据过滤（如指定文档类型）
-     * 3. Vector Search - 向量检索
-     * 4. Re-ranking - 结果重排序（可选）
-     * 5. LLM Generation - 生成答案
+     * 通过 conversationId 从 ChatMemory（Redis）自动读取历史，
+     * 生成答案后自动将用户问题和 AI 回复写入 ChatMemory，
+     * 支持服务重启后恢复会话上下文。
      *
      * @param question       用户问题
      * @param metadataFilter 元数据过滤条件（可选）
-     * @param history        对话历史（可选）
+     * @param conversationId 会话 ID（用于 ChatMemory 读写，null 表示无历史上下文）
      * @return Advanced RAG 查询结果
      */
-    public AdvancedRagResult queryAdvancedWithDetails(String question, Map<String, Object> metadataFilter, String history) {
-        return queryAdvancedWithDetails(question, metadataFilter, history, stage -> {
-        });
+    public AdvancedRagResult queryAdvancedWithDetails(String question, Map<String, Object> metadataFilter, String conversationId) {
+        return queryAdvancedWithDetails(question, metadataFilter, conversationId, stage -> {});
     }
 
     /**
-     * Advanced RAG 查询（带阶段进度回调）。
+     * Advanced RAG 查询（使用 ChatMemory + 阶段进度回调）
      */
     public AdvancedRagResult queryAdvancedWithDetails(
             String question,
             Map<String, Object> metadataFilter,
+            String conversationId,
+            Consumer<AdvancedRagStage> stageConsumer) {
+
+        // 从 ChatMemory 读取历史消息，转换为文本供查询改写使用
+        String history = loadHistoryFromChatMemory(conversationId);
+
+        // 调用核心查询流程
+        AdvancedRagResult result = queryAdvancedWithDetailsInternal(
+                question, metadataFilter, history, conversationId, stageConsumer);
+
+        // 将本轮对话写入 ChatMemory（Redis），保证下次追问可读取
+        if (conversationId != null && !conversationId.isEmpty()) {
+            chatMemory.add(conversationId, new UserMessage(question));
+            chatMemory.add(conversationId, new AssistantMessage(result.answer()));
+            log.debug("Advanced RAG 会话 {} 已写入 ChatMemory", conversationId);
+        }
+
+        return result;
+    }
+
+    /**
+     * Advanced RAG 核心查询流程（内部方法）
+     */
+    private AdvancedRagResult queryAdvancedWithDetailsInternal(
+            String question,
+            Map<String, Object> metadataFilter,
             String history,
+            String conversationId,
             Consumer<AdvancedRagStage> stageConsumer) {
         log.info("=== Advanced RAG 查询开始 ===");
         log.info("原始问题: {}", question);
@@ -214,15 +255,15 @@ public class AdvancedRagService {
     /**
      * Advanced RAG 查询（兼容旧调用，只返回答案）
      */
-    public String queryAdvanced(String question, Map<String, Object> metadataFilter, String history) {
-        return queryAdvancedWithDetails(question, metadataFilter, history).answer();
+    public String queryAdvanced(String question, Map<String, Object> metadataFilter, String conversationId) {
+        return queryAdvancedWithDetails(question, metadataFilter, conversationId).answer();
     }
 
     /**
-     * Advanced RAG 查询（简化版，无元数据过滤）
+     * Advanced RAG 查询（简化版，无元数据过滤，无会话 ID）
      */
     public String queryAdvanced(String question) {
-        return queryAdvanced(question, null, null);
+        return queryAdvancedWithDetails(question, null, null).answer();
     }
 
     private void emitStage(
@@ -631,5 +672,45 @@ public class AdvancedRagService {
                 .getResult()
                 .getOutput()
                 .getContent();
+    }
+
+    /**
+     * 从 ChatMemory 加载历史消息并转换为文本格式
+     * <p>
+     * 转换逻辑：
+     * - 从 ChatMemory 读取最近 HISTORY_WINDOW_SIZE 条消息
+     * - 将 Message 对象转换为 "用户：xxx\n助手：xxx" 格式
+     * - 用于查询改写时的上下文推断
+     * <p>
+     * 此方法使得 Advanced RAG 不再依赖前端传的 history 文本，
+     * 而是统一从 ChatMemory（Redis）读取，实现了会话状态的统一管理。
+     *
+     * @param conversationId 会话 ID
+     * @return 历史文本（如 "用户：xxx\n助手：yyy"），无历史时返回空字符串
+     */
+    private String loadHistoryFromChatMemory(String conversationId) {
+        if (conversationId == null || conversationId.isEmpty()) {
+            return "";
+        }
+
+        try {
+            List<Message> messages = chatMemory.get(conversationId, HISTORY_WINDOW_SIZE);
+            if (messages == null || messages.isEmpty()) {
+                return "";
+            }
+
+            StringBuilder sb = new StringBuilder();
+            for (Message msg : messages) {
+                String role = (msg instanceof UserMessage) ? "用户" : "助手";
+                sb.append(role).append("：").append(msg.getContent()).append("\n");
+            }
+
+            log.debug("从 ChatMemory 加载会话 {} 最近 {} 条历史", conversationId, messages.size());
+            return sb.toString().trim();
+        } catch (Exception e) {
+            // ChatMemory 读取失败时降级为无历史，不影响当前查询
+            log.warn("从 ChatMemory 加载历史失败，降级为无历史: conversationId={}", conversationId, e);
+            return "";
+        }
     }
 }

@@ -551,6 +551,8 @@
     }
 
     async function streamAdvancedMessage(payload, pendingMessage) {
+        let nextConversationId = payload.conversationId || null;
+
         const res = await fetch('/api/chat/advanced/stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -582,6 +584,15 @@
 
         function handleAdvancedEvent(event) {
             const data = event.data ? JSON.parse(event.data) : {};
+
+            if (event.type === 'conversation') {
+                // 保存后端返回的 conversationId
+                nextConversationId = data.conversationId || nextConversationId;
+                conversationId = nextConversationId;
+                localStorage.setItem(conversationIdKey, conversationId);
+                updateConversationStatus();
+                return false;
+            }
 
             if (event.type === 'stage') {
                 const stage = {
@@ -644,7 +655,8 @@
         }
 
         return {
-            answer: answer || '未生成回答'
+            answer: answer || '未生成回答',
+            conversationId: nextConversationId
         };
     }
 
@@ -662,7 +674,7 @@
 
         try {
             const payload = ragMode === 'advanced'
-                ? { question: question, history: buildHistoryText() }
+                ? { question: question, conversationId: conversationId }
                 : { question: question, conversationId: conversationId };
 
             if (ragMode === 'advanced' && advancedFilterFileName) {
@@ -775,6 +787,12 @@
 
     function clearChat() {
         if (confirm('确定要开始一个新会话吗？')) {
+            // 通知后端清除 ChatMemory（Redis 中对应的会话数据）
+            if (conversationId) {
+                fetch('/api/chat/memory/' + conversationId, { method: 'DELETE' })
+                    .catch(() => {});  // 清除失败不阻塞前端操作
+            }
+
             document.getElementById('chatContainer').innerHTML = '';
             chatHistory = [];
             conversationId = null;
