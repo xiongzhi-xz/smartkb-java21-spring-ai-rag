@@ -69,7 +69,7 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 | --- | --- | --- | --- | --- | --- |
 | E01 | 接管 TicketRush 项目 | 通过 | 2 | 0 | 准确识别阶段、已完成/未完成、风险和下一步 |
 | E02 | 解释 RocketMQ 异步下单链路 | 通过 | 2 | 0 | 找到发送、消费、订单幂等、重试配置、补偿和测试证据 |
-| E03 | 解释 Redis Lua 防超卖方案 | 未执行 | - | - | - |
+| E03 | 解释 Redis Lua 防超卖方案 | 通过 | 2 | 0 | 找到 Lua 脚本、库存 Hash、幂等 Key、失败映射和策略差异 |
 | E04 | 判断 Docker Compose 启动前置条件 | 未执行 | - | - | - |
 | E05 | 生成 k6 最小压测步骤 | 未执行 | - | - | - |
 | E06 | 找出当前未完成任务 | 未执行 | - | - | - |
@@ -172,13 +172,13 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 
 | 字段 | 内容 |
 | --- | --- |
-| 状态 | 未执行 |
-| 得分 | - |
-| 耗时 | - |
-| 工具调用次数 | - |
-| 人工介入次数 | - |
-| 实际产出摘要 | - |
-| 失败原因 | - |
+| 状态 | 通过 |
+| 得分 | 2 |
+| 耗时 | 未单独计时 |
+| 工具调用次数 | 10（读取 Redis Lua 仓储、Lua 脚本、Key/字段定义、Redis Lock/MySQL 策略和相关测试） |
+| 人工介入次数 | 0 |
+| 实际产出摘要 | 核心方案位于 `RedisLuaTicketInventoryRepository` 和 `src/main/resources/lua/reserve_stock.lua`。库存结构是 `ticketrush:inventory:{skuId}` Hash，字段包括 `total`、`available`、`locked`、`sold`、`version`；幂等 Key 为 `ticketrush:idempotent:{idempotentKey}`。Lua 脚本在 Redis 单线程内原子完成幂等检查、库存 Key 存在性检查、可售库存校验、`available` 扣减、`locked` 增加、`version` 递增和幂等 Key 写入。返回码 `1/0/-1/-2` 分别映射为成功、可售库存不足、重复请求、库存不存在或未预热。与 Redis Lock 方案相比，Lua 方案不需要 `SET NX` 票档锁和解锁脚本，网络往返更少；与 MySQL 乐观锁相比，Lua 方案不依赖数据库 `version` 条件更新，热点票档写冲突压力更低。测试证据为 `RedisInventoryIntegrationTest` 覆盖 Lua 原子预占、重复请求不重复扣减，以及 Redis Lock 对比路径；应用层 `RushTicketApplicationServiceTest` 覆盖重复请求到业务异常、消息发送失败释放预占库存等边界。 |
+| 失败原因 | 无 |
 
 ### E04 判断 Docker Compose 启动前置条件
 
@@ -412,28 +412,29 @@ TicketRush 工作区出现 docker/rocketmq/store/ 未跟踪目录。
 | 指标 | 当前值 |
 | --- | --- |
 | Eval case 总数 | 10 |
-| 已执行 | 2 |
-| 通过 | 2 |
+| 已执行 | 3 |
+| 通过 | 3 |
 | 部分通过 | 0 |
 | 失败 | 0 |
-| 总分 | 4 / 20 |
+| 总分 | 6 / 20 |
 | 平均分 | 2.00 |
 | 总人工介入次数 | 0 |
 
 ## 8. 初步结论
 
-E01、E02 已通过，说明当前接管提示词可以稳定产出项目目标、阶段、已完成/未完成、工作区状态、风险点和单一下一步，也能在真实 Java 项目中跨应用层、基础设施层、配置、数据库和测试文件追踪一条异步业务链路。
+E01-E03 已通过，说明当前接管提示词可以稳定产出项目目标、阶段、已完成/未完成、工作区状态、风险点和单一下一步，也能在真实 Java 项目中跨应用层、基础设施层、配置、数据库和测试文件追踪核心业务链路。
 
 当前判断：
 
 - TicketRush 适合作为 SmartKB v2 第一批 eval 样本，项目复杂度足够覆盖 Java 后端接管场景。
 - 首个 case 验证了“项目理解、交接文档提取、git 状态读取、风险判断和下一步收敛”。
 - E02 验证了 RocketMQ 异步下单链路的上下文检索能力，能把消息发送、消费者绑定、订单幂等、失败重试、库存补偿和集成测试串起来。
+- E03 验证了 Redis Lua 防超卖方案的实现级解释能力，能定位脚本、Key 结构、失败码映射，并和 Redis Lock、MySQL 乐观锁方案区分。
 - E01 的下一步建议聚焦真实 k6 压测，符合 TicketRush 当前最缺真实数据报告的状态。
-- 暂不评测自动大规模改代码，后续 E03-E04 先继续验证代码上下文检索和解释能力。
+- 暂不评测自动大规模改代码，后续 E04 先继续验证配置上下文检索和解释能力。
 
 ## 9. 下一步
 
-1. 执行 E03-E04，继续验证 Redis Lua 和 Docker Compose 场景的代码上下文检索策略。
-2. 根据 E01-E02 结果固化项目接管与链路解释输出格式。
+1. 执行 E04，继续验证 Docker Compose 场景的配置上下文检索策略。
+2. 根据 E01-E03 结果固化项目接管与链路解释输出格式。
 3. 形成第一版 `Project Intake` 后端接口设计。
