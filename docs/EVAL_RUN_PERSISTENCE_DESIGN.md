@@ -2,7 +2,21 @@
 
 ## Current State
 
-Eval runs are stored in memory through `EvalCaseRunService`. This is enough for API shape, frontend workflow, aggregation, tests, and importing the existing TicketRush E01-E10 report. The limitation is that runs disappear after application restart.
+Eval runs use a store abstraction behind `EvalCaseRunService`.
+
+- Default mode: `InMemoryEvalCaseRunStore`
+- Optional mode: `JdbcEvalCaseRunStore`
+
+Enable JDBC persistence with:
+
+```yaml
+smartkb:
+  agent:
+    eval-run:
+      persistence: jdbc
+```
+
+The default remains memory so local tests and demos without PostgreSQL keep working.
 
 The project already has:
 
@@ -13,9 +27,9 @@ The project already has:
 
 The project does not currently use Flyway, Liquibase, JPA, or MyBatis.
 
-## Recommendation
+## Implemented Approach
 
-Use a small JDBC repository with idempotent table creation on startup. Do not introduce a migration framework for this narrow Agent-platform feature yet.
+Use a small JDBC store with idempotent table creation on startup. Do not introduce a migration framework for this narrow Agent-platform feature yet.
 
 Reasons:
 
@@ -53,21 +67,17 @@ CREATE INDEX IF NOT EXISTS idx_agent_eval_case_run_case
 
 CREATE INDEX IF NOT EXISTS idx_agent_eval_case_run_status
     ON agent_eval_case_run(status);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_eval_case_run_project_case_title
-    ON agent_eval_case_run(COALESCE(project_id, ''), case_id, title);
 ```
 
-## Repository Boundary
+## Store Boundary
 
-Add `EvalCaseRunRepository` with:
+The store abstraction is `EvalCaseRunStore` with:
 
 - `save(EvalCaseRunResponse run)`
 - `findById(String id)`
 - `findAll(String projectId, String caseId, EvalCaseRunStatus status)`
-- `existsByProjectIdAndCaseId(String projectId, String caseId)`
 
-Keep validation in `EvalCaseRunService`. The repository should only persist normalized domain responses.
+Validation stays in `EvalCaseRunService`. Stores only persist or retrieve normalized domain responses.
 
 ## JSON Fields
 
@@ -75,7 +85,7 @@ Store `evidencePaths` and `verificationCommands` as JSON text in v1 to avoid int
 
 ## Startup Behavior
 
-Create the table in a small bootstrap method guarded by `CREATE TABLE IF NOT EXISTS`. If the database is unavailable, fail fast in normal application startup because persisted eval runs are not a soft optional cache once enabled.
+When JDBC persistence is enabled, `JdbcEvalCaseRunStore` creates the table and indexes with `CREATE TABLE IF NOT EXISTS` / `CREATE INDEX IF NOT EXISTS`. If the database is unavailable in JDBC mode, startup should fail because persisted eval runs are no longer a soft optional cache.
 
 ## Test Plan
 
