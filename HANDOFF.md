@@ -292,3 +292,15 @@ Completed:
 Verified:
 - `mvn -Dtest=MemoryRecordServiceTest test`: 6 tests passed.
 - `mvn test`: 96 tests passed.
+
+## 2026-06-17 Work Log - AgentTask Normalization Test
+
+Completed:
+- Added AgentTask service coverage for trimming projectId, title, goal, transition note, and plan.
+- Verified blank riskLevel defaults to `medium`.
+- Verified blank transition values do not overwrite an existing plan.
+- Marked AgentTask normalization coverage in `SPEC.md`.
+
+Verified:
+- `mvn -Dtest=AgentTaskServiceTest test`: 6 tests passed.
+- `mvn test`: 97 tests passed.

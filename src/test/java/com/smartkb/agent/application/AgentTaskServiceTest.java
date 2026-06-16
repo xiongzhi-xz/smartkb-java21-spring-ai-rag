@@ -33,6 +33,46 @@ class AgentTaskServiceTest {
     }
 
     @Test
+    void shouldTrimFieldsAndPreserveExistingDetailsOnBlankTransitionValues() {
+        AgentTaskResponse task = service.create(new CreateAgentTaskRequest(
+                " ticket-project ",
+                " Run TicketRush k6 benchmark ",
+                " Run the first local k6 benchmark ",
+                " "
+        ));
+
+        assertEquals("ticket-project", task.projectId());
+        assertEquals("Run TicketRush k6 benchmark", task.title());
+        assertEquals("Run the first local k6 benchmark", task.goal());
+        assertEquals("medium", task.riskLevel());
+
+        task = service.transition(task.id(), new TransitionAgentTaskRequest(
+                AgentTaskStatus.PLAN,
+                " Plan ready ",
+                " Scope k6 scripts only ",
+                null,
+                null,
+                null
+        ));
+        assertEquals("Scope k6 scripts only", task.plan());
+        assertEquals("Plan ready", task.events().getLast().note());
+
+        task = service.transition(task.id(), new TransitionAgentTaskRequest(
+                AgentTaskStatus.EXECUTE,
+                " ",
+                " ",
+                " ",
+                " ",
+                null
+        ));
+
+        assertEquals(AgentTaskStatus.EXECUTE, task.status());
+        assertEquals("Scope k6 scripts only", task.plan());
+        assertEquals(3, task.events().size());
+        assertEquals(AgentTaskStatus.EXECUTE, task.events().getLast().status());
+    }
+
+    @Test
     void shouldMoveThroughRequiredTaskStates() {
         AgentTaskResponse task = service.create(new CreateAgentTaskRequest(
                 "ticket-project",
