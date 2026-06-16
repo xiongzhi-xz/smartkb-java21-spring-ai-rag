@@ -234,3 +234,15 @@ Verified:
 
 Still not verified:
 - Full running-app Redis/LLM behavior is still blocked by unavailable Docker Desktop endpoints and external model dependencies.
+
+## 2026-06-17 Work Log - Project Intake Text Extractor Tests
+
+Completed:
+- Added direct unit coverage for `ProjectIntakeTextExtractor`.
+- Covered Markdown section extraction up to the next level-two heading.
+- Covered paragraph, first meaningful line, bullet, numbered list, checked item, merge, limit, first item, and first non-blank helpers.
+- Marked the parser coverage in `SPEC.md`.
+
+Verified:
+- `mvn -Dtest=ProjectIntakeTextExtractorTest test`: 4 tests passed.
+- `mvn test`: 88 tests passed.
