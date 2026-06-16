@@ -459,7 +459,7 @@ GET /api/agent/eval/report
 - [x] Eval 报告前端面板
 - [ ] 10 个 TicketRush eval case 执行记录
 - [x] 成功率和失败原因统计 API
-- [ ] 面试讲法总结
+- [x] 面试讲法总结（见 `docs/EVAL_INTERVIEW_SUMMARY.md`）
 
 验收：
 
@@ -485,7 +485,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-继续阶段 F，下一步补面试讲法总结。
+继续阶段 F，下一步把既有 Markdown 评测结果导入结构化 Eval Run。
 ```
 
-不要马上写复杂多 Agent 编排。先让 eval 结果能结构化记录，再继续做报告聚合。
+不要马上写复杂多 Agent 编排。先让既有评测结果和 API 记录口径对齐，再考虑持久化。
