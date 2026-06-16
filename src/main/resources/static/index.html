@@ -693,7 +693,18 @@
             chatHistory.push({ role: 'user', content: question });
             chatHistory.push({ role: 'assistant', content: answer });
         } catch (e) {
-            updateAssistantMessage(pendingMessage, `请求失败：${e.message}`);
+            let errorMsg = e.message || '未知错误';
+            // AI 模型相关错误给出更友好的提示
+            if (errorMsg.includes('AI_MODEL_ERROR') || errorMsg.includes('AI 模型')
+                    || errorMsg.includes('api key') || errorMsg.includes('API Key')
+                    || errorMsg.includes('认证失败') || errorMsg.includes('模型不存在')
+                    || errorMsg.includes('额度不足') || errorMsg.includes('限流')
+                    || errorMsg.includes('无法连接') || errorMsg.includes('模型服务')
+                    || errorMsg.includes('503') || errorMsg.includes('401')) {
+                updateAssistantMessage(pendingMessage, '⚠ ' + errorMsg);
+            } else {
+                updateAssistantMessage(pendingMessage, `请求失败：${errorMsg}`);
+            }
         } finally {
             setChatBusy(false);
             input.focus();
