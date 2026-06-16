@@ -47,6 +47,7 @@ public class RagService {
     private final EmbeddingService embeddingService;
     private final VectorStoreService vectorStoreService;
     private final ChatClient chatClient;
+    private final SmartKbMetricsService metricsService;
 
     /**
      * 添加文档到知识库（完整流程：解析 → Embedding → 存储）
@@ -100,6 +101,7 @@ public class RagService {
             VirtualThreadInspector.logThreadInfo("文档处理完成",
                     String.format("文件: %s, chunks: %d, 耗时: %d ms", resource.getFilename(), chunks.size(), duration));
 
+            metricsService.recordDocumentUpload(chunks.size());
             return chunks.size();
 
         } catch (Exception e) {

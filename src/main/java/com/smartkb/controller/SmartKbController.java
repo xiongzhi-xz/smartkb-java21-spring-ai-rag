@@ -7,6 +7,7 @@ import com.smartkb.domain.ReferenceChunk;
 import com.smartkb.service.AdvancedRagService;
 import com.smartkb.service.DocumentManagementService;
 import com.smartkb.service.RagService;
+import com.smartkb.service.SmartKbMetricsService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,7 @@ public class SmartKbController {
     private final AdvancedRagService advancedRagService;
     private final DocumentManagementService documentManagementService;
     private final ChatMemory chatMemory;
+    private final SmartKbMetricsService metricsService;
     private final ObjectMapper objectMapper;
 
     /**
@@ -174,6 +176,7 @@ public class SmartKbController {
         log.info("接收多轮对话请求: conversationId={}, question={}",
                 request.getConversationId(),
                 request.getQuestion().substring(0, Math.min(50, request.getQuestion().length())));
+        metricsService.recordConversationRequest();
 
         try {
             // 如果没有提供 conversationId，生成一个新的

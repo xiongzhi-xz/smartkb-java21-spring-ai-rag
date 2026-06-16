@@ -40,6 +40,36 @@ services:
     networks:
       - smartkb-network
 
+  # SmartKB Spring Boot 应用
+  smartkb-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartkb-app
+    ports:
+      - "8080:8080"
+    environment:
+      # 使用 Docker 网络内部 DNS 连接 PostgreSQL 和 Redis
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartkb
+      SPRING_DATA_REDIS_HOST: redis
+      # AI 模型配置（通过环境变量注入，不硬编码）
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-your-api-key-here}
+      TRANSIT_BASE_URL: ${TRANSIT_BASE_URL:-https://elysiver.h-e.top}
+      AI_MODEL: ${AI_MODEL:-deepseek-v4-flash}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - smartkb-network
+
   # Prometheus - 指标采集
   prometheus:
     image: prom/prometheus:latest
@@ -52,6 +82,8 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - smartkb-app
     networks:
       - smartkb-network
 
@@ -66,6 +98,8 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin123
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
     networks:

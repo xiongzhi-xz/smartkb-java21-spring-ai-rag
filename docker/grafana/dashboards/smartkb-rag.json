@@ -1,0 +1,76 @@
+﻿{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "fieldConfig": { "defaults": { "unit": "none" } },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "smartkb_rag_advanced_requests_total", "legendFormat": "Total" },
+        { "expr": "smartkb_rag_advanced_requests_success_total", "legendFormat": "Success" },
+        { "expr": "smartkb_rag_advanced_requests_failed_total", "legendFormat": "Failed" }
+      ],
+      "title": "Advanced RAG Requests", "type": "stat"
+    },
+    {
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [{ "expr": "smartkb_documents_uploaded_total", "legendFormat": "Uploads" }],
+      "title": "Document Uploads", "type": "stat"
+    },
+    {
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [{ "expr": "smartkb_documents_chunks_total", "legendFormat": "Chunks" }],
+      "title": "Document Chunks", "type": "stat"
+    },
+    {
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "targets": [{ "expr": "smartkb_chat_conversation_requests_total", "legendFormat": "Chat" }],
+      "title": "Chat Requests", "type": "stat"
+    },
+    {
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "targets": [{ "expr": "smartkb_chat_ai_calls_total", "legendFormat": "AI Calls" }],
+      "title": "AI Model Calls", "type": "stat"
+    },
+    {
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(smartkb_rag_advanced_duration_seconds_bucket[5m]))", "legendFormat": "P50" },
+        { "expr": "histogram_quantile(0.95, rate(smartkb_rag_advanced_duration_seconds_bucket[5m]))", "legendFormat": "P95" },
+        { "expr": "histogram_quantile(0.99, rate(smartkb_rag_advanced_duration_seconds_bucket[5m]))", "legendFormat": "P99" }
+      ],
+      "title": "Advanced RAG Duration (P50/P95/P99)", "type": "timeseries"
+    },
+    {
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(smartkb_chat_ai_call_duration_seconds_bucket[5m]))", "legendFormat": "P50" },
+        { "expr": "histogram_quantile(0.95, rate(smartkb_chat_ai_call_duration_seconds_bucket[5m]))", "legendFormat": "P95" }
+      ],
+      "title": "AI Model Call Duration (P50/P95)", "type": "timeseries"
+    },
+    {
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "rate(smartkb_rag_advanced_stage_duration_seconds_sum{stage=\"rewrite\"}[5m]) / rate(smartkb_rag_advanced_stage_duration_seconds_count{stage=\"rewrite\"}[5m])", "legendFormat": "Rewrite" },
+        { "expr": "rate(smartkb_rag_advanced_stage_duration_seconds_sum{stage=\"retrieval\"}[5m]) / rate(smartkb_rag_advanced_stage_duration_seconds_count{stage=\"retrieval\"}[5m])", "legendFormat": "Retrieval" },
+        { "expr": "rate(smartkb_rag_advanced_stage_duration_seconds_sum{stage=\"rerank\"}[5m]) / rate(smartkb_rag_advanced_stage_duration_seconds_count{stage=\"rerank\"}[5m])", "legendFormat": "Rerank" },
+        { "expr": "rate(smartkb_rag_advanced_stage_duration_seconds_sum{stage=\"generation\"}[5m]) / rate(smartkb_rag_advanced_stage_duration_seconds_count{stage=\"generation\"}[5m])", "legendFormat": "Generation" }
+      ],
+      "title": "RAG Stage Duration Comparison", "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["smartkb", "rag"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "SmartKB RAG Dashboard",
+  "uid": "smartkb-rag",
+  "version": 1
+}

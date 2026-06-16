@@ -69,6 +69,7 @@ public class AdvancedRagService {
     private final VectorStoreService vectorStoreService;
     private final ChatModel chatModel;
     private final ChatMemory chatMemory;
+    private final SmartKbMetricsService metricsService;
 
     /**
      * 构造函数
@@ -77,16 +78,19 @@ public class AdvancedRagService {
      * @param vectorStoreService    向量存储服务
      * @param chatModel             OpenAI 兼容 ChatModel（Advanced RAG 专用，避免触发默认 RAG Advisor）
      * @param chatMemory            会话记忆（Redis 持久化）
+     * @param metricsService        可观测性指标服务
      */
     public AdvancedRagService(
             QueryRewritingService queryRewritingService,
             VectorStoreService vectorStoreService,
             @Qualifier("openAiChatModel") ChatModel chatModel,
-            ChatMemory chatMemory) {
+            ChatMemory chatMemory,
+            SmartKbMetricsService metricsService) {
         this.queryRewritingService = queryRewritingService;
         this.vectorStoreService = vectorStoreService;
         this.chatModel = chatModel;
         this.chatMemory = chatMemory;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -244,9 +248,14 @@ public class AdvancedRagService {
             log.info("Advanced RAG 耗时: total={}ms, rewrite={}ms, retrieval={}ms, filter={}ms, rerank={}ms, generation={}ms",
                     totalMs, rewriteMs, retrievalMs, filterMs, rerankMs, generationMs);
             VirtualThreadInspector.logThreadInfo("Advanced RAG 查询完成");
+            metricsService.recordAdvancedRagRequest(
+                    rewriteMs, retrievalMs, filterMs, rerankMs, generationMs, totalMs, true);
             return new AdvancedRagResult(answer, rewrittenQuery, sources, references, retrievedDocs.size(), metrics);
 
         } catch (Exception e) {
+            long totalMs = elapsedMs(totalStart);
+            metricsService.recordAdvancedRagRequest(
+                    rewriteMs, retrievalMs, filterMs, rerankMs, generationMs, totalMs, false);
             log.error("Advanced RAG 查询失败", e);
             throw new RuntimeException("Advanced RAG 查询失败: " + e.getMessage(), e);
         }

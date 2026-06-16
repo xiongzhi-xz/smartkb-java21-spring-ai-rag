@@ -50,7 +50,7 @@ class AdvancedRagServiceTest {
     @SuppressWarnings("unchecked")
     void retrieveCandidatesMergesKeywordSearchWithVectorSearch() throws Exception {
         VectorStoreService vectorStoreService = mock(VectorStoreService.class);
-        AdvancedRagService service = new AdvancedRagService(null, vectorStoreService, null, null);
+        AdvancedRagService service = new AdvancedRagService(null, vectorStoreService, null, null, null);
         Map<String, Object> metadataFilter = Map.of("fileName", "advanced-rag-demo.md");
 
         Document vectorHit = new Document(
@@ -92,7 +92,7 @@ class AdvancedRagServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void keywordSearchTermsPutDomainAnchorsBeforeGenericNgrams() throws Exception {
-        AdvancedRagService service = new AdvancedRagService(null, null, null, null);
+        AdvancedRagService service = new AdvancedRagService(null, null, null, null, null);
         Method method = AdvancedRagService.class.getDeclaredMethod(
                 "buildKeywordSearchTerms",
                 String.class,
@@ -174,7 +174,7 @@ class AdvancedRagServiceTest {
     void queryAdvancedReportsProgressStagesWhenNoDocumentsFound() {
         QueryRewritingService queryRewritingService = mock(QueryRewritingService.class);
         VectorStoreService vectorStoreService = mock(VectorStoreService.class);
-        AdvancedRagService service = new AdvancedRagService(queryRewritingService, vectorStoreService, null, null);
+        AdvancedRagService service = new AdvancedRagService(queryRewritingService, vectorStoreService, null, null, null);
 
         when(queryRewritingService.rewriteQuery(anyString(), any()))
                 .thenReturn("查询改写在 Advanced RAG 中解决什么问题");
@@ -213,7 +213,7 @@ class AdvancedRagServiceTest {
 
     @SuppressWarnings("unchecked")
     private List<Document> rerank(List<Document> documents, String originalQuery, String rewrittenQuery) throws Exception {
-        AdvancedRagService service = new AdvancedRagService(null, null, null, null);
+        AdvancedRagService service = new AdvancedRagService(null, null, null, null, null);
         Method rerank = AdvancedRagService.class.getDeclaredMethod(
                 "rerank",
                 List.class,
