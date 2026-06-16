@@ -373,8 +373,8 @@ GET /api/agent/eval/report
 产出：
 
 - [x] `docs/AGENT_PLATFORM_SPEC.md`
-- [ ] `docs/agent-eval-report.md` 模板
-- [ ] TicketRush 10 个 eval case 初稿
+- [x] `docs/agent-eval-report.md` 模板
+- [x] TicketRush 10 个 eval case 初稿
 
 验收：
 
@@ -471,7 +471,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-创建 docs/agent-eval-report.md 模板，并整理 TicketRush 10 个 eval case。
+手动执行 E01 接管 TicketRush 项目，验证项目接管提示词和输出格式。
 ```
 
-不要马上写复杂 Agent 代码。先把评测样本设计好，后续每个功能都能用 eval 证明价值。
+不要马上写复杂 Agent 代码。先用 eval case 校准输出格式，后续每个功能都能用评测结果证明价值。
