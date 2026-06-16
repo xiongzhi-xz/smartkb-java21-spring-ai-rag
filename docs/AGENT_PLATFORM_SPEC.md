@@ -375,6 +375,8 @@ GET /api/agent/eval/report
 - [x] `docs/AGENT_PLATFORM_SPEC.md`
 - [x] `docs/agent-eval-report.md` 模板
 - [x] TicketRush 10 个 eval case 初稿
+- [x] TicketRush E01-E10 eval 执行记录（20/20）
+- [x] `docs/PROJECT_INTAKE_API_DESIGN.md`
 
 验收：
 
@@ -385,6 +387,7 @@ GET /api/agent/eval/report
 
 产出：
 
+- [x] Project Intake API 设计文档
 - [ ] 项目路径输入
 - [ ] 文件读取白名单
 - [ ] Git status/log 读取
@@ -471,7 +474,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-手动执行 E01 接管 TicketRush 项目，验证项目接管提示词和输出格式。
+实现 Project Intake 后端接口骨架：路径校验、白名单读取、Git status/log 读取和结构化接管响应。
 ```
 
-不要马上写复杂 Agent 代码。先用 eval case 校准输出格式，后续每个功能都能用评测结果证明价值。
+不要马上写复杂多 Agent 编排。先把 E01-E10 已校准的输出格式落成一个可调用的后端接口，后续每个功能都能用评测结果证明价值。
