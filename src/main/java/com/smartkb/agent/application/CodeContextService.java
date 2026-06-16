@@ -1,6 +1,8 @@
 package com.smartkb.agent.application;
 
 import com.smartkb.agent.domain.CodeContextException;
+import com.smartkb.agent.domain.CodeChunkRequest;
+import com.smartkb.agent.domain.CodeChunkResponse;
 import com.smartkb.agent.domain.CodeDiffRequest;
 import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
@@ -39,6 +41,8 @@ public class CodeContextService {
     private static final int DEFAULT_MAX_RESULTS = 100;
     private static final int DEFAULT_MAX_FILE_BYTES = 1_048_576;
     private static final int DEFAULT_MAX_DIFF_LINES = 200;
+    private static final int DEFAULT_MAX_CHUNKS = 100;
+    private static final int DEFAULT_MAX_CHUNK_CHARS = 2_000;
     private static final Pattern HUNK_HEADER = Pattern.compile("@@ -(\\d+)(?:,\\d+)? \\+(\\d+)(?:,\\d+)? @@.*");
 
     private final ProjectPathGuard pathGuard;
@@ -141,6 +145,33 @@ public class CodeContextService {
                 .map(entry -> new CodeDiffResponse.DiffFile(entry.getKey(), entry.getValue()))
                 .toList();
         return new CodeDiffResponse(true, normalizePath(root), true, query, files, skippedFiles, warnings);
+    }
+
+    public CodeChunkResponse chunks(CodeChunkRequest request) {
+        CodeChunkRequest safeRequest = request == null
+                ? new CodeChunkRequest(null, null, null, null)
+                : request;
+        Path root = pathGuard.validateProjectRoot(safeRequest.rootPath());
+        int maxChunks = positiveOrDefault(safeRequest.maxChunks(), DEFAULT_MAX_CHUNKS);
+        int maxFileBytes = positiveOrDefault(safeRequest.maxFileBytes(), DEFAULT_MAX_FILE_BYTES);
+        int maxChunkChars = positiveOrDefault(safeRequest.maxChunkChars(), DEFAULT_MAX_CHUNK_CHARS);
+
+        List<CodeTreeResponse.CodeFile> files = new ArrayList<>();
+        List<CodeChunkResponse.CodeChunk> chunks = new ArrayList<>();
+        List<ProjectIntakeResponse.SkippedFile> skippedFiles = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        scanTree(root, root, 0, DEFAULT_MAX_DEPTH, DEFAULT_MAX_FILES, files, skippedFiles, warnings);
+
+        for (CodeTreeResponse.CodeFile file : files) {
+            if (chunks.size() >= maxChunks) {
+                warnings.add("max chunks reached");
+                break;
+            }
+            Path path = root.resolve(file.path()).normalize();
+            addChunks(root, path, maxChunks, maxFileBytes, maxChunkChars, chunks, skippedFiles, warnings);
+        }
+
+        return new CodeChunkResponse(true, normalizePath(root), chunks, skippedFiles, warnings);
     }
 
     private void scanTree(
@@ -250,6 +281,47 @@ public class CodeContextService {
             skippedFiles.add(new ProjectIntakeResponse.SkippedFile(relative, "non utf-8 file"));
         } catch (IOException exception) {
             warnings.add("failed to search file: " + relative);
+        }
+    }
+
+    private void addChunks(
+            Path root,
+            Path file,
+            int maxChunks,
+            int maxFileBytes,
+            int maxChunkChars,
+            List<CodeChunkResponse.CodeChunk> chunks,
+            List<ProjectIntakeResponse.SkippedFile> skippedFiles,
+            List<String> warnings
+    ) {
+        String relative = pathGuard.toRelative(root, file);
+        try {
+            if (Files.size(file) > maxFileBytes) {
+                skippedFiles.add(new ProjectIntakeResponse.SkippedFile(relative, "file too large"));
+                return;
+            }
+            List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+            int startLine = 1;
+            StringBuilder current = new StringBuilder();
+            for (int index = 0; index < lines.size(); index++) {
+                if (chunks.size() >= maxChunks) {
+                    return;
+                }
+                String line = lines.get(index);
+                if (!current.isEmpty() && current.length() + line.length() + 1 > maxChunkChars) {
+                    chunks.add(new CodeChunkResponse.CodeChunk(relative, startLine, index, current.toString().strip()));
+                    current.setLength(0);
+                    startLine = index + 1;
+                }
+                current.append(line).append('\n');
+            }
+            if (!current.isEmpty() && chunks.size() < maxChunks) {
+                chunks.add(new CodeChunkResponse.CodeChunk(relative, startLine, lines.size(), current.toString().strip()));
+            }
+        } catch (MalformedInputException exception) {
+            skippedFiles.add(new ProjectIntakeResponse.SkippedFile(relative, "non utf-8 file"));
+        } catch (IOException exception) {
+            warnings.add("failed to chunk file: " + relative);
         }
     }
 

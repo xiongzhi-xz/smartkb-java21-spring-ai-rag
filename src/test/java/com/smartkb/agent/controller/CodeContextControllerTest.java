@@ -1,6 +1,8 @@
 package com.smartkb.agent.controller;
 
 import com.smartkb.agent.application.CodeContextService;
+import com.smartkb.agent.domain.CodeChunkRequest;
+import com.smartkb.agent.domain.CodeChunkResponse;
 import com.smartkb.agent.domain.CodeContextException;
 import com.smartkb.agent.domain.CodeDiffRequest;
 import com.smartkb.agent.domain.CodeDiffResponse;
@@ -138,6 +140,38 @@ class CodeContextControllerTest {
         verify(codeContextService).diff(captor.capture());
         assertEquals("reserveTicket", captor.getValue().query());
         assertEquals(20, captor.getValue().maxLines());
+    }
+
+    @Test
+    void shouldReturnCodeChunks() throws Exception {
+        when(codeContextService.chunks(any(CodeChunkRequest.class))).thenReturn(new CodeChunkResponse(
+                true,
+                "E:/project/work/job/demo",
+                List.of(new CodeChunkResponse.CodeChunk("src/main/java/App.java", 1, 3, "class App {}")),
+                List.of(),
+                List.of()
+        ));
+
+        mockMvc.perform(post("/api/agent/code/chunks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "rootPath": "E:/project/work/job/demo",
+                                  "maxChunks": 20,
+                                  "maxFileBytes": 65536,
+                                  "maxChunkChars": 2000
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.chunks[0].path").value("src/main/java/App.java"))
+                .andExpect(jsonPath("$.chunks[0].startLine").value(1))
+                .andExpect(jsonPath("$.chunks[0].endLine").value(3));
+
+        ArgumentCaptor<CodeChunkRequest> captor = ArgumentCaptor.forClass(CodeChunkRequest.class);
+        verify(codeContextService).chunks(captor.capture());
+        assertEquals(20, captor.getValue().maxChunks());
+        assertEquals(2000, captor.getValue().maxChunkChars());
     }
 
     @Test

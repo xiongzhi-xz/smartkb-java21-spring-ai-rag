@@ -439,6 +439,7 @@ GET /api/agent/eval/report
 - [x] 文件树索引
 - [x] `rg` 关键词检索
 - [x] Git diff 检索
+- [x] 代码 chunk 提取
 - [ ] RAG 语义补充
 - [x] 来源路径展示
 

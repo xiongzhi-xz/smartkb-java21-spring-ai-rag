@@ -1,6 +1,8 @@
 package com.smartkb.agent.application;
 
 import com.smartkb.agent.domain.CodeContextException;
+import com.smartkb.agent.domain.CodeChunkRequest;
+import com.smartkb.agent.domain.CodeChunkResponse;
 import com.smartkb.agent.domain.CodeDiffRequest;
 import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
@@ -116,6 +118,34 @@ class CodeContextServiceTest {
                         && line.content().contains("reserveTicket"))));
         assertFalse(response.files().stream().anyMatch(file -> ".env".equals(file.path())));
         assertTrue(response.skippedFiles().stream().anyMatch(file -> ".env".equals(file.path())));
+    }
+
+    @Test
+    void shouldBuildCodeChunksWithLineRanges() throws IOException {
+        write("src/main/java/com/example/App.java", """
+                class App {
+                    void first() {}
+                    void second() {}
+                    void third() {}
+                }
+                """);
+        write(".env.local", "TOKEN=secret\n");
+
+        CodeChunkResponse response = service().chunks(new CodeChunkRequest(
+                tempDir.toString(),
+                10,
+                65_536,
+                45
+        ));
+
+        assertTrue(response.success());
+        assertTrue(response.chunks().stream()
+                .anyMatch(chunk -> chunk.path().equals("src/main/java/com/example/App.java")
+                        && chunk.startLine() == 1
+                        && chunk.content().contains("class App")));
+        assertTrue(response.chunks().size() > 1);
+        assertFalse(response.chunks().stream().anyMatch(chunk -> ".env.local".equals(chunk.path())));
+        assertTrue(response.skippedFiles().stream().anyMatch(file -> ".env.local".equals(file.path())));
     }
 
     private CodeContextService service() {
