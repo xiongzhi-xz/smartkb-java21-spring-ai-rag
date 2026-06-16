@@ -394,7 +394,7 @@ GET /api/agent/eval/report
 - [x] Git status/log 读取
 - [x] `README/SPEC/AGENTS/HANDOFF/pom.xml` 摘要
 - [x] 接管摘要输出
-- [ ] 前端最小入口
+- [x] 前端最小入口
 
 验收：
 
@@ -476,7 +476,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-为 Project Intake 增加前端最小入口：项目路径输入、接管按钮、摘要/风险/证据面板。
+为 Project Intake 增加 Web 层测试，并在本地可启动环境下验证前端入口能调用接管接口。
 ```
 
-不要马上写复杂多 Agent 编排。先把 E01-E10 已校准的输出格式变成一个可演示的端到端入口，后续每个功能都能用评测结果证明价值。
+不要马上写复杂多 Agent 编排。先把 Project Intake 的后端接口和前端入口验证扎实，后续每个功能都能用评测结果证明价值。

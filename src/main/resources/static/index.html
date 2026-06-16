@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
-        .chat-container { height: calc(100vh - 140px); }
+        .chat-container { min-height: 0; }
         .message { max-width: 80%; }
         .user-msg { background-color: #3b82f6; color: white; }
         .ai-msg { background-color: #f3f4f6; }
@@ -70,6 +70,10 @@
                         class="hidden max-w-52 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500">
                 </select>
                 <span id="conversationStatus" class="max-w-52 truncate text-xs text-gray-400"></span>
+                <button onclick="toggleProjectIntakePanel()"
+                        class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-folder-tree"></i> 项目接管
+                </button>
                 <button onclick="clearChat()"
                         class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1">
                     <i class="fa-solid fa-trash"></i> 新会话
@@ -77,7 +81,38 @@
             </div>
         </div>
 
-        <div id="chatContainer" class="chat-container p-6 overflow-y-auto bg-gray-50 space-y-6">
+        <div id="projectIntakePanel" class="hidden border-b bg-white px-6 py-4">
+            <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+                <div class="space-y-3">
+                    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(220px,320px)_auto]">
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">项目路径</span>
+                            <input id="projectIntakePath" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="E:/project/work/job/ticketrush-java21-high-concurrency"
+                                   placeholder="E:/project/work/job/example-project">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">接管目标</span>
+                            <input id="projectIntakeGoal" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="接管项目，判断下一步只做什么"
+                                   placeholder="接管项目，判断下一步">
+                        </label>
+                        <div class="flex items-end">
+                            <button id="projectIntakeButton" onclick="runProjectIntake()"
+                                    class="h-10 min-w-28 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
+                                <i class="fa-solid fa-play mr-1.5"></i> 接管
+                            </button>
+                        </div>
+                    </div>
+                    <div id="projectIntakeResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                </div>
+                <div id="projectIntakeMeta" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+            </div>
+        </div>
+
+        <div id="chatContainer" class="chat-container flex-1 p-6 overflow-y-auto bg-gray-50 space-y-6">
             <!-- 聊天记录将在这里显示 -->
         </div>
 
@@ -127,6 +162,7 @@
     let uploadedDocuments = [];
     let selectedDocumentFileName = null;
     let chatBusy = false;
+    let projectIntakeBusy = false;
     const documentDetailWidthKey = 'smartkb.documentDetailWidth';
     const documentDetailMinWidth = 420;
     const documentDetailMaxWidth = 900;
@@ -143,6 +179,190 @@
 
     function renderText(value) {
         return escapeHtml(value).replace(/\n/g, '<br>');
+    }
+
+    function renderProjectIntakeList(items, emptyText = '暂无') {
+        if (!Array.isArray(items) || items.length === 0) {
+            return `<p class="text-gray-400">${escapeHtml(emptyText)}</p>`;
+        }
+
+        return `
+            <ul class="space-y-1.5">
+                ${items.map(item => `
+                    <li class="flex gap-2 text-gray-700">
+                        <i class="fa-solid fa-angle-right mt-1 text-[10px] text-gray-400"></i>
+                        <span>${renderText(item)}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+    }
+
+    function renderProjectIntakeValue(value, emptyText = '未识别') {
+        if (value === null || value === undefined || String(value).trim() === '') {
+            return `<span class="text-gray-400">${escapeHtml(emptyText)}</span>`;
+        }
+        return renderText(value);
+    }
+
+    function renderProjectIntakeSection(title, bodyHtml) {
+        return `
+            <section class="rounded-lg border border-gray-200 bg-white p-3">
+                <h4 class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-gray-500">
+                    <i class="fa-solid fa-circle text-[6px] text-blue-500"></i>${escapeHtml(title)}
+                </h4>
+                <div class="text-sm leading-6 text-gray-700">${bodyHtml}</div>
+            </section>
+        `;
+    }
+
+    function toggleProjectIntakePanel() {
+        const panel = document.getElementById('projectIntakePanel');
+        panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            document.getElementById('projectIntakePath').focus();
+        }
+    }
+
+    function setProjectIntakeLoading(isLoading) {
+        projectIntakeBusy = isLoading;
+        const button = document.getElementById('projectIntakeButton');
+        button.disabled = isLoading;
+        button.innerHTML = isLoading
+            ? '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 接管中'
+            : '<i class="fa-solid fa-play mr-1.5"></i> 接管';
+    }
+
+    function renderProjectIntakeResult(data) {
+        const result = document.getElementById('projectIntakeResult');
+        const meta = document.getElementById('projectIntakeMeta');
+        const project = data.project || {};
+        const intake = data.intake || {};
+        const workingTree = intake.workingTree || {};
+        const commits = Array.isArray(workingTree.latestCommits) ? workingTree.latestCommits : [];
+        const statusText = workingTree.isGitRepository === false
+            ? '不是 Git 仓库'
+            : workingTree.hasUncommittedChanges ? '有未提交改动' : '工作区干净';
+
+        result.classList.remove('hidden');
+        meta.classList.remove('hidden');
+        result.innerHTML = `
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h3 class="font-semibold text-gray-800">${renderProjectIntakeValue(project.name, '未命名项目')}</h3>
+                    <p class="mt-0.5 break-all text-xs text-gray-500">${renderProjectIntakeValue(project.rootPath, '无路径')}</p>
+                </div>
+                <span class="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                    ${escapeHtml(statusText)}
+                </span>
+            </div>
+            <div class="grid gap-3 lg:grid-cols-2">
+                ${renderProjectIntakeSection('当前目标', renderProjectIntakeValue(intake.currentGoal))}
+                ${renderProjectIntakeSection('当前阶段', renderProjectIntakeValue(intake.currentStage))}
+                ${renderProjectIntakeSection('已完成', renderProjectIntakeList(intake.completed))}
+                ${renderProjectIntakeSection('未完成', renderProjectIntakeList(intake.unfinished))}
+                ${renderProjectIntakeSection('风险点', renderProjectIntakeList(intake.risks))}
+                ${renderProjectIntakeSection('下一步只做', renderProjectIntakeValue(intake.nextStepOnly))}
+                ${renderProjectIntakeSection('技术栈', renderProjectIntakeList(project.detectedStack))}
+                ${renderProjectIntakeSection('验证命令', renderProjectIntakeList(project.testCommands))}
+                ${renderProjectIntakeSection('Git 状态', `
+                    <p>${escapeHtml(statusText)}</p>
+                    <p class="mt-1 break-words text-xs text-gray-500">${renderProjectIntakeValue(workingTree.statusShort, '无 git status 输出')}</p>
+                `)}
+                ${renderProjectIntakeSection('最新提交', renderProjectIntakeList(commits))}
+            </div>
+        `;
+
+        const evidenceItems = Array.isArray(data.evidence) ? data.evidence : [];
+        const readLog = data.readLog || {};
+        const readFiles = Array.isArray(readLog.readFiles) ? readLog.readFiles : [];
+        const commands = Array.isArray(readLog.commands) ? readLog.commands : [];
+        const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+
+        meta.innerHTML = `
+            <div class="space-y-4">
+                <section>
+                    <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">证据</h3>
+                    ${evidenceItems.length === 0 ? '<p class="text-gray-400">暂无</p>' : `
+                        <div class="space-y-2">
+                            ${evidenceItems.map(item => `
+                                <div class="rounded-md border border-gray-200 bg-white p-2">
+                                    <p class="text-xs font-medium text-gray-700">${renderProjectIntakeValue(item.type, 'evidence')}</p>
+                                    <p class="mt-1 break-all text-xs text-gray-500">${renderProjectIntakeValue(item.path || item.command, '无来源')}</p>
+                                    <p class="mt-1 text-xs text-gray-600">${renderProjectIntakeValue(item.summary, '无摘要')}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </section>
+                <section>
+                    <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">读取记录</h3>
+                    <div class="max-h-40 overflow-auto rounded-md border border-gray-200 bg-white p-2">
+                        ${renderProjectIntakeList(readFiles.concat(commands), '暂无读取记录')}
+                    </div>
+                </section>
+                <section>
+                    <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">警告</h3>
+                    ${renderProjectIntakeList(warnings, '暂无警告')}
+                </section>
+            </div>
+        `;
+    }
+
+    async function runProjectIntake() {
+        if (projectIntakeBusy) return;
+
+        const rootPathInput = document.getElementById('projectIntakePath');
+        const goalInput = document.getElementById('projectIntakeGoal');
+        const rootPath = rootPathInput.value.trim();
+        const goal = goalInput.value.trim();
+        const result = document.getElementById('projectIntakeResult');
+        const meta = document.getElementById('projectIntakeMeta');
+
+        if (!rootPath) {
+            rootPathInput.focus();
+            result.classList.remove('hidden');
+            result.innerHTML = '<p class="text-sm text-red-600">请先输入项目路径。</p>';
+            return;
+        }
+
+        setProjectIntakeLoading(true);
+        result.classList.remove('hidden');
+        meta.classList.add('hidden');
+        result.innerHTML = `
+            <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i class="fa-solid fa-spinner fa-spin text-blue-600"></i>
+                正在读取项目文档、Git 状态和最近提交...
+            </div>
+        `;
+
+        try {
+            const res = await fetch('/api/agent/projects/intake', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rootPath,
+                    goal,
+                    includeCodeTree: true,
+                    maxFiles: 200,
+                    maxFileBytes: 65536
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.success === false) {
+                throw new Error(data.error || data.message || `项目接管失败（HTTP ${res.status}）`);
+            }
+            renderProjectIntakeResult(data);
+        } catch (e) {
+            result.classList.remove('hidden');
+            result.innerHTML = `
+                <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, '项目接管失败')}
+                </div>
+            `;
+        } finally {
+            setProjectIntakeLoading(false);
+        }
     }
 
     function formatDurationMs(value) {
