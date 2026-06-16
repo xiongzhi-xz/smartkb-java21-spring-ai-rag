@@ -68,7 +68,7 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 | 编号 | 任务 | 状态 | 得分 | 人工介入 | 备注 |
 | --- | --- | --- | --- | --- | --- |
 | E01 | 接管 TicketRush 项目 | 通过 | 2 | 0 | 准确识别阶段、已完成/未完成、风险和下一步 |
-| E02 | 解释 RocketMQ 异步下单链路 | 未执行 | - | - | - |
+| E02 | 解释 RocketMQ 异步下单链路 | 通过 | 2 | 0 | 找到发送、消费、订单幂等、重试配置、补偿和测试证据 |
 | E03 | 解释 Redis Lua 防超卖方案 | 未执行 | - | - | - |
 | E04 | 判断 Docker Compose 启动前置条件 | 未执行 | - | - | - |
 | E05 | 生成 k6 最小压测步骤 | 未执行 | - | - | - |
@@ -140,13 +140,13 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 
 | 字段 | 内容 |
 | --- | --- |
-| 状态 | 未执行 |
-| 得分 | - |
-| 耗时 | - |
-| 工具调用次数 | - |
-| 人工介入次数 | - |
-| 实际产出摘要 | - |
-| 失败原因 | - |
+| 状态 | 通过 |
+| 得分 | 2 |
+| 耗时 | 未单独计时 |
+| 工具调用次数 | 19（检索 RocketMQ/Order/幂等/补偿关键词，读取关键源码、配置、测试和工作区状态） |
+| 人工介入次数 | 0 |
+| 实际产出摘要 | 关键链路为 `RushTicketApplicationService` 库存预占成功后构造 `OrderCreateMessage`，通过 `OrderCreateMessagePublisher` 抽象交给 `RocketMqOrderCreateMessagePublisher` 使用 `StreamBridge` 发送到 `orderCreate-out-0`，消息 header 写入 `KEYS=idempotentKey` 和 `TAGS=order-create`。`application.yml` 将 `orderCreate-out-0` 与 `orderCreateConsumer-in-0` 绑定到 `ticketrush-order-create-topic`，消费者组为 `ticketrush-order-consumer-group`，并配置 `max-attempts=3`。`RocketMqOrderCreateConsumerConfig` 暴露 `orderCreateConsumer`，委托 `OrderApplicationService#createOrder` 创建 `PENDING` 订单。消费幂等基于 `TicketOrderRepository#existsByIdempotentKey`，数据库层还有 `uk_ticket_order_idempotent_key` 唯一键兜底。补偿路径包括消息发送失败时入口释放预占库存，以及 `OrderTimeoutCloseJob` 批量关闭过期 `PENDING` 订单后释放库存。测试证据为 `RocketMqOrderCreateStreamIntegrationTest` 覆盖发布、消费落单、重复消息幂等和 RocketMQ headers。 |
+| 失败原因 | 无 |
 
 ### E03 解释 Redis Lua 防超卖方案
 
@@ -412,27 +412,28 @@ TicketRush 工作区出现 docker/rocketmq/store/ 未跟踪目录。
 | 指标 | 当前值 |
 | --- | --- |
 | Eval case 总数 | 10 |
-| 已执行 | 1 |
-| 通过 | 1 |
+| 已执行 | 2 |
+| 通过 | 2 |
 | 部分通过 | 0 |
 | 失败 | 0 |
-| 总分 | 2 / 20 |
+| 总分 | 4 / 20 |
 | 平均分 | 2.00 |
 | 总人工介入次数 | 0 |
 
 ## 8. 初步结论
 
-E01 已通过，说明当前接管提示词可以稳定产出项目目标、阶段、已完成/未完成、工作区状态、风险点和单一下一步。
+E01、E02 已通过，说明当前接管提示词可以稳定产出项目目标、阶段、已完成/未完成、工作区状态、风险点和单一下一步，也能在真实 Java 项目中跨应用层、基础设施层、配置、数据库和测试文件追踪一条异步业务链路。
 
 当前判断：
 
 - TicketRush 适合作为 SmartKB v2 第一批 eval 样本，项目复杂度足够覆盖 Java 后端接管场景。
 - 首个 case 验证了“项目理解、交接文档提取、git 状态读取、风险判断和下一步收敛”。
+- E02 验证了 RocketMQ 异步下单链路的上下文检索能力，能把消息发送、消费者绑定、订单幂等、失败重试、库存补偿和集成测试串起来。
 - E01 的下一步建议聚焦真实 k6 压测，符合 TicketRush 当前最缺真实数据报告的状态。
-- 暂不评测自动大规模改代码，后续 E02-E04 先继续验证代码上下文检索和解释能力。
+- 暂不评测自动大规模改代码，后续 E03-E04 先继续验证代码上下文检索和解释能力。
 
 ## 9. 下一步
 
-1. 执行 E02-E04，验证代码上下文检索策略。
-2. 根据 E01 结果固化项目接管输出格式。
+1. 执行 E03-E04，继续验证 Redis Lua 和 Docker Compose 场景的代码上下文检索策略。
+2. 根据 E01-E02 结果固化项目接管与链路解释输出格式。
 3. 形成第一版 `Project Intake` 后端接口设计。
