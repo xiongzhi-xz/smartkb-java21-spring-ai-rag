@@ -112,6 +112,10 @@ smartkb:
     similarity-threshold: 0.7
     context-window: 4000  # Token 限制
 
+  # 会话记忆配置
+  chat-memory:
+    ttl-hours: 24  # 会话过期时间（小时），活跃会话自动续期
+
   # Agent 配置
   agent:
     max-iterations: 5
