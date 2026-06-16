@@ -1,6 +1,7 @@
 package com.smartkb.config;
 
 import com.smartkb.agent.domain.AgentTaskException;
+import com.smartkb.agent.domain.CodeContextException;
 import com.smartkb.agent.domain.MemoryRecordException;
 import com.smartkb.agent.domain.ProjectIntakeException;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +85,18 @@ public class GlobalExceptionHandler {
      * <p>
      * 返回 503（服务不可用）而非 500，因为这是上游依赖问题
      */
+    @ExceptionHandler(CodeContextException.class)
+    public ResponseEntity<Map<String, Object>> handleCodeContextException(CodeContextException e) {
+        log.warn("Code Context request failed: code={}, message={}", e.code(), e.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("error", e.getMessage());
+        response.put("code", e.code());
+
+        return ResponseEntity.status(e.status()).body(response);
+    }
+
     @ExceptionHandler(NonTransientAiException.class)
     public ResponseEntity<Map<String, Object>> handleNonTransientAiException(NonTransientAiException e) {
         log.error("AI 模型访问失败（非瞬态）：{}", e.getMessage(), e);
