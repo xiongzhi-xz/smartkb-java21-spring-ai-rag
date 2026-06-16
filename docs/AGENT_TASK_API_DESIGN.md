@@ -99,3 +99,5 @@ POST /api/agent/tasks/{id}/transition
 - `git diff --check`：通过。
 - 本地端到端联调：`POST /api/agent/tasks` 创建任务后，HTTP 流转 `INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD` 成功。
 - 失败保护：`VERIFY -> RECORD` 且 `verificationPassed:false` 返回 `409 TASK_VERIFICATION_REQUIRED`。
+- 前端入口：`http://localhost:18080/` 静态首页包含任务状态入口、创建任务按钮、状态流转函数和验证通过开关。
+- 任务列表接口：`GET /api/agent/tasks` 返回正常。

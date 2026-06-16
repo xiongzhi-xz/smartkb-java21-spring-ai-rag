@@ -74,6 +74,10 @@
                         class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
                     <i class="fa-solid fa-folder-tree"></i> 项目接管
                 </button>
+                <button onclick="toggleAgentTaskPanel()"
+                        class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-list-check"></i> 任务状态
+                </button>
                 <button onclick="clearChat()"
                         class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1">
                     <i class="fa-solid fa-trash"></i> 新会话
@@ -109,6 +113,94 @@
                     <div id="projectIntakeResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
                 </div>
                 <div id="projectIntakeMeta" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+            </div>
+        </div>
+
+        <div id="agentTaskPanel" class="hidden border-b bg-white px-6 py-4">
+            <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+                <div class="space-y-3">
+                    <div class="grid gap-3 md:grid-cols-[minmax(160px,220px)_minmax(0,1fr)_minmax(180px,240px)_auto]">
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Project ID</span>
+                            <input id="agentTaskProjectId" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="ticket-project"
+                                   placeholder="ticket-project">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">任务标题</span>
+                            <input id="agentTaskTitle" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   value="Run TicketRush k6 benchmark"
+                                   placeholder="Run TicketRush k6 benchmark">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">风险等级</span>
+                            <select id="agentTaskRiskLevel"
+                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">
+                                <option value="low">low</option>
+                                <option value="medium">medium</option>
+                                <option value="high">high</option>
+                            </select>
+                        </label>
+                        <div class="flex items-end gap-2">
+                            <button id="agentTaskCreateButton" onclick="createAgentTask()"
+                                    class="h-10 min-w-24 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
+                                <i class="fa-solid fa-plus mr-1.5"></i> 创建
+                            </button>
+                            <button onclick="loadAgentTasks()"
+                                    class="h-10 w-10 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                                    title="刷新任务">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <label class="block">
+                        <span class="mb-1 block text-xs font-medium text-gray-500">目标</span>
+                        <input id="agentTaskGoal" type="text"
+                               class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                               value="Run first local benchmark and record verification"
+                               placeholder="Run first local benchmark and record verification">
+                    </label>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">备注</span>
+                            <input id="agentTaskNote" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   placeholder="当前状态变化说明">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Plan</span>
+                            <input id="agentTaskPlan" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   placeholder="文件范围、风险、验证方式">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Verification</span>
+                            <input id="agentTaskVerification" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   placeholder="测试、lint、接口或手动验证">
+                        </label>
+                        <label class="block">
+                            <span class="mb-1 block text-xs font-medium text-gray-500">Result</span>
+                            <input id="agentTaskResultSummary" type="text"
+                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                   placeholder="记录结果或失败原因">
+                        </label>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <label class="flex items-center gap-2 text-sm text-gray-600">
+                            <input id="agentTaskVerificationPassed" type="checkbox"
+                                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            验证通过后允许进入 RECORD
+                        </label>
+                        <div id="agentTaskControls" class="flex flex-wrap justify-end gap-2 text-sm"></div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div id="agentTaskResult" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                    <div id="agentTaskList" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                </div>
             </div>
         </div>
 
@@ -163,6 +255,8 @@
     let selectedDocumentFileName = null;
     let chatBusy = false;
     let projectIntakeBusy = false;
+    let agentTaskBusy = false;
+    let activeAgentTask = null;
     const documentDetailWidthKey = 'smartkb.documentDetailWidth';
     const documentDetailMinWidth = 420;
     const documentDetailMaxWidth = 900;
@@ -363,6 +457,278 @@
         } finally {
             setProjectIntakeLoading(false);
         }
+    }
+
+    function toggleAgentTaskPanel() {
+        const panel = document.getElementById('agentTaskPanel');
+        panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            document.getElementById('agentTaskTitle').focus();
+            renderAgentTask(activeAgentTask);
+            loadAgentTasks();
+        }
+    }
+
+    function setAgentTaskLoading(isLoading) {
+        agentTaskBusy = isLoading;
+        const createButton = document.getElementById('agentTaskCreateButton');
+        createButton.disabled = isLoading;
+        createButton.innerHTML = isLoading
+            ? '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 处理中'
+            : '<i class="fa-solid fa-plus mr-1.5"></i> 创建';
+        document.querySelectorAll('[data-agent-task-transition]').forEach(button => {
+            button.disabled = isLoading;
+            button.classList.toggle('opacity-70', isLoading);
+            button.classList.toggle('cursor-not-allowed', isLoading);
+        });
+    }
+
+    function getNextAgentTaskStatus(status) {
+        return {
+            INTAKE: 'PLAN',
+            PLAN: 'EXECUTE',
+            EXECUTE: 'VERIFY',
+            VERIFY: 'RECORD'
+        }[status] || '';
+    }
+
+    function isAgentTaskTerminal(status) {
+        return ['RECORD', 'BLOCKED', 'FAILED'].includes(status);
+    }
+
+    function getAgentTaskStatusClass(status) {
+        const classes = {
+            INTAKE: 'border-sky-200 bg-sky-50 text-sky-700',
+            PLAN: 'border-blue-200 bg-blue-50 text-blue-700',
+            EXECUTE: 'border-amber-200 bg-amber-50 text-amber-700',
+            VERIFY: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+            RECORD: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+            BLOCKED: 'border-orange-200 bg-orange-50 text-orange-700',
+            FAILED: 'border-red-200 bg-red-50 text-red-700'
+        };
+        return classes[status] || 'border-gray-200 bg-gray-50 text-gray-600';
+    }
+
+    function renderAgentTaskStatusBadge(status) {
+        return `
+            <span class="rounded-full border px-2.5 py-1 text-xs font-medium ${getAgentTaskStatusClass(status)}">
+                ${escapeHtml(status || 'NONE')}
+            </span>
+        `;
+    }
+
+    function renderAgentTask(task) {
+        const result = document.getElementById('agentTaskResult');
+        const controls = document.getElementById('agentTaskControls');
+
+        if (!task) {
+            result.innerHTML = `
+                <div class="text-gray-500">
+                    <p class="font-medium text-gray-700">暂无当前任务</p>
+                    <p class="mt-1 text-xs">创建任务后会从 INTAKE 开始，并按固定状态流转。</p>
+                </div>
+            `;
+            controls.innerHTML = '';
+            return;
+        }
+
+        activeAgentTask = task;
+        const events = Array.isArray(task.events) ? task.events : [];
+        result.innerHTML = `
+            <div class="mb-3 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 class="truncate font-semibold text-gray-800">${renderProjectIntakeValue(task.title, '未命名任务')}</h3>
+                    <p class="mt-0.5 break-all text-xs text-gray-500">${renderProjectIntakeValue(task.id, '无 ID')}</p>
+                </div>
+                ${renderAgentTaskStatusBadge(task.status)}
+            </div>
+            <div class="space-y-3">
+                ${renderProjectIntakeSection('目标', renderProjectIntakeValue(task.goal))}
+                ${renderProjectIntakeSection('计划', renderProjectIntakeValue(task.plan, '未记录'))}
+                ${renderProjectIntakeSection('验证', renderProjectIntakeValue(task.verification, '未记录'))}
+                ${renderProjectIntakeSection('结果', renderProjectIntakeValue(task.resultSummary, '未记录'))}
+                <section class="rounded-lg border border-gray-200 bg-white p-3">
+                    <h4 class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-gray-500">
+                        <i class="fa-solid fa-circle text-[6px] text-blue-500"></i>事件记录
+                    </h4>
+                    <div class="space-y-2">
+                        ${events.map(event => `
+                            <div class="rounded-md border border-gray-100 bg-gray-50 p-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    ${renderAgentTaskStatusBadge(event.status)}
+                                    <span class="text-[11px] text-gray-400">${renderProjectIntakeValue(event.createdAt, '')}</span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-600">${renderProjectIntakeValue(event.note, '无备注')}</p>
+                            </div>
+                        `).join('') || '<p class="text-gray-400">暂无事件</p>'}
+                    </div>
+                </section>
+            </div>
+        `;
+        renderAgentTaskControls(task.status);
+    }
+
+    function renderAgentTaskControls(status) {
+        const controls = document.getElementById('agentTaskControls');
+        if (!activeAgentTask || isAgentTaskTerminal(status)) {
+            controls.innerHTML = '<span class="text-xs text-gray-400">当前任务已结束</span>';
+            return;
+        }
+
+        const nextStatus = getNextAgentTaskStatus(status);
+        const nextButton = nextStatus ? `
+            <button data-agent-task-transition="${escapeHtml(nextStatus)}"
+                    onclick="transitionAgentTask('${escapeHtml(nextStatus)}')"
+                    class="rounded-lg bg-blue-600 px-3 py-2 text-white hover:bg-blue-700">
+                <i class="fa-solid fa-arrow-right mr-1.5"></i>${escapeHtml(nextStatus)}
+            </button>
+        ` : '';
+        controls.innerHTML = `
+            ${nextButton}
+            <button data-agent-task-transition="BLOCKED"
+                    onclick="transitionAgentTask('BLOCKED')"
+                    class="rounded-lg border border-orange-200 bg-white px-3 py-2 text-orange-700 hover:bg-orange-50">
+                <i class="fa-solid fa-pause mr-1.5"></i>BLOCKED
+            </button>
+            <button data-agent-task-transition="FAILED"
+                    onclick="transitionAgentTask('FAILED')"
+                    class="rounded-lg border border-red-200 bg-white px-3 py-2 text-red-700 hover:bg-red-50">
+                <i class="fa-solid fa-xmark mr-1.5"></i>FAILED
+            </button>
+        `;
+    }
+
+    function renderAgentTaskList(tasks) {
+        const list = document.getElementById('agentTaskList');
+        if (!Array.isArray(tasks) || tasks.length === 0) {
+            list.innerHTML = '<p class="text-gray-400">暂无任务列表</p>';
+            return;
+        }
+
+        list.innerHTML = `
+            <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">任务列表</h3>
+            <div class="max-h-52 space-y-2 overflow-auto">
+                ${tasks.map(task => `
+                    <button onclick="selectAgentTask('${escapeHtml(task.id)}')"
+                            class="w-full rounded-md border border-gray-200 bg-white p-2 text-left hover:border-blue-300 hover:bg-blue-50">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="truncate text-sm font-medium text-gray-700">${renderProjectIntakeValue(task.title, '未命名任务')}</span>
+                            ${renderAgentTaskStatusBadge(task.status)}
+                        </div>
+                        <p class="mt-1 truncate text-xs text-gray-500">${renderProjectIntakeValue(task.goal, '无目标')}</p>
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async function createAgentTask() {
+        if (agentTaskBusy) return;
+
+        const titleInput = document.getElementById('agentTaskTitle');
+        const title = titleInput.value.trim();
+        const goal = document.getElementById('agentTaskGoal').value.trim();
+        const result = document.getElementById('agentTaskResult');
+
+        if (!title || !goal) {
+            result.innerHTML = '<p class="text-sm text-red-600">请填写任务标题和目标。</p>';
+            (!title ? titleInput : document.getElementById('agentTaskGoal')).focus();
+            return;
+        }
+
+        setAgentTaskLoading(true);
+        try {
+            const task = await requestAgentTask('/api/agent/tasks', {
+                method: 'POST',
+                body: {
+                    projectId: document.getElementById('agentTaskProjectId').value.trim(),
+                    title,
+                    goal,
+                    riskLevel: document.getElementById('agentTaskRiskLevel').value
+                }
+            });
+            renderAgentTask(task);
+            await loadAgentTasks(false);
+        } catch (e) {
+            result.innerHTML = `
+                <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, '任务创建失败')}
+                </div>
+            `;
+        } finally {
+            setAgentTaskLoading(false);
+        }
+    }
+
+    async function transitionAgentTask(targetStatus) {
+        if (agentTaskBusy || !activeAgentTask) return;
+
+        setAgentTaskLoading(true);
+        try {
+            const task = await requestAgentTask(`/api/agent/tasks/${encodeURIComponent(activeAgentTask.id)}/transition`, {
+                method: 'POST',
+                body: {
+                    targetStatus,
+                    note: document.getElementById('agentTaskNote').value.trim(),
+                    plan: document.getElementById('agentTaskPlan').value.trim(),
+                    verification: document.getElementById('agentTaskVerification').value.trim(),
+                    resultSummary: document.getElementById('agentTaskResultSummary').value.trim(),
+                    verificationPassed: document.getElementById('agentTaskVerificationPassed').checked
+                }
+            });
+            renderAgentTask(task);
+            await loadAgentTasks(false);
+        } catch (e) {
+            const result = document.getElementById('agentTaskResult');
+            result.innerHTML += `
+                <div class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, '状态流转失败')}
+                </div>
+            `;
+        } finally {
+            setAgentTaskLoading(false);
+        }
+    }
+
+    async function loadAgentTasks(renderFirst = true) {
+        try {
+            const tasks = await requestAgentTask('/api/agent/tasks');
+            renderAgentTaskList(tasks);
+            if (renderFirst && Array.isArray(tasks) && tasks.length > 0 && !activeAgentTask) {
+                renderAgentTask(tasks[0]);
+            }
+        } catch (e) {
+            document.getElementById('agentTaskList').innerHTML = `
+                <p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, '任务列表加载失败')}</p>
+            `;
+        }
+    }
+
+    async function selectAgentTask(id) {
+        try {
+            const task = await requestAgentTask(`/api/agent/tasks/${encodeURIComponent(id)}`);
+            renderAgentTask(task);
+        } catch (e) {
+            document.getElementById('agentTaskResult').innerHTML = `
+                <p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, '任务加载失败')}</p>
+            `;
+        }
+    }
+
+    async function requestAgentTask(url, options = {}) {
+        const fetchOptions = {
+            method: options.method || 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        };
+        if (options.body) {
+            fetchOptions.body = JSON.stringify(options.body);
+        }
+        const res = await fetch(url, fetchOptions);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.success === false) {
+            throw new Error(data.error || data.message || `任务请求失败（HTTP ${res.status}）`);
+        }
+        return data;
     }
 
     function formatDurationMs(value) {
