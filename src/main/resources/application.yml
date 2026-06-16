@@ -34,7 +34,7 @@ spring:
 
   # Spring AI 配置
   ai:
-    # OpenAI 兼容接口（DeepSeek 中转站）
+    # OpenAI 兼容接口（DeepSeek 中转站）— 用于 Chat
     openai:
       api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:sk-your-api-key-here}}
       base-url: ${TRANSIT_BASE_URL:https://elysiver.h-e.top}
@@ -43,17 +43,24 @@ spring:
           model: ${AI_MODEL:deepseek-v4-flash}
           temperature: 0.7
           max-tokens: 2000
-      # embedding:
-      #   options:
-      #     model: text-embedding-3-small
-      #     dimensions: 1536
+      embedding:
+        enabled: false  # Chat 用中转站，Embedding 用本地 Ollama
+
+    # Ollama 本地模型 — 用于 Embedding（nomic-embed-text，768 维）
+    # 前提：本地已安装 Ollama 并拉取模型：ollama pull nomic-embed-text
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      embedding:
+        enabled: true
+        options:
+          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
 
     # pgvector 向量存储配置
     vectorstore:
       pgvector:
         index-type: HNSW  # 2026主流高性能索引
         distance-type: COSINE_DISTANCE
-        dimensions: 1536
+        dimensions: 768  # nomic-embed-text 输出 768 维
         remove-existing-vector-store-table: false
         initialize-schema: true
 
