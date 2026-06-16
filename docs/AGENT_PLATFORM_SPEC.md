@@ -388,11 +388,13 @@ GET /api/agent/eval/report
 产出：
 
 - [x] Project Intake API 设计文档
-- [ ] 项目路径输入
-- [ ] 文件读取白名单
-- [ ] Git status/log 读取
-- [ ] `README/SPEC/AGENTS/HANDOFF/pom.xml` 摘要
-- [ ] 接管摘要输出
+- [x] Project Intake 后端接口骨架
+- [x] 项目路径输入（API 请求字段）
+- [x] 文件读取白名单
+- [x] Git status/log 读取
+- [x] `README/SPEC/AGENTS/HANDOFF/pom.xml` 摘要
+- [x] 接管摘要输出
+- [ ] 前端最小入口
 
 验收：
 
@@ -474,7 +476,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-实现 Project Intake 后端接口骨架：路径校验、白名单读取、Git status/log 读取和结构化接管响应。
+为 Project Intake 增加前端最小入口：项目路径输入、接管按钮、摘要/风险/证据面板。
 ```
 
-不要马上写复杂多 Agent 编排。先把 E01-E10 已校准的输出格式落成一个可调用的后端接口，后续每个功能都能用评测结果证明价值。
+不要马上写复杂多 Agent 编排。先把 E01-E10 已校准的输出格式变成一个可演示的端到端入口，后续每个功能都能用评测结果证明价值。
