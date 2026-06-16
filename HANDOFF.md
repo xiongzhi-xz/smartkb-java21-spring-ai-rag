@@ -220,3 +220,17 @@ Verified:
 Still not verified:
 - The running-app Redis live smoke remains blocked by unavailable Docker Desktop endpoints.
 - The SPEC Redis ChatMemory live checklist still needs a real SmartKB app plus Redis.
+
+## 2026-06-17 Work Log - ConversationId Web Contract Test
+
+Completed:
+- Expanded `SmartKbControllerTest` to cover conversationId handling for POST `/api/chat/conversation`.
+- Verified conversation chat reuses a provided `conversationId`.
+- Verified conversation chat generates a non-blank `conversationId` when omitted.
+- Verified POST `/api/chat/advanced` passes the provided `conversationId` and metadata filter to `AdvancedRagService`.
+
+Verified:
+- `mvn -Dtest=SmartKbControllerTest test`: 5 tests passed.
+
+Still not verified:
+- Full running-app Redis/LLM behavior is still blocked by unavailable Docker Desktop endpoints and external model dependencies.
