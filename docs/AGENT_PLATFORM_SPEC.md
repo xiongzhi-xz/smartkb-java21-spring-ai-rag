@@ -424,7 +424,7 @@ GET /api/agent/eval/report
 
 - [x] MemoryRecord 模型
 - [x] 高/中/低权威记忆列表
-- [ ] 从 SPEC/HANDOFF 生成高权威记忆
+- [x] 从 SPEC/HANDOFF 生成高权威记忆
 - [ ] 冲突提示规则
 
 验收：
@@ -479,7 +479,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-为 MemoryRecord 增加从 SPEC/HANDOFF 生成高权威记忆的导入能力。
+为 MemoryRecord 增加冲突提示规则：同项目同标签下低权威记忆遇到高权威记忆时提示采用高权威来源。
 ```
 
-不要马上写复杂多 Agent 编排。先让高权威记忆从真实项目文档产生，再处理冲突提示规则。
+不要马上写复杂多 Agent 编排。先让记忆冲突有明确解释，再继续做代码上下文检索。

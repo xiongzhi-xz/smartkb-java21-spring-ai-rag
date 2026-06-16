@@ -54,6 +54,24 @@ GET /api/agent/memories/{id}
 GET /api/agent/memories?projectId=ticket-project&authorityLevel=HIGH&sourceType=SPEC
 ```
 
+### 导入高权威记忆
+
+```http
+POST /api/agent/memories/import/high-authority
+```
+
+请求：
+
+```json
+{
+  "projectId": "ticket-project",
+  "rootPath": "E:/project/work/job/ticketrush-java21-high-concurrency",
+  "maxFileBytes": 65536
+}
+```
+
+第一版只读取项目根目录下的 `SPEC.md` 和 `HANDOFF.md`，导入为 `HIGH` 权威记忆，并返回 `imported` 与 `skippedFiles`。
+
 ## 3. 错误响应
 
 错误沿用全局格式：
@@ -75,7 +93,9 @@ GET /api/agent/memories?projectId=ticket-project&authorityLevel=HIGH&sourceType=
 ## 4. 已验证
 
 - `mvn -Dtest=MemoryRecordServiceTest,MemoryRecordControllerTest test`：9 tests, 0 failures。
-- `mvn test`：34 tests, 0 failures。
+- `mvn test`：38 tests, 0 failures。
 - `git diff --check`：通过。
 - 本地端到端联调：`POST /api/agent/memories` 创建 HIGH 记忆成功。
 - 筛选联调：`GET /api/agent/memories?projectId=ticket-project&authorityLevel=HIGH&sourceType=SPEC` 返回刚创建的记忆。
+- 高权威导入定向测试：`mvn -Dtest=MemoryRecordServiceTest,MemoryRecordControllerTest,HighAuthorityMemoryImportServiceTest test`：13 tests, 0 failures。
+- TicketRush 导入联调：`POST /api/agent/memories/import/high-authority` 导入 `SPEC.md` 和 `HANDOFF.md`，`skippedFiles` 为空。

@@ -1,7 +1,10 @@
 package com.smartkb.agent.controller;
 
+import com.smartkb.agent.application.HighAuthorityMemoryImportService;
 import com.smartkb.agent.application.MemoryRecordService;
 import com.smartkb.agent.domain.CreateMemoryRecordRequest;
+import com.smartkb.agent.domain.ImportHighAuthorityMemoryRequest;
+import com.smartkb.agent.domain.ImportHighAuthorityMemoryResponse;
 import com.smartkb.agent.domain.MemoryAuthorityLevel;
 import com.smartkb.agent.domain.MemoryRecordException;
 import com.smartkb.agent.domain.MemoryRecordResponse;
@@ -37,6 +40,9 @@ class MemoryRecordControllerTest {
 
     @MockBean
     private MemoryRecordService memoryRecordService;
+
+    @MockBean
+    private HighAuthorityMemoryImportService highAuthorityMemoryImportService;
 
     @Test
     void shouldCreateMemory() throws Exception {
@@ -100,6 +106,30 @@ class MemoryRecordControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("MEMORY_NOT_FOUND"))
                 .andExpect(jsonPath("$.error").value("memory not found"));
+    }
+
+    @Test
+    void shouldImportHighAuthorityMemories() throws Exception {
+        when(highAuthorityMemoryImportService.importFromProjectDocs(any(ImportHighAuthorityMemoryRequest.class)))
+                .thenReturn(new ImportHighAuthorityMemoryResponse(List.of(memory()), List.of("HANDOFF.md: missing")));
+
+        mockMvc.perform(post("/api/agent/memories/import/high-authority")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "projectId": "ticket-project",
+                                  "rootPath": "E:/project/work/job/ticketrush-java21-high-concurrency",
+                                  "maxFileBytes": 65536
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imported[0].id").value("memory-1"))
+                .andExpect(jsonPath("$.skippedFiles[0]").value("HANDOFF.md: missing"));
+
+        ArgumentCaptor<ImportHighAuthorityMemoryRequest> captor =
+                ArgumentCaptor.forClass(ImportHighAuthorityMemoryRequest.class);
+        verify(highAuthorityMemoryImportService).importFromProjectDocs(captor.capture());
+        assertEquals("ticket-project", captor.getValue().projectId());
     }
 
     private MemoryRecordResponse memory() {
