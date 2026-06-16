@@ -395,6 +395,8 @@ GET /api/agent/eval/report
 - [x] `README/SPEC/AGENTS/HANDOFF/pom.xml` 摘要
 - [x] 接管摘要输出
 - [x] 前端最小入口
+- [x] Web 层测试
+- [ ] 本地端到端联调
 
 验收：
 
@@ -476,7 +478,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-为 Project Intake 增加 Web 层测试，并在本地可启动环境下验证前端入口能调用接管接口。
+在本地可启动环境下验证 Project Intake 前端入口能调用接管接口，并记录启动/联调结果。
 ```
 
 不要马上写复杂多 Agent 编排。先把 Project Intake 的后端接口和前端入口验证扎实，后续每个功能都能用评测结果证明价值。
