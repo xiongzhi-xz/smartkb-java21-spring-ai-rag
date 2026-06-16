@@ -89,10 +89,12 @@ When JDBC persistence is enabled, `JdbcEvalCaseRunStore` creates the table and i
 
 ## Test Plan
 
-- Keep existing service tests for validation and aggregation.
-- Add repository tests with an embedded or test PostgreSQL profile when available.
-- Add controller tests unchanged because the controller should not know whether storage is memory or JDBC.
-- Run `mvn test` and `git diff --check`.
+- Existing service tests cover validation and aggregation.
+- `InMemoryEvalCaseRunStoreTest` covers default store ordering and filters.
+- Controller tests remain unchanged because the controller does not know whether storage is memory or JDBC.
+- `JdbcEvalCaseRunStoreIT` runs under the `integration-tests` Maven profile with Testcontainers when Docker is available.
+- Manual Docker Compose JDBC smoke verification is recorded in `docs/EVAL_RUN_JDBC_VERIFICATION.md`.
+- Run `mvn test`, `mvn -Pintegration-tests verify`, and `git diff --check`.
 
 ## Not Doing Yet
 

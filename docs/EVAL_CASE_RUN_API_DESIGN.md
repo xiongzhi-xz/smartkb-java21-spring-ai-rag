@@ -124,4 +124,4 @@ GET /api/agent/eval/report?projectId=ticket-project
 
 ## 4. Next Step
 
-Run the JDBC smoke test from `docs/EVAL_RUN_JDBC_VERIFICATION.md` when PostgreSQL is available.
+Phase F Eval Run persistence is implemented and verified. Continue with the next SmartKB v2 Agent platform capability without expanding the TicketRush sample scope.

@@ -156,4 +156,4 @@ Verified:
 - Live JDBC behavior is still covered by the Docker Compose smoke record in `docs/EVAL_RUN_JDBC_VERIFICATION.md`.
 
 Next step:
-- Phase F is close to complete. Next safe work is to refresh Eval docs/indexes and then choose the next Agent platform capability without expanding TicketRush scope.
+- Phase F Eval Run persistence is closed. Next safe work is to choose the next SmartKB v2 Agent platform capability without expanding TicketRush scope.

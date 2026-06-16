@@ -114,12 +114,12 @@ Covered by automated tests:
 - Import idempotency.
 - Report aggregation.
 - Controller API shape.
+- `JdbcEvalCaseRunStoreIT` under `mvn -Pintegration-tests verify` when Testcontainers can access Docker.
 
 Not covered yet:
 
-- Live PostgreSQL integration test for `JdbcEvalCaseRunStore`.
-
-Add a live repository test later when the project has a standard Testcontainers or integration-test profile.
+- This Windows Docker Desktop environment skips `JdbcEvalCaseRunStoreIT` because Testcontainers cannot find a valid Java Docker client configuration through npipe.
+- A standard Docker environment supported by Testcontainers should execute the integration test instead of skipping it.
 
 ## Local Verification Record
 
