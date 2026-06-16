@@ -7,6 +7,8 @@ import com.smartkb.agent.domain.CodeDiffRequest;
 import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
 import com.smartkb.agent.domain.CodeSearchResponse;
+import com.smartkb.agent.domain.CodeSemanticSearchRequest;
+import com.smartkb.agent.domain.CodeSemanticSearchResponse;
 import com.smartkb.agent.domain.CodeTreeRequest;
 import com.smartkb.agent.domain.CodeTreeResponse;
 import com.smartkb.agent.domain.ProjectIntakeResponse;
@@ -43,7 +45,9 @@ public class CodeContextService {
     private static final int DEFAULT_MAX_DIFF_LINES = 200;
     private static final int DEFAULT_MAX_CHUNKS = 100;
     private static final int DEFAULT_MAX_CHUNK_CHARS = 2_000;
+    private static final int DEFAULT_MAX_SEMANTIC_RESULTS = 20;
     private static final Pattern HUNK_HEADER = Pattern.compile("@@ -(\\d+)(?:,\\d+)? \\+(\\d+)(?:,\\d+)? @@.*");
+    private static final Pattern TERM_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9_-]*");
 
     private final ProjectPathGuard pathGuard;
     private final GitDiffReader gitDiffReader;
@@ -172,6 +176,44 @@ public class CodeContextService {
         }
 
         return new CodeChunkResponse(true, normalizePath(root), chunks, skippedFiles, warnings);
+    }
+
+    public CodeSemanticSearchResponse semanticSearch(CodeSemanticSearchRequest request) {
+        CodeSemanticSearchRequest safeRequest = request == null
+                ? new CodeSemanticSearchRequest(null, null, null, null, null)
+                : request;
+        Path root = pathGuard.validateProjectRoot(safeRequest.rootPath());
+        String query = normalizeQuery(safeRequest.query());
+        int maxResults = positiveOrDefault(safeRequest.maxResults(), DEFAULT_MAX_SEMANTIC_RESULTS);
+        int maxFileBytes = positiveOrDefault(safeRequest.maxFileBytes(), DEFAULT_MAX_FILE_BYTES);
+        int maxChunkChars = positiveOrDefault(safeRequest.maxChunkChars(), DEFAULT_MAX_CHUNK_CHARS);
+
+        CodeChunkResponse chunkResponse = chunks(new CodeChunkRequest(
+                root.toString(),
+                Math.max(DEFAULT_MAX_CHUNKS, maxResults * 10),
+                maxFileBytes,
+                maxChunkChars
+        ));
+        List<String> terms = extractTerms(query);
+        List<CodeSemanticSearchResponse.SemanticMatch> matches = chunkResponse.chunks().stream()
+                .map(chunk -> scoreChunk(chunk, terms))
+                .filter(match -> match.score() > 0)
+                .sorted(Comparator
+                        .comparingInt(CodeSemanticSearchResponse.SemanticMatch::score)
+                        .reversed()
+                        .thenComparing(CodeSemanticSearchResponse.SemanticMatch::path)
+                        .thenComparingInt(CodeSemanticSearchResponse.SemanticMatch::startLine))
+                .limit(maxResults)
+                .toList();
+
+        return new CodeSemanticSearchResponse(
+                true,
+                normalizePath(root),
+                query,
+                matches,
+                chunkResponse.skippedFiles(),
+                chunkResponse.warnings()
+        );
     }
 
     private void scanTree(
@@ -379,6 +421,67 @@ public class CodeContextService {
             return new CodeDiffResponse.DiffLine("context", oldLine, newLine, rawLine.substring(1).strip());
         }
         return null;
+    }
+
+    private CodeSemanticSearchResponse.SemanticMatch scoreChunk(
+            CodeChunkResponse.CodeChunk chunk,
+            List<String> terms
+    ) {
+        String searchable = (chunk.path() + "\n" + chunk.content()).toLowerCase(Locale.ROOT);
+        List<String> matchedTerms = terms.stream()
+                .filter(searchable::contains)
+                .toList();
+        int score = matchedTerms.stream()
+                .mapToInt(term -> scoreTerm(searchable, term))
+                .sum();
+        return new CodeSemanticSearchResponse.SemanticMatch(
+                chunk.path(),
+                chunk.startLine(),
+                chunk.endLine(),
+                score,
+                matchedTerms,
+                chunk.content()
+        );
+    }
+
+    private int scoreTerm(String searchable, String term) {
+        int score = Math.min(term.length(), 12);
+        int occurrences = 0;
+        int index = searchable.indexOf(term);
+        while (index >= 0) {
+            occurrences++;
+            index = searchable.indexOf(term, index + term.length());
+        }
+        return score * Math.max(1, occurrences);
+    }
+
+    private List<String> extractTerms(String query) {
+        Matcher matcher = TERM_PATTERN.matcher(query);
+        List<String> terms = new ArrayList<>();
+        while (matcher.find()) {
+            String rawTerm = matcher.group();
+            addTerm(terms, rawTerm.toLowerCase(Locale.ROOT));
+            for (String part : splitCamelCase(rawTerm)) {
+                addTerm(terms, part);
+            }
+        }
+        return terms;
+    }
+
+    private List<String> splitCamelCase(String term) {
+        String spaced = term.replaceAll("([a-z])([A-Z])", "$1 $2")
+                .replace('_', ' ')
+                .replace('-', ' ');
+        return Stream.of(spaced.split("\\s+"))
+                .map(part -> part.toLowerCase(Locale.ROOT))
+                .filter(part -> part.length() >= 2)
+                .toList();
+    }
+
+    private void addTerm(List<String> terms, String term) {
+        if (term.length() >= 2 && !terms.contains(term)) {
+            terms.add(term);
+        }
     }
 
     private int totalLines(Map<String, List<CodeDiffResponse.DiffLine>> linesByPath) {

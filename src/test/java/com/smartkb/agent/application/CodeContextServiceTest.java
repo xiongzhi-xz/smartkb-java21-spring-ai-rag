@@ -7,6 +7,8 @@ import com.smartkb.agent.domain.CodeDiffRequest;
 import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
 import com.smartkb.agent.domain.CodeSearchResponse;
+import com.smartkb.agent.domain.CodeSemanticSearchRequest;
+import com.smartkb.agent.domain.CodeSemanticSearchResponse;
 import com.smartkb.agent.domain.CodeTreeRequest;
 import com.smartkb.agent.domain.CodeTreeResponse;
 import com.smartkb.agent.infrastructure.filesystem.ProjectPathGuard;
@@ -146,6 +148,36 @@ class CodeContextServiceTest {
         assertTrue(response.chunks().size() > 1);
         assertFalse(response.chunks().stream().anyMatch(chunk -> ".env.local".equals(chunk.path())));
         assertTrue(response.skippedFiles().stream().anyMatch(file -> ".env.local".equals(file.path())));
+    }
+
+    @Test
+    void shouldRankSemanticCodeChunks() throws IOException {
+        write("src/main/java/com/example/TicketService.java", """
+                class TicketService {
+                    void reserveTicket() {}
+                    void releaseInventoryLock() {}
+                }
+                """);
+        write("src/main/java/com/example/UserService.java", """
+                class UserService {
+                    void updateProfile() {}
+                }
+                """);
+
+        CodeSemanticSearchResponse response = service().semanticSearch(new CodeSemanticSearchRequest(
+                tempDir.toString(),
+                "reserve ticket inventory",
+                5,
+                65_536,
+                2_000
+        ));
+
+        assertTrue(response.success());
+        assertEquals("reserve ticket inventory", response.query());
+        assertFalse(response.matches().isEmpty());
+        assertEquals("src/main/java/com/example/TicketService.java", response.matches().get(0).path());
+        assertTrue(response.matches().get(0).matchedTerms().contains("ticket"));
+        assertTrue(response.matches().get(0).matchedTerms().contains("inventory"));
     }
 
     private CodeContextService service() {

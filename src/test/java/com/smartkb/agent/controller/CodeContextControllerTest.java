@@ -8,6 +8,8 @@ import com.smartkb.agent.domain.CodeDiffRequest;
 import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
 import com.smartkb.agent.domain.CodeSearchResponse;
+import com.smartkb.agent.domain.CodeSemanticSearchRequest;
+import com.smartkb.agent.domain.CodeSemanticSearchResponse;
 import com.smartkb.agent.domain.CodeTreeRequest;
 import com.smartkb.agent.domain.CodeTreeResponse;
 import com.smartkb.config.GlobalExceptionHandler;
@@ -172,6 +174,49 @@ class CodeContextControllerTest {
         verify(codeContextService).chunks(captor.capture());
         assertEquals(20, captor.getValue().maxChunks());
         assertEquals(2000, captor.getValue().maxChunkChars());
+    }
+
+    @Test
+    void shouldReturnSemanticCodeMatches() throws Exception {
+        when(codeContextService.semanticSearch(any(CodeSemanticSearchRequest.class)))
+                .thenReturn(new CodeSemanticSearchResponse(
+                        true,
+                        "E:/project/work/job/demo",
+                        "reserve ticket",
+                        List.of(new CodeSemanticSearchResponse.SemanticMatch(
+                                "src/main/java/TicketService.java",
+                                1,
+                                8,
+                                24,
+                                List.of("reserve", "ticket"),
+                                "class TicketService {}"
+                        )),
+                        List.of(),
+                        List.of()
+                ));
+
+        mockMvc.perform(post("/api/agent/code/semantic")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "rootPath": "E:/project/work/job/demo",
+                                  "query": "reserve ticket",
+                                  "maxResults": 5,
+                                  "maxFileBytes": 65536,
+                                  "maxChunkChars": 2000
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.query").value("reserve ticket"))
+                .andExpect(jsonPath("$.matches[0].path").value("src/main/java/TicketService.java"))
+                .andExpect(jsonPath("$.matches[0].score").value(24))
+                .andExpect(jsonPath("$.matches[0].matchedTerms[0]").value("reserve"));
+
+        ArgumentCaptor<CodeSemanticSearchRequest> captor = ArgumentCaptor.forClass(CodeSemanticSearchRequest.class);
+        verify(codeContextService).semanticSearch(captor.capture());
+        assertEquals("reserve ticket", captor.getValue().query());
+        assertEquals(5, captor.getValue().maxResults());
     }
 
     @Test

@@ -7,6 +7,8 @@ import com.smartkb.agent.domain.CodeDiffRequest;
 import com.smartkb.agent.domain.CodeDiffResponse;
 import com.smartkb.agent.domain.CodeSearchRequest;
 import com.smartkb.agent.domain.CodeSearchResponse;
+import com.smartkb.agent.domain.CodeSemanticSearchRequest;
+import com.smartkb.agent.domain.CodeSemanticSearchResponse;
 import com.smartkb.agent.domain.CodeTreeRequest;
 import com.smartkb.agent.domain.CodeTreeResponse;
 import org.springframework.http.ResponseEntity;
@@ -46,5 +48,10 @@ public class CodeContextController {
     @PostMapping("/chunks")
     public ResponseEntity<CodeChunkResponse> chunks(@RequestBody CodeChunkRequest request) {
         return ResponseEntity.ok(codeContextService.chunks(request));
+    }
+
+    @PostMapping("/semantic")
+    public ResponseEntity<CodeSemanticSearchResponse> semanticSearch(@RequestBody CodeSemanticSearchRequest request) {
+        return ResponseEntity.ok(codeContextService.semanticSearch(request));
     }
 }

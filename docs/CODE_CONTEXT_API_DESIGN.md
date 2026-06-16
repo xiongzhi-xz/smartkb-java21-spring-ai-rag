@@ -84,6 +84,26 @@ Request:
 
 Chunk responses return safe code snippets with `path`, `startLine`, `endLine`, and `content`. This is the first step toward RAG semantic supplementation: it prepares deterministic, source-linked chunks without writing to the vector store.
 
+### Semantic Code Search
+
+```http
+POST /api/agent/code/semantic
+```
+
+Request:
+
+```json
+{
+  "rootPath": "E:/project/work/job/ticketrush-java21-high-concurrency",
+  "query": "reserve ticket inventory",
+  "maxResults": 20,
+  "maxFileBytes": 1048576,
+  "maxChunkChars": 2000
+}
+```
+
+The first version uses safe code chunks and deterministic query term ranking. It returns source-linked chunks with `score` and `matchedTerms`, and does not write to the vector store.
+
 ## 3. Errors
 
 Errors use the global response shape:
@@ -106,8 +126,8 @@ Common codes:
 
 ## 4. Verified
 
-- Service tests cover safe tree indexing, keyword matches with line numbers, Git diff evidence, code chunk extraction, sensitive file skipping, and blank query rejection.
-- Web tests cover `/api/agent/code/tree`, `/api/agent/code/search`, `/api/agent/code/diff`, `/api/agent/code/chunks`, and Code Context error response.
-- `mvn -Dtest=CodeContextServiceTest,CodeContextControllerTest test`: 10 tests, 0 failures.
-- `mvn test`: 52 tests, 0 failures.
+- Service tests cover safe tree indexing, keyword matches with line numbers, Git diff evidence, code chunk extraction, semantic chunk ranking, sensitive file skipping, and blank query rejection.
+- Web tests cover `/api/agent/code/tree`, `/api/agent/code/search`, `/api/agent/code/diff`, `/api/agent/code/chunks`, `/api/agent/code/semantic`, and Code Context error response.
+- `mvn -Dtest=CodeContextServiceTest,CodeContextControllerTest test`: 12 tests, 0 failures.
+- `mvn test`: 54 tests, 0 failures.
 - Static frontend panel syntax check: inline script syntax ok.

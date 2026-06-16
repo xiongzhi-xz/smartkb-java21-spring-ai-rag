@@ -227,6 +227,7 @@
                                 <option value="search">Keyword search</option>
                                 <option value="diff">Git diff</option>
                                 <option value="chunks">Chunks</option>
+                                <option value="semantic">Semantic</option>
                             </select>
                         </label>
                         <label class="block">
@@ -807,6 +808,12 @@
                 body: { rootPath, maxChunks: 100, maxFileBytes: 1048576, maxChunkChars: 2000 }
             };
         }
+        if (mode === 'semantic') {
+            return {
+                endpoint: '/api/agent/code/semantic',
+                body: { rootPath, query, maxResults: 20, maxFileBytes: 1048576, maxChunkChars: 2000 }
+            };
+        }
         return {
             endpoint: '/api/agent/code/search',
             body: { rootPath, query, maxResults: 100, maxFileBytes: 1048576 }
@@ -858,6 +865,19 @@
                 <div class="rounded-md border border-gray-200 bg-white p-2">
                     <p class="break-all font-medium text-gray-700">${renderText(chunk.path)}:${escapeHtml(chunk.startLine)}-${escapeHtml(chunk.endLine)}</p>
                     <pre class="mt-2 max-h-48 overflow-auto rounded bg-gray-900 p-2 text-xs text-gray-100">${escapeHtml(chunk.content)}</pre>
+                </div>
+            `);
+        } else if (mode === 'semantic') {
+            result.innerHTML = renderCodeContextItems(data.matches, match => `
+                <div class="rounded-md border border-gray-200 bg-white p-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <p class="break-all font-medium text-gray-700">${renderText(match.path)}:${escapeHtml(match.startLine)}-${escapeHtml(match.endLine)}</p>
+                        <span class="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                            score ${escapeHtml(match.score)}
+                        </span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">${renderText((match.matchedTerms || []).join(', '))}</p>
+                    <pre class="mt-2 max-h-48 overflow-auto rounded bg-gray-900 p-2 text-xs text-gray-100">${escapeHtml(match.content)}</pre>
                 </div>
             `);
         } else {
@@ -914,7 +934,7 @@
             document.getElementById('codeContextPath').focus();
             return;
         }
-        if ((mode === 'search' || mode === 'diff') && !query) {
+        if ((mode === 'search' || mode === 'diff' || mode === 'semantic') && !query) {
             result.classList.remove('hidden');
             result.innerHTML = '<p class="text-sm text-red-600">Query is required for this mode.</p>';
             document.getElementById('codeContextQuery').focus();

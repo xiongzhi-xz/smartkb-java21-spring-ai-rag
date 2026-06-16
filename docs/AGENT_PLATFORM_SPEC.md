@@ -441,7 +441,7 @@ GET /api/agent/eval/report
 - [x] Git diff 检索
 - [x] 代码 chunk 提取
 - [x] Code Context 前端面板
-- [ ] RAG 语义补充
+- [x] RAG 语义补充
 - [x] 来源路径展示
 
 验收：
@@ -481,7 +481,7 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 建议下一步只做：
 
 ```text
-继续阶段 E，下一步实现代码上下文 RAG 语义补充。
+进入阶段 F，下一步实现 Eval Case 运行记录 API。
 ```
 
-不要马上写复杂多 Agent 编排。先让代码上下文检索能形成真实路径证据，再接入更复杂的语义补充。
+不要马上写复杂多 Agent 编排。先让 eval 结果能结构化记录，再继续做报告聚合。
