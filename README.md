@@ -1,98 +1,284 @@
-# SmartKB - 企业智能知识库系统（Advanced RAG + Agent）
+# SmartKB
 
-> **Gap期间核心技术项目** —— 基于2026年主流技术栈，将大模型能力真正工程化落地到企业级Java后端系统。
+Java 21 + Spring AI 企业智能知识库系统，已升级为面向 Java 存量项目的 Agent 工程平台。
 
-这是一个我在2025-2026年Gap期间独立设计和开发的**生产级预研项目**。目标是通过这个项目系统性掌握 Java 21 Virtual Threads、Spring AI 工程化最佳实践，并形成可落地、可讲解、可监控的完整解决方案。
+SmartKB 的第一阶段是一个可运行、可演示、可监控的 Advanced RAG 知识库：文档上传、解析、切片、Embedding、pgvector 检索、多轮流式问答、引用片段和 Redis 会话记忆。第二阶段在此基础上扩展为 Agent 工程平台：项目接管、任务状态机、分层记忆、代码上下文检索和 Eval 评测。
 
-### 项目背景
-过去8年我主要从事企业级业务系统开发（景区票务大数据、AI语音分析、SRM系统等）。Gap期间我没有停止技术迭代，而是系统学习了2026年主流技术方向，重点突破 **Java 21 Virtual Threads** 在AI场景的应用和 **Spring AI Advisor** 体系在企业级RAG中的落地。本项目即为该阶段的核心成果。
+## 项目亮点
 
-### 技术栈（2026主流选型）
-- **Java 21** — Virtual Threads + Structured Concurrency（核心亮点）
-- **Spring Boot 3.3+** — 应用框架
-- **Spring AI** — Advisor体系（QuestionAnswerAdvisor、RetrievalAugmentationAdvisor、VectorStoreChatMemoryAdvisor）
-- **PostgreSQL 16 + pgvector** — 向量数据库
-- **Redis 7** — 会话记忆、缓存、限流
-- **Docker + Kubernetes (K3s)** — 容器化部署
-- **OpenTelemetry + Prometheus + Grafana** — 全链路可观测性
-- **Arthas** — 线上诊断（后续加入）
+- **Advanced RAG 闭环**：文档上传、UTF-8 解析、切片、Ollama Embedding、pgvector 入库、Hybrid Search、查询改写、过滤、重排序和引用片段定位。
+- **Redis ChatMemory**：自研实现 Spring AI `ChatMemory` 接口，Redis List + TTL 持久化多轮会话，支持服务重启后恢复上下文。
+- **流式对话体验**：普通对话和 Advanced RAG 都支持 SSE 流式返回；Advanced 模式展示查询改写、检索、过滤、重排、生成等阶段反馈。
+- **可观测性**：Micrometer 自定义 Counter/Timer，Prometheus 指标采集，Grafana Dashboard 预配置。
+- **Docker Compose 一键运行**：PostgreSQL + pgvector、Redis、Spring Boot、Prometheus、Grafana 一套 Compose 启动。
+- **Agent 工程平台**：面向 Java 项目目录做接管摘要、任务状态流转、记忆分层、代码检索和 Eval 报告，使用 TicketRush 作为真实评测样本。
 
-### 核心功能与亮点
-- 支持PDF、Word、Markdown等多种文档智能解析与切片
-- **Advanced RAG**：Query Rewriting + Metadata Filtering + Re-ranking
-- 多轮对话记忆 + Tool-Calling Agent（搜索、总结、导出等工具）
-- 使用 Virtual Threads 大幅提升文档批量Embedding和检索并发性能
-- 完整可观测性监控仪表盘（Grafana）
-- 生产级考虑：异常处理、日志、单元测试友好、避免 Virtual Threads pinning 问题
+## 技术栈
 
-### 项目结构
+| 分类 | 技术 |
+| --- | --- |
+| Runtime | Java 21, Spring Boot 3.3.1, Virtual Threads |
+| AI | Spring AI 1.0.0-M1, OpenAI-compatible Chat API, Ollama `nomic-embed-text` |
+| RAG | pgvector, Hybrid Search, Query Rewriting, Metadata Filtering, Re-ranking |
+| Storage | PostgreSQL 16, Redis 7 |
+| Observability | Spring Boot Actuator, Micrometer, Prometheus, Grafana |
+| Delivery | Docker Compose, Docker BuildKit, K3s demo manifest |
+| Test | JUnit 5, Mockito, Spring MVC Test, Testcontainers profile |
+
+## 架构图
+
+```mermaid
+flowchart LR
+    U[Browser Workbench] --> API[Spring Boot API]
+
+    subgraph RAG["RAG Pipeline"]
+        API --> Loader[Document Loader]
+        Loader --> Splitter[Chunking]
+        Splitter --> Emb[Ollama Embedding]
+        Emb --> PG[(PostgreSQL + pgvector)]
+        API --> Retrieval[Hybrid Retrieval]
+        Retrieval --> PG
+        Retrieval --> Rerank[Filter + Re-rank]
+        Rerank --> Chat[OpenAI-compatible Chat Model]
+        Chat --> API
+    end
+
+    subgraph Memory["Conversation Memory"]
+        API --> Redis[(Redis ChatMemory)]
+    end
+
+    subgraph Agent["SmartKB v2 Agent Platform"]
+        API --> Intake[Project Intake]
+        API --> Task[Agent Task State Machine]
+        API --> Code[Code Context Search]
+        API --> Eval[Eval Runs + Report]
+        Code --> FS[Local Java Project Files]
+        Code --> Git[Git Status / Diff / Log]
+    end
+
+    API --> Metrics[Micrometer Metrics]
+    Metrics --> Prom[Prometheus]
+    Prom --> Grafana[Grafana]
 ```
-src/main/java/com/smartkb/
-├── controller/          # API层
-├── service/             # 业务服务（RAG Service、Agent Service）
-├── domain/              # 领域模型
-├── infrastructure/      # 向量存储、外部客户端
-├── config/              # Spring AI Advisor配置、Virtual Threads配置
-└── util/                # 文档解析、Prompt工具
+
+## 功能清单
+
+### RAG 知识库
+
+- 文档上传：Markdown、TXT、PDF、DOCX。
+- 文档管理：列表、详情、删除、统计。
+- 文档切片可视化：查看入库 chunk，引用片段可定位到文档详情。
+- 普通问答：多轮对话、流式输出、会话 ID 管理。
+- Advanced RAG：查询改写、双路召回、文档过滤、关键词/锚点重排、阶段耗时指标。
+- Redis 会话记忆：刷新或重启应用后，同一 `conversationId` 可恢复上下文。
+
+### Agent 工程平台
+
+- 项目接管：读取 `README/SPEC/AGENTS/HANDOFF/pom.xml/docker-compose.yml/Git` 信息，生成接管摘要。
+- 任务状态机：`INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD`，记录状态流转和验证结果。
+- 记忆分层：高权威记忆、中权威记忆、低权威记忆，并支持冲突提示。
+- 代码上下文：文件树、关键词搜索、Git diff、代码 chunk、语义检索。
+- Eval 评测：记录 TicketRush eval case，聚合成功率、得分率、失败原因和人工介入指标。
+
+## 快速启动
+
+### 方式一：Docker Compose 全链路
+
+准备 `.env`：
+
+```bash
+cp .env.example .env
 ```
 
-### 快速启动
-本地开发推荐使用 `hybrid` 模式：Docker Desktop 启动 PostgreSQL/Redis，Ollama 提供本地 Embedding，IDEA 启动 Spring Boot。
+填入你的 Chat API 配置，示例字段：
 
-完整步骤见 [STARTUP.md](STARTUP.md)。
+```env
+TRANSIT_API_KEY=your-chat-api-key
+TRANSIT_BASE_URL=https://api.deepseek.com
+AI_MODEL=deepseek-chat
+SMARTKB_PROJECTS_ROOT=..
+```
+
+启动：
+
+```bash
+docker compose up -d
+```
+
+访问：
+
+| 服务 | 地址 |
+| --- | --- |
+| SmartKB | http://localhost:8082 |
+| Grafana | http://localhost:3001 |
+| Health | http://localhost:8082/actuator/health |
+
+Docker 模式下 Project Intake 使用容器路径：
+
+```text
+/workspace/projects/<project-dir>
+```
+
+例如：
+
+```text
+/workspace/projects/smartkb-java21-spring-ai-rag
+```
+
+### 方式二：Hybrid 本地开发
+
+只启动 PostgreSQL 和 Redis：
 
 ```bash
 docker compose -f docker-compose-minimal.yml up -d
+```
+
+准备 Ollama Embedding 模型：
+
+```bash
 ollama pull nomic-embed-text
 ```
 
-IDEA 运行配置：
+IDEA 或命令行启动 Spring Boot：
 
-- Active profiles: `hybrid`
-- Environment variables: `TRANSIT_API_KEY=你的Key;TRANSIT_BASE_URL=https://api.deepseek.com;AI_MODEL=deepseek-chat`
-- 应用地址: http://localhost:8080
+```text
+Active profiles: hybrid
+Environment variables:
+TRANSIT_API_KEY=your-chat-api-key;TRANSIT_BASE_URL=https://api.deepseek.com;AI_MODEL=deepseek-chat
+```
 
-### 后续开发计划
-- [x] 项目初始化 + Virtual Threads 配置 + CLAUDE.md 规则
-- [x] 文档智能解析与切片服务
-- [x] Embedding 与向量存储
-- [x] 核心 RAG 服务（单轮/多轮问答）
-- [x] REST API 接口
-- [x] Advanced RAG（Query Rewriting、Metadata Filtering、Re-ranking）
-- [x] 生产级功能（文档管理、异常处理）
-- [x] Web 前端界面
-- [x] 单元测试（核心服务）
-- [x] Kubernetes 部署 + Grafana 监控面板
-- [x] 性能测试报告模板
-- [x] 技术博客大纲
+访问：
 
-### 项目文档
-- [STARTUP.md](STARTUP.md) - 本地启动指南
-- [DEMO.md](DEMO.md) - 5 分钟演示脚本
-- [TESTING.md](TESTING.md) - 完整测试指南
-- [PERFORMANCE_REPORT.md](docs/PERFORMANCE_REPORT.md) - 性能测试报告
-- [BLOG_OUTLINE.md](docs/BLOG_OUTLINE.md) - 技术博客系列大纲
-- [k8s/README.md](k8s/README.md) - Kubernetes 部署指南
+```text
+http://localhost:8080
+```
 
-## API 文档
+完整启动细节见 [STARTUP.md](STARTUP.md)。
 
-### 文档管理
-- `POST /api/documents/upload` - 上传文档
-- `GET /api/documents` - 查询文档列表
-- `GET /api/documents/{fileName}` - 查询文档详情
-- `DELETE /api/documents/{fileName}` - 删除文档
-- `GET /api/documents/stats` - 文档统计信息
+## 演示路径
 
-### 问答服务
-- `POST /api/chat` - 基础 RAG 问答
-- `POST /api/chat/advanced` - Advanced RAG 问答（查询改写+过滤）
-- `POST /api/chat/conversation` - 多轮对话
-- `POST /api/test/rag` - 测试接口（带调试信息）
+推荐演示文档：
 
-### 详细测试步骤
-参考 [TESTING.md](TESTING.md) 获取完整测试指南。
+```text
+test-docs/advanced-rag-demo.md
+```
 
-### 学习收获与总结
-通过本项目，我将理论知识转化为可运行的生产级系统，深入理解了 Virtual Threads 在AI场景下的正确使用方式、Spring AI Advisor 的设计思想，以及RAG系统的工程化落地路径。这些经验将帮助我快速适应2026年的企业技术要求。
+5 分钟演示：
 
----
+1. 打开 SmartKB 工作台。
+2. 上传 `advanced-rag-demo.md`。
+3. 查看文档详情和 chunk。
+4. 在“智能问答”中进行多轮流式问答。
+5. 切换 Advanced 模式，选择指定文档，提问：
+
+```text
+查询改写在 Advanced RAG 中解决什么问题？
+为什么引用片段能提升 RAG 系统可信度？
+```
+
+6. 展开引用片段并定位到文档详情 chunk。
+7. 切到“项目接管”，输入 Docker 容器内项目路径，运行 Project Intake。
+8. 查看“任务状态”“代码上下文”“Eval 评测”工作区。
+
+详细脚本见 [DEMO.md](DEMO.md)。
+
+## API 概览
+
+### 文档与问答
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `POST` | `/api/documents/upload` | 上传文档并生成向量 |
+| `GET` | `/api/documents` | 文档列表 |
+| `GET` | `/api/documents/{fileName}` | 文档详情和 chunks |
+| `DELETE` | `/api/documents/{fileName}` | 删除文档和向量 |
+| `POST` | `/api/chat/conversation/stream` | 普通多轮流式对话 |
+| `POST` | `/api/chat/advanced/stream` | Advanced RAG 分阶段流式回答 |
+| `DELETE` | `/api/chat/memory/{conversationId}` | 清理 Redis 会话记忆 |
+
+### Agent 平台
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `POST` | `/api/agent/projects/intake` | 项目接管摘要 |
+| `POST` | `/api/agent/tasks` | 创建 Agent 任务 |
+| `POST` | `/api/agent/tasks/{id}/transition` | 状态流转 |
+| `POST` | `/api/agent/memories/import/high-authority` | 导入高权威记忆 |
+| `POST` | `/api/agent/code/search` | 代码关键词搜索 |
+| `POST` | `/api/agent/code/diff` | Git diff 检索 |
+| `POST` | `/api/agent/code/semantic` | 语义补充检索 |
+| `POST` | `/api/agent/eval/runs` | 创建 Eval Run |
+| `GET` | `/api/agent/eval/report` | Eval 聚合报告 |
+
+## 验证状态
+
+当前已验证：
+
+- `mvn test`：97 tests passed。
+- Docker Compose 全链路启动：`smartkb-app` healthy。
+- Redis ChatMemory live checklist：6/6 通过。
+- Docker BuildKit 缓存构建：缓存命中后重建约秒级。
+- Project Intake Docker 宿主机只读挂载：通过容器路径读取项目。
+- Eval Run：内存存储、JDBC 持久化和 Testcontainers profile 已覆盖。
+
+说明：
+
+- Testcontainers 集成测试在部分 Windows Docker Desktop 环境中可能因为 npipe Java Docker client 配置被跳过。
+- K3s demo manifest 已做 YAML 语法检查，仍建议在一次性 K3s/K3d 集群中再做真实部署验证。
+
+## 项目结构
+
+```text
+src/main/java/com/smartkb
+├── agent                 # SmartKB v2 Agent 工程平台
+│   ├── application       # 接管、任务、记忆、代码上下文、Eval 服务
+│   ├── controller        # Agent REST API
+│   ├── domain            # AgentTask、MemoryRecord、EvalRun 等模型
+│   └── infrastructure    # 文件系统与 Git 读取
+├── config                # Spring AI、Redis ChatMemory、VectorStore、异常处理
+├── controller            # 文档与问答 API
+├── domain                # RAG 领域模型
+├── service               # 文档加载、RAG、Advanced RAG、指标
+└── util                  # Virtual Thread 诊断工具
+```
+
+## 面试讲法
+
+30 秒版：
+
+```text
+SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，第一阶段完成了 Advanced RAG 工程闭环：文档上传、Ollama Embedding、pgvector 检索、Redis 会话记忆、流式问答和 Prometheus/Grafana 监控。第二阶段我把它升级成 Java 项目的 Agent 工程平台，能接管真实项目目录，做任务状态流转、记忆分层、代码上下文检索和 Eval 评测。我用 TicketRush 这个高并发票务项目作为真实样本来验证它。
+```
+
+核心追问点：
+
+- 为什么 Redis ChatMemory 比 InMemoryChatMemory 更适合演示分布式和重启恢复？
+- Advanced RAG 中查询改写、过滤和重排序分别解决什么问题？
+- 为什么代码上下文检索不能只靠向量检索，而要优先 `rg`、Git diff 和文件树？
+- 如何用 Eval Run 证明 Agent 能稳定接管真实 Java 项目？
+- Java 21 Virtual Threads 在文档解析、Embedding、数据库访问和模型调用这类 IO 密集场景中的价值是什么？
+
+更完整讲法见 [docs/EVAL_INTERVIEW_SUMMARY.md](docs/EVAL_INTERVIEW_SUMMARY.md) 和 [SPEC.md](SPEC.md)。
+
+## 文档导航
+
+| 文档 | 说明 |
+| --- | --- |
+| [STARTUP.md](STARTUP.md) | 本地启动指南 |
+| [DEMO.md](DEMO.md) | 5 分钟演示脚本 |
+| [TESTING.md](TESTING.md) | 测试指南 |
+| [SPEC.md](SPEC.md) | 当前规格、进度和面试讲法 |
+| [docs/AGENT_PLATFORM_SPEC.md](docs/AGENT_PLATFORM_SPEC.md) | SmartKB v2 Agent 平台规格 |
+| [docs/REDIS_CHAT_MEMORY_VERIFICATION.md](docs/REDIS_CHAT_MEMORY_VERIFICATION.md) | Redis 会话记忆验证记录 |
+| [docs/PROJECT_INTAKE_API_DESIGN.md](docs/PROJECT_INTAKE_API_DESIGN.md) | Project Intake 设计 |
+| [docs/CODE_CONTEXT_API_DESIGN.md](docs/CODE_CONTEXT_API_DESIGN.md) | 代码上下文设计 |
+| [docs/EVAL_RUN_PERSISTENCE_DESIGN.md](docs/EVAL_RUN_PERSISTENCE_DESIGN.md) | Eval Run 持久化方案 |
+| [docs/K3S_DEPLOYMENT_PLAN.md](docs/K3S_DEPLOYMENT_PLAN.md) | K3s 部署方案 |
+| [k8s/README.md](k8s/README.md) | Kubernetes/K3s 清单说明 |
+
+## 安全说明
+
+- `.env` 已加入 `.gitignore`，不要提交真实 API Key。
+- `.env.example` 只保留占位字段和公开示例。
+- 检查配置时只说明字段是否存在，不复述密钥值。
+- Docker Compose 中的数据库账号密码仅用于本地演示环境，不用于生产。

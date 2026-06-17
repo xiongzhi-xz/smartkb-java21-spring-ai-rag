@@ -633,3 +633,31 @@ Verified:
 
 Next step:
 - Commit and push the safety cleanup, then continue README/showcase polishing when ready.
+
+## 2026-06-17 Work Log - README Showcase Polish
+
+Current goal:
+- Turn SmartKB `README.md` into a GitHub/project-showcase entry page that supports interviews and quick project review.
+
+Completed:
+- Rewrote the README around two clear stages:
+  - SmartKB v1: Java 21 + Spring AI Advanced RAG knowledge base.
+  - SmartKB v2: Java project Agent engineering platform.
+- Added a Mermaid architecture diagram covering RAG, Redis ChatMemory, Agent platform, and observability flow.
+- Added feature checklist, technology table, Docker Compose startup, hybrid local startup, demo path, API overview, verification status, project structure, interview talking points, documentation navigation, and safety notes.
+- Kept public-safe OpenAI-compatible example configuration and avoided private gateway references.
+- Marked README showcase polish complete in `SPEC.md`.
+
+Modified files:
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- README local link scan via Node: passed (`README links ok: 15`).
+- Public-safety scan for old private gateway/local path placeholders: no matches.
+- `git diff --check`: only LF/CRLF warnings, no whitespace errors.
+- `mvn test` was not rerun because this step only changed documentation.
+
+Next step:
+- Run documentation validation, commit, push, then continue TicketRush README showcase polish.
