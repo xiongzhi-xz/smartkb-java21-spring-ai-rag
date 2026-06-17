@@ -562,3 +562,39 @@ Not verified:
 
 Next step:
 - Frontend sidebar refresh risk is closed. A good next slice is to split the dense AgentTask/Eval panels into smaller sub-tabs or continue SmartKB v2 Agent platform polish.
+
+## 2026-06-17 Work Log - AgentTask Eval Sub Tabs
+
+Current goal:
+- Reduce the density of the SmartKB v2 Agent workbench without changing backend APIs.
+
+Completed:
+- Added reusable inner workspace tab styling and `openWorkspaceSubTab(scope, targetId)`.
+- Split AgentTask into three inner tabs: 当前任务, 新建任务, 任务列表.
+- Kept AgentTask creation fields, transition fields, current task detail, and task list on the same API/function contracts.
+- Moved AgentTask creation validation into the 新建任务 tab and switched to 当前任务 after successful creation or task selection.
+- Split Eval into three inner tabs: 新增记录, 运行列表, 聚合报告.
+- Moved the Eval project filter and refresh/import actions into a shared toolbar so records and reports use the same project ID.
+- Marked the frontend sub-tab polish complete in `SPEC.md`.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- Inline JavaScript parse check via Node: passed.
+- Static DOM id uniqueness check via Node: 76 unique IDs, no duplicates.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed; image rebuilt and `smartkb-app` restarted.
+- `smartkb-app`: healthy at `http://localhost:8082`.
+- `curl http://localhost:8082/actuator/health`: `UP`, with PostgreSQL and Redis `UP`.
+- Runtime headless Chrome smoke against `http://localhost:8082/?v=subtabs`: passed.
+- Smoke covered AgentTask sub-tabs, Eval sub-tabs, AgentTask create validation staying inside 新建任务, and no desktop horizontal overflow at 1440px.
+- `mvn test`: passed, 97 tests.
+- `git diff --check`: only LF/CRLF warnings, no whitespace errors.
+
+Not verified:
+- Mobile viewport screenshot smoke was not run in this step.
+
+Next step:
+- Continue SmartKB v2 Agent platform polish. A focused next slice is to add lightweight screenshots or automated smoke coverage for the static workbench, or improve the Project Intake/Memory display density next.

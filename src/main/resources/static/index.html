@@ -39,6 +39,26 @@
         .workspace-nav-button i {
             width: 16px;
         }
+        .workspace-tab-button {
+            align-items: center;
+            border-radius: 6px;
+            color: #4b5563;
+            display: inline-flex;
+            font-size: 13px;
+            font-weight: 500;
+            gap: 8px;
+            min-height: 34px;
+            padding: 7px 12px;
+            transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+        }
+        .workspace-tab-button:hover {
+            color: #1d4ed8;
+        }
+        .workspace-tab-button.active {
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+            color: #1d4ed8;
+        }
     </style>
 </head>
 <body class="overflow-hidden bg-gray-50">
@@ -165,8 +185,69 @@
         </div>
 
         <div id="agentTaskPanel" class="hidden flex-1 overflow-auto bg-gray-50 px-6 py-5">
-            <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-                <div class="space-y-3">
+            <div class="space-y-4">
+                <div class="inline-flex flex-wrap rounded-lg border border-gray-200 bg-gray-100 p-1">
+                    <button type="button" data-workspace-tab="agentTask" data-workspace-tab-target="agentTaskCurrentTab"
+                            onclick="openWorkspaceSubTab('agentTask', 'agentTaskCurrentTab')"
+                            class="workspace-tab-button active">
+                        <i class="fa-solid fa-diagram-project"></i> 当前任务
+                    </button>
+                    <button type="button" data-workspace-tab="agentTask" data-workspace-tab-target="agentTaskCreateTab"
+                            onclick="openWorkspaceSubTab('agentTask', 'agentTaskCreateTab')"
+                            class="workspace-tab-button">
+                        <i class="fa-solid fa-plus"></i> 新建任务
+                    </button>
+                    <button type="button" data-workspace-tab="agentTask" data-workspace-tab-target="agentTaskListTab"
+                            onclick="openWorkspaceSubTab('agentTask', 'agentTaskListTab'); loadAgentTasks(false);"
+                            class="workspace-tab-button">
+                        <i class="fa-solid fa-list"></i> 任务列表
+                    </button>
+                </div>
+
+                <div id="agentTaskCurrentTab" data-workspace-tab-panel="agentTask"
+                     class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,460px)]">
+                    <div id="agentTaskResult" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                    <div class="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <h3 class="text-xs font-semibold uppercase text-gray-500">状态流转</h3>
+                        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+                            <label class="block">
+                                <span class="mb-1 block text-xs font-medium text-gray-500">备注</span>
+                                <input id="agentTaskNote" type="text"
+                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                       placeholder="当前状态变化说明">
+                            </label>
+                            <label class="block">
+                                <span class="mb-1 block text-xs font-medium text-gray-500">计划</span>
+                                <input id="agentTaskPlan" type="text"
+                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                       placeholder="文件范围、风险、验证方式">
+                            </label>
+                            <label class="block">
+                                <span class="mb-1 block text-xs font-medium text-gray-500">验证</span>
+                                <input id="agentTaskVerification" type="text"
+                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                       placeholder="测试、lint、接口或手动验证">
+                            </label>
+                            <label class="block">
+                                <span class="mb-1 block text-xs font-medium text-gray-500">结果</span>
+                                <input id="agentTaskResultSummary" type="text"
+                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                       placeholder="记录结果或失败原因">
+                            </label>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3">
+                            <label class="flex items-center gap-2 text-sm text-gray-600">
+                                <input id="agentTaskVerificationPassed" type="checkbox"
+                                       class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                验证通过后允许进入 RECORD
+                            </label>
+                            <div id="agentTaskControls" class="flex flex-wrap justify-end gap-2 text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="agentTaskCreateTab" data-workspace-tab-panel="agentTask"
+                     class="hidden space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
                     <div class="grid gap-3 md:grid-cols-[minmax(160px,220px)_minmax(0,1fr)_minmax(180px,240px)_auto]">
                         <label class="block">
                             <span class="mb-1 block text-xs font-medium text-gray-500">项目 ID</span>
@@ -191,15 +272,10 @@
                                 <option value="high">high</option>
                             </select>
                         </label>
-                        <div class="flex items-end gap-2">
+                        <div class="flex items-end">
                             <button id="agentTaskCreateButton" onclick="createAgentTask()"
                                     class="h-10 min-w-24 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
                                 <i class="fa-solid fa-plus mr-1.5"></i> 创建
-                            </button>
-                            <button onclick="loadAgentTasks()"
-                                    class="h-10 w-10 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-700"
-                                    title="刷新任务">
-                                <i class="fa-solid fa-rotate"></i>
                             </button>
                         </div>
                     </div>
@@ -210,59 +286,71 @@
                                value="完成一次可复现验证并记录结果"
                                placeholder="完成一次可复现验证并记录结果">
                     </label>
-                    <div class="grid gap-3 md:grid-cols-2">
-                        <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">备注</span>
-                            <input id="agentTaskNote" type="text"
-                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                   placeholder="当前状态变化说明">
-                        </label>
-                        <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">计划</span>
-                            <input id="agentTaskPlan" type="text"
-                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                   placeholder="文件范围、风险、验证方式">
-                        </label>
-                        <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">验证</span>
-                            <input id="agentTaskVerification" type="text"
-                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                   placeholder="测试、lint、接口或手动验证">
-                        </label>
-                        <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">结果</span>
-                            <input id="agentTaskResultSummary" type="text"
-                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                   placeholder="记录结果或失败原因">
-                        </label>
-                    </div>
-                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                        <label class="flex items-center gap-2 text-sm text-gray-600">
-                            <input id="agentTaskVerificationPassed" type="checkbox"
-                                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            验证通过后允许进入 RECORD
-                        </label>
-                        <div id="agentTaskControls" class="flex flex-wrap justify-end gap-2 text-sm"></div>
-                    </div>
+                    <div id="agentTaskCreateResult" class="hidden rounded-lg border border-gray-200 bg-white p-3 text-sm"></div>
                 </div>
-                <div class="space-y-3">
-                    <div id="agentTaskResult" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
-                    <div id="agentTaskList" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+
+                <div id="agentTaskListTab" data-workspace-tab-panel="agentTask"
+                     class="hidden space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="text-xs font-semibold uppercase text-gray-500">任务列表</h3>
+                        <button onclick="loadAgentTasks(false)"
+                                class="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                                title="刷新任务">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div id="agentTaskList" class="text-sm"></div>
                 </div>
             </div>
         </div>
 
         <div id="evalPanel" class="hidden flex-1 overflow-auto bg-gray-50 px-6 py-5">
-            <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,340px)_minmax(300px,420px)]">
-                <div class="space-y-3">
-                    <div class="grid gap-3 md:grid-cols-[minmax(140px,200px)_minmax(110px,150px)_minmax(140px,180px)_minmax(90px,120px)]">
-                        <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">项目 ID</span>
-                            <input id="evalProjectId" type="text"
-                                   class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                   value="ticket-project"
-                                   placeholder="ticket-project">
-                        </label>
+            <div class="space-y-4">
+                <div class="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <label class="block min-w-56 flex-1">
+                        <span class="mb-1 block text-xs font-medium text-gray-500">项目 ID</span>
+                        <input id="evalProjectId" type="text"
+                               class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                               value="ticket-project"
+                               placeholder="ticket-project">
+                    </label>
+                    <div class="flex gap-2">
+                        <button onclick="loadEvalData()"
+                                class="h-10 w-10 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                                title="刷新 Eval 数据">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                        <button onclick="importTicketRushEvalReport()"
+                                class="h-10 w-10 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                                title="导入 TicketRush 评测记录">
+                            <i class="fa-solid fa-file-import"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="inline-flex flex-wrap rounded-lg border border-gray-200 bg-gray-100 p-1">
+                    <button type="button" data-workspace-tab="eval" data-workspace-tab-target="evalCreateTab"
+                            onclick="openWorkspaceSubTab('eval', 'evalCreateTab')"
+                            class="workspace-tab-button active">
+                        <i class="fa-solid fa-plus"></i> 新增记录
+                    </button>
+                    <button type="button" data-workspace-tab="eval" data-workspace-tab-target="evalRunList"
+                            onclick="openWorkspaceSubTab('eval', 'evalRunList'); loadEvalData();"
+                            class="workspace-tab-button">
+                        <i class="fa-solid fa-list"></i> 运行列表
+                    </button>
+                    <button type="button" data-workspace-tab="eval" data-workspace-tab-target="evalReport"
+                            onclick="openWorkspaceSubTab('eval', 'evalReport'); loadEvalData();"
+                            class="workspace-tab-button">
+                        <i class="fa-solid fa-chart-simple"></i> 聚合报告
+                    </button>
+                </div>
+
+                <div id="evalResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm"></div>
+
+                <div id="evalCreateTab" data-workspace-tab-panel="eval"
+                     class="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <div class="grid gap-3 md:grid-cols-[minmax(110px,150px)_minmax(140px,180px)_minmax(90px,120px)]">
                         <label class="block">
                             <span class="mb-1 block text-xs font-medium text-gray-500">用例 ID</span>
                             <input id="evalCaseId" type="text"
@@ -279,25 +367,15 @@
                                 <option value="FAILED">FAILED</option>
                             </select>
                         </label>
-                        <div class="flex items-end gap-2">
+                        <div class="flex items-end">
                             <button id="evalCreateButton" onclick="createEvalRun()"
                                     class="h-10 min-w-20 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
                                 <i class="fa-solid fa-plus mr-1.5"></i> 新增
                             </button>
-                            <button onclick="loadEvalData()"
-                                    class="h-10 w-10 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-700"
-                                    title="Refresh eval data">
-                                <i class="fa-solid fa-rotate"></i>
-                            </button>
-                            <button onclick="importTicketRushEvalReport()"
-                                    class="h-10 w-10 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-700"
-                                    title="导入 TicketRush 评测记录">
-                                <i class="fa-solid fa-file-import"></i>
-                            </button>
                         </div>
                     </div>
                     <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">标题</span>
+                        <span class="mb-1 block text-xs font-medium text-gray-500">标题</span>
                         <input id="evalTitle" type="text"
                                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                value="TicketRush intake"
@@ -363,10 +441,12 @@ git diff --check</textarea>
                                       placeholder="失败或部分通过时填写"></textarea>
                         </label>
                     </div>
-                    <div id="evalResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm"></div>
                 </div>
-                <div id="evalRunList" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
-                <div id="evalReport" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+
+                <div id="evalRunList" data-workspace-tab-panel="eval"
+                     class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                <div id="evalReport" data-workspace-tab-panel="eval"
+                     class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
             </div>
         </div>
 
@@ -507,6 +587,18 @@ git diff --check</textarea>
         if (element) {
             element.classList.toggle('hidden', isHidden);
         }
+    }
+
+    function openWorkspaceSubTab(scope, targetId) {
+        document.querySelectorAll(`[data-workspace-tab="${scope}"]`).forEach(button => {
+            button.classList.toggle('active', button.dataset.workspaceTabTarget === targetId);
+        });
+        document.querySelectorAll(`[data-workspace-tab-panel="${scope}"]`).forEach(panel => {
+            panel.classList.toggle('hidden', panel.id !== targetId);
+            if (panel.id === targetId) {
+                panel.scrollTop = 0;
+            }
+        });
     }
 
     function openWorkspacePanel(name) {
@@ -916,10 +1008,13 @@ git diff --check</textarea>
         const titleInput = document.getElementById('agentTaskTitle');
         const title = titleInput.value.trim();
         const goal = document.getElementById('agentTaskGoal').value.trim();
-        const result = document.getElementById('agentTaskResult');
+        const createResult = document.getElementById('agentTaskCreateResult');
+        createResult.classList.add('hidden');
+        createResult.innerHTML = '';
 
         if (!title || !goal) {
-            result.innerHTML = '<p class="text-sm text-red-600">请填写任务标题和目标。</p>';
+            createResult.classList.remove('hidden');
+            createResult.innerHTML = '<p class="text-sm text-red-600">请填写任务标题和目标。</p>';
             (!title ? titleInput : document.getElementById('agentTaskGoal')).focus();
             return;
         }
@@ -935,10 +1030,14 @@ git diff --check</textarea>
                     riskLevel: document.getElementById('agentTaskRiskLevel').value
                 }
             });
+            createResult.classList.add('hidden');
+            createResult.innerHTML = '';
             renderAgentTask(task);
+            openWorkspaceSubTab('agentTask', 'agentTaskCurrentTab');
             await loadAgentTasks(false);
         } catch (e) {
-            result.innerHTML = `
+            createResult.classList.remove('hidden');
+            createResult.innerHTML = `
                 <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                     <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, '任务创建失败')}
                 </div>
@@ -996,6 +1095,7 @@ git diff --check</textarea>
         try {
             const task = await requestAgentTask(`/api/agent/tasks/${encodeURIComponent(id)}`);
             renderAgentTask(task);
+            openWorkspaceSubTab('agentTask', 'agentTaskCurrentTab');
         } catch (e) {
             document.getElementById('agentTaskResult').innerHTML = `
                 <p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, '任务加载失败')}</p>
