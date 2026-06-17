@@ -50,6 +50,10 @@ services:
     container_name: smartkb-app
     ports:
       - "8082:8080"  # 宿主机 8082 → 容器 8080（避免与 ticketrush 的 8080 冲突）
+    volumes:
+      # Project Intake 读取宿主机项目时使用容器内路径：
+      # /workspace/projects/<project-dir>
+      - ${SMARTKB_PROJECTS_ROOT:-E:/project/work/job}:${SMARTKB_PROJECTS_MOUNT:-/workspace/projects}:ro
     environment:
       # 使用 Docker 网络内部 DNS 连接 PostgreSQL 和 Redis
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartkb

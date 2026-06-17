@@ -446,9 +446,16 @@ Verified:
   - `http://localhost:8082/actuator/health`: `UP`, with PostgreSQL and Redis `UP`.
   - Home page HTML contains `接管简报`, `技术栈证据`, `可运行命令`, and `验证缺口`.
   - POST `/api/agent/projects/intake` against container path `/app` returned `success=true` and a non-empty `takeoverBrief`.
+- Docker host-workspace mount smoke:
+  - Added a read-only Compose mount from `${SMARTKB_PROJECTS_ROOT:-E:/project/work/job}` to `${SMARTKB_PROJECTS_MOUNT:-/workspace/projects}`.
+  - Recreated only `smartkb-app`; container stayed healthy.
+  - Verified `/workspace/projects/smartkb-java21-spring-ai-rag` exists inside the container.
+  - POST `/api/agent/projects/intake` with `rootPath=/workspace/projects/smartkb-java21-spring-ai-rag` returned `success=true`.
+  - Detected stack included Java 21, Spring Boot, Maven, Docker Compose, Redis, Prometheus, and Grafana.
+  - Runnable commands included `mvn test`, `mvn clean verify`, `docker compose up -d`, and `docker compose ps`.
 
 Not verified:
-- Browser click-through with a host project path. The Docker container cannot read Windows host paths such as `E:\...`; use IDEA/local run for host-path Project Intake, or add an explicit bind mount later if container-mode host project intake is required.
+- Browser click-through after entering the container path manually. Use `/workspace/projects/<project-dir>` in Docker mode, not a Windows `E:\...` path.
 
 Next step:
-- Continue SmartKB v2 Agent platform polish. A good next slice is to improve the takeover report wording if the UI output feels too dense, or add a container bind-mount option for host project intake.
+- Continue SmartKB v2 Agent platform polish. A good next slice is to improve the takeover report wording if the UI output feels too dense.
