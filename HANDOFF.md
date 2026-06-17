@@ -327,3 +327,32 @@ Still not verified:
 
 Next step:
 - After Docker Desktop is available, follow `docs/REDIS_CHAT_MEMORY_VERIFICATION.md` and complete the six Redis live checklist items in `SPEC.md`.
+
+## 2026-06-17 Work Log - RedisChatMemory Live Partial Verification
+
+Completed:
+- Continued after the user started Docker Desktop.
+- Confirmed Docker CLI was available and Docker server was `29.5.3`.
+- Confirmed `smartkb-app` was already healthy at `http://localhost:8082`.
+- Confirmed `smartkb-postgres` and `smartkb-redis` were healthy.
+- Verified `smartkb-app` startup logs include `初始化 RedisChatMemory, TTL=24h`.
+- Verified `smartkb-app` startup logs include `初始化 ChatMemory (Redis 模式, TTL=24h)`.
+- Verified actuator health returned `UP` with PostgreSQL and Redis `UP`.
+- Sent POST `/api/chat/conversation` with a dedicated `conversationId`.
+- Verified Redis key creation under `smartkb:chat:{conversationId}` despite the Chat model returning 401.
+- Verified the Redis key type was `list`, list length was `1`, and TTL was positive near 24 hours.
+- Verified DELETE `/api/chat/memory/{conversationId}` returned success and removed the Redis key.
+- Updated `SPEC.md` to mark 3 Redis live checklist items complete.
+- Updated `docs/REDIS_CHAT_MEMORY_VERIFICATION.md` with the live verification record.
+
+Verified:
+- `mvn -Pintegration-tests verify`: build passed; 97 unit tests passed, 2 integration tests skipped because Testcontainers still could not find a valid Java Docker client through Windows npipe.
+
+Still not verified:
+- Browser refresh follow-up memory.
+- App restart follow-up memory.
+- Advanced RAG history-aware query rewrite.
+- These require a valid Chat token. The running request failed with `401 无效的令牌`; host env vars `TRANSIT_API_KEY`, `OPENAI_API_KEY`, `TRANSIT_BASE_URL`, and `AI_MODEL` were absent.
+
+Next step:
+- Provide a valid Chat token to the running SmartKB app, restart only `smartkb-app`, then complete the remaining three Redis live checklist items.

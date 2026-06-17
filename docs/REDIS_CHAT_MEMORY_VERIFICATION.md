@@ -89,3 +89,34 @@ On 2026-06-17, live smoke could not be executed in this Windows environment:
 - Port checks showed only Ollama on `11434`.
 
 Docker Desktop was not restarted to avoid disrupting other local project containers.
+
+## Live Verification Record
+
+Date: 2026-06-17
+
+Docker Desktop was later started by the user. The SmartKB Docker Compose stack was already running:
+
+- `smartkb-app`: healthy, mapped to `http://localhost:8082`.
+- `smartkb-postgres`: healthy.
+- `smartkb-redis`: healthy.
+- `smartkb-prometheus` and `smartkb-grafana`: running.
+
+Verified:
+
+- `http://localhost:8082/actuator/health` returned `UP` with PostgreSQL and Redis `UP`.
+- `smartkb-app` logs contained `初始化 RedisChatMemory, TTL=24h`.
+- `smartkb-app` logs contained `初始化 ChatMemory (Redis 模式, TTL=24h)`.
+- Before the live request, `docker exec smartkb-redis redis-cli keys "smartkb:chat:*"` returned no keys.
+- A POST to `/api/chat/conversation` with `conversationId=redis-live-20260617111513` created `smartkb:chat:redis-live-20260617111513`.
+- The key type was `list`.
+- The list length was `1`.
+- The TTL was positive and close to 24 hours (`86392` seconds at check time).
+- DELETE `/api/chat/memory/redis-live-20260617111513` returned success.
+- After DELETE, `exists smartkb:chat:redis-live-20260617111513` returned `0`.
+
+Not verified:
+
+- The conversation request returned HTTP 500 because the Chat model call failed with `401 无效的令牌`.
+- Host environment variables `TRANSIT_API_KEY`, `OPENAI_API_KEY`, `TRANSIT_BASE_URL`, and `AI_MODEL` were not present, so the running container used its configured defaults.
+- Browser refresh follow-up memory, app restart follow-up memory, and Advanced RAG history-aware query rewrite still need a valid Chat token.
+- `mvn -Pintegration-tests verify` completed successfully, but `JdbcEvalCaseRunStoreIT` and `RedisChatMemoryIT` were still skipped because Testcontainers could not obtain a valid Java Docker client through the Windows npipe setup, even though Docker CLI and Docker Compose containers were available.
