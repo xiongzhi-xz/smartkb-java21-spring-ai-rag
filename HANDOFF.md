@@ -304,3 +304,26 @@ Completed:
 Verified:
 - `mvn -Dtest=AgentTaskServiceTest test`: 6 tests passed.
 - `mvn test`: 97 tests passed.
+
+## 2026-06-17 Work Log - RedisChatMemory Integration Coverage
+
+Completed:
+- Checked Redis live smoke prerequisites without restarting Docker Desktop.
+- Confirmed Docker Desktop service was stopped and Docker API was unavailable.
+- Confirmed ports `5432` and `6379` were not listening; only Ollama was listening on `11434`.
+- Confirmed no local `redis-server`, `redis-cli`, `psql`, or PostgreSQL service was available.
+- Added `RedisChatMemoryIT` under the existing `integration-tests` profile.
+- Added `docs/REDIS_CHAT_MEMORY_VERIFICATION.md`.
+- Updated `SPEC.md` with the RedisChatMemory integration-test coverage and current test count.
+
+Verified:
+- `mvn -Dtest=RedisChatMemoryTest test`: 5 tests passed.
+- `mvn test`: 97 tests passed.
+- `mvn -Pintegration-tests verify`: build passed; `JdbcEvalCaseRunStoreIT` and `RedisChatMemoryIT` were skipped because Testcontainers could not find a valid Docker environment.
+
+Still not verified:
+- SPEC Redis ChatMemory live checklist remains unchecked because it needs a running SmartKB app, real Redis, browser conversation state, and LLM calls.
+- Docker Desktop was not restarted to avoid disrupting other local project environments.
+
+Next step:
+- After Docker Desktop is available, follow `docs/REDIS_CHAT_MEMORY_VERIFICATION.md` and complete the six Redis live checklist items in `SPEC.md`.
