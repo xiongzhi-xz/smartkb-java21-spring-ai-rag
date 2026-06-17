@@ -447,7 +447,7 @@ Verified:
   - Home page HTML contains `接管简报`, `技术栈证据`, `可运行命令`, and `验证缺口`.
   - POST `/api/agent/projects/intake` against container path `/app` returned `success=true` and a non-empty `takeoverBrief`.
 - Docker host-workspace mount smoke:
-  - Added a read-only Compose mount from `${SMARTKB_PROJECTS_ROOT:-E:/project/work/job}` to `${SMARTKB_PROJECTS_MOUNT:-/workspace/projects}`.
+  - Added a read-only Compose mount from `${SMARTKB_PROJECTS_ROOT:-..}` to `${SMARTKB_PROJECTS_MOUNT:-/workspace/projects}`.
   - Recreated only `smartkb-app`; container stayed healthy.
   - Verified `/workspace/projects/smartkb-java21-spring-ai-rag` exists inside the container.
   - POST `/api/agent/projects/intake` with `rootPath=/workspace/projects/smartkb-java21-spring-ai-rag` returned `success=true`.
@@ -598,3 +598,38 @@ Not verified:
 
 Next step:
 - Continue SmartKB v2 Agent platform polish. A focused next slice is to add lightweight screenshots or automated smoke coverage for the static workbench, or improve the Project Intake/Memory display density next.
+
+## 2026-06-17 Work Log - GitHub Safety Cleanup
+
+Current goal:
+- Make the pushed GitHub version safer as a private backup and easier to turn into a public showcase later.
+
+Completed:
+- Confirmed the working tree was clean before the safety pass.
+- Confirmed `.env` is ignored and not tracked; `.env.example` is tracked as the public template.
+- Replaced private Chat API gateway examples with a generic OpenAI-compatible DeepSeek example.
+- Replaced the old token-shaped API key placeholder with `your-api-key-here`.
+- Changed the Docker Project Intake default mount from a machine-specific absolute path to `..`.
+- Updated README, STARTUP, AGENTS, OLLAMA setup docs, application configs, Compose config, SPEC, and historical HANDOFF note to match the generic public-safe examples.
+- Checked unauthenticated GitHub API visibility; the repository returned 404, so it is not visible as a public repository from that view.
+
+Modified files:
+- `.env.example`
+- `AGENTS.md`
+- `README.md`
+- `STARTUP.md`
+- `docker-compose.yml`
+- `docs/OLLAMA_SETUP.md`
+- `src/main/resources/application.yml`
+- `src/main/resources/application-hybrid.yml`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- Redacted scan for the previous private gateway domains and local default project path: no remaining matches in the checked public-facing files.
+- `git diff --check`: only LF/CRLF warnings, no whitespace errors.
+- `docker compose config --quiet`: passed.
+- `mvn test`: passed, 97 tests.
+
+Next step:
+- Commit and push the safety cleanup, then continue README/showcase polishing when ready.

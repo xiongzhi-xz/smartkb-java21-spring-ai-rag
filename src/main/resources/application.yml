@@ -34,13 +34,13 @@ spring:
 
   # Spring AI 配置
   ai:
-    # OpenAI 兼容接口（DeepSeek 中转站）— 用于 Chat
+    # OpenAI 兼容接口 — 用于 Chat
     openai:
-      api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:sk-your-api-key-here}}
-      base-url: ${TRANSIT_BASE_URL:https://elysiver.h-e.top}
+      api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:your-api-key-here}}
+      base-url: ${TRANSIT_BASE_URL:https://api.deepseek.com}
       chat:
         options:
-          model: ${AI_MODEL:deepseek-v4-flash}
+          model: ${AI_MODEL:deepseek-chat}
           temperature: 0.7
           max-tokens: 2000
       embedding:

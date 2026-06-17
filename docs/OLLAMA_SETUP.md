@@ -37,8 +37,8 @@ ollama list
 spring:
   ai:
     openai:
-      api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:sk-your-api-key-here}}
-      base-url: ${TRANSIT_BASE_URL:https://fufu.iqach.top}
+      api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:your-api-key-here}}
+      base-url: ${TRANSIT_BASE_URL:https://api.deepseek.com}
       chat:
         enabled: true
         options:

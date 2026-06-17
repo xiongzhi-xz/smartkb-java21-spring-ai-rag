@@ -53,7 +53,7 @@ services:
     volumes:
       # Project Intake 读取宿主机项目时使用容器内路径：
       # /workspace/projects/<project-dir>
-      - ${SMARTKB_PROJECTS_ROOT:-E:/project/work/job}:${SMARTKB_PROJECTS_MOUNT:-/workspace/projects}:ro
+      - ${SMARTKB_PROJECTS_ROOT:-..}:${SMARTKB_PROJECTS_MOUNT:-/workspace/projects}:ro
     environment:
       # 使用 Docker 网络内部 DNS 连接 PostgreSQL 和 Redis
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartkb
@@ -61,9 +61,9 @@ services:
       # Ollama 在宿主机运行，容器内通过 host.docker.internal 访问
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       # AI 模型配置（通过环境变量注入，不硬编码）
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-${TRANSIT_API_KEY:-sk-your-api-key-here}}
-      TRANSIT_BASE_URL: ${TRANSIT_BASE_URL:-https://elysiver.h-e.top}
-      AI_MODEL: ${AI_MODEL:-deepseek-v4-flash}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-${TRANSIT_API_KEY:-your-api-key-here}}
+      TRANSIT_BASE_URL: ${TRANSIT_BASE_URL:-https://api.deepseek.com}
+      AI_MODEL: ${AI_MODEL:-deepseek-chat}
     depends_on:
       postgres:
         condition: service_healthy

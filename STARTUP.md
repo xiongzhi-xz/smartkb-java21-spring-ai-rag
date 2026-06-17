@@ -96,7 +96,7 @@ E:\project\work\job\smartkb-java21-spring-ai-rag
 `Environment variables` 填：
 
 ```text
-TRANSIT_API_KEY=你的真实中转站Key;TRANSIT_BASE_URL=https://fufu.iqach.top
+TRANSIT_API_KEY=你的真实 Chat API Key;TRANSIT_BASE_URL=https://api.deepseek.com;AI_MODEL=deepseek-chat
 ```
 
 注意：

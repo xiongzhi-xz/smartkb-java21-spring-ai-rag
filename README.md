@@ -49,7 +49,7 @@ ollama pull nomic-embed-text
 IDEA 运行配置：
 
 - Active profiles: `hybrid`
-- Environment variables: `TRANSIT_API_KEY=你的Key;TRANSIT_BASE_URL=https://fufu.iqach.top`
+- Environment variables: `TRANSIT_API_KEY=你的Key;TRANSIT_BASE_URL=https://api.deepseek.com;AI_MODEL=deepseek-chat`
 - 应用地址: http://localhost:8080
 
 ### 后续开发计划

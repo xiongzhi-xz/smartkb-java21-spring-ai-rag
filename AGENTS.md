@@ -61,7 +61,7 @@ git status --short
    环境变量示例：
 
    ```text
-   TRANSIT_API_KEY=真实Key;TRANSIT_BASE_URL=https://fufu.iqach.top
+   TRANSIT_API_KEY=真实Key;TRANSIT_BASE_URL=https://api.deepseek.com;AI_MODEL=deepseek-chat
    ```
 
 4. 访问：
