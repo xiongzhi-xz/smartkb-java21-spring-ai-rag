@@ -356,3 +356,36 @@ Still not verified:
 
 Next step:
 - Provide a valid Chat token to the running SmartKB app, restart only `smartkb-app`, then complete the remaining three Redis live checklist items.
+
+## 2026-06-17 Work Log - RedisChatMemory Live Completed
+
+Completed:
+- Created local ignored `.env` from `.env.example`.
+- Normalized `.env` from `export KEY=value` to Docker Compose-compatible `KEY=value` without printing secret values.
+- Removed non-`KEY=value` example command lines from `.env`.
+- Updated `docker-compose.yml` so container-mode `OPENAI_API_KEY` falls back to local `TRANSIT_API_KEY`.
+- Recreated `smartkb-app` with the new `.env`; confirmed required environment fields were present inside the container without printing values.
+- Found a live behavior bug: Redis history was read after app restart, but conversation mode still answered as if no memory existed because the default `QuestionAnswerAdvisor` no-document constraint could outweigh ChatMemory history.
+- Added a dedicated `conversationChatClient` with only `MessageChatMemoryAdvisor`.
+- Updated `RagService.queryWithContext` and stream mode to use the dedicated conversation client.
+- Verified Redis ChatMemory live checklist end to end with `conversationId=redis-memory-fixed-20260617122343`.
+- Marked all six Redis ChatMemory checklist items complete in `SPEC.md`.
+- Updated `docs/REDIS_CHAT_MEMORY_VERIFICATION.md` with the completed live record.
+
+Verified:
+- `mvn test`: 97 tests passed.
+- `mvn package -DskipTests`: passed.
+- `smartkb-app` logs include `初始化 Conversation ChatClient with ChatMemory Advisor`.
+- Same `conversationId` follow-up returned phrase `smartkb-cypress-122343`.
+- Restarted only `smartkb-app`; post-restart follow-up returned the same phrase.
+- Advanced RAG loaded 6 ChatMemory messages and query rewrite included `smartkb-cypress-122343`.
+- DELETE `/api/chat/memory/{conversationId}` removed the Redis key; `exists` returned `0`.
+
+Operational note:
+- Full Docker image rebuild with `docker compose up -d --no-deps --build --force-recreate smartkb-app` timed out after 5 minutes in this environment.
+- The stuck local Docker build processes were stopped.
+- Live verification used `mvn package -DskipTests`, `docker cp target/smartkb-java21-spring-ai-rag-1.0.0-SNAPSHOT.jar smartkb-app:/app/app.jar`, then `docker restart smartkb-app`.
+- For a durable container image, retry full Docker build later or optimize the Dockerfile build cache.
+
+Next step:
+- Redis ChatMemory live verification is closed. A good next task is either optimizing Docker rebuild speed or continuing SmartKB v2 Agent platform polish.

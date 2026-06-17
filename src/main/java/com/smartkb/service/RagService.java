@@ -1,7 +1,6 @@
 package com.smartkb.service;
 
 import com.smartkb.util.VirtualThreadInspector;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor;
@@ -10,6 +9,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -40,14 +40,29 @@ import java.util.concurrent.Executors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class RagService {
 
     private final DocumentLoaderService documentLoaderService;
     private final EmbeddingService embeddingService;
     private final VectorStoreService vectorStoreService;
     private final ChatClient chatClient;
+    private final ChatClient conversationChatClient;
     private final SmartKbMetricsService metricsService;
+
+    public RagService(
+            DocumentLoaderService documentLoaderService,
+            EmbeddingService embeddingService,
+            VectorStoreService vectorStoreService,
+            ChatClient chatClient,
+            @Qualifier("conversationChatClient") ChatClient conversationChatClient,
+            SmartKbMetricsService metricsService) {
+        this.documentLoaderService = documentLoaderService;
+        this.embeddingService = embeddingService;
+        this.vectorStoreService = vectorStoreService;
+        this.chatClient = chatClient;
+        this.conversationChatClient = conversationChatClient;
+        this.metricsService = metricsService;
+    }
 
     /**
      * 添加文档到知识库（完整流程：解析 → Embedding → 存储）
@@ -198,9 +213,10 @@ public class RagService {
     /**
      * RAG 问答（多轮对话，支持上下文记忆）
      * <p>
-     * 使用 MessageChatMemoryAdvisor 自动管理对话历史：
+     * 使用 conversationChatClient 的 MessageChatMemoryAdvisor 自动管理对话历史：
      * - 历史消息存储在 ChatMemory（基于 conversationId）
      * - Advisor 会自动注入历史上下文到 Prompt
+     * - 不叠加 QuestionAnswerAdvisor，避免无文档命中时压过 ChatMemory 历史
      *
      * @param question       用户问题
      * @param conversationId 会话 ID（用于区分不同用户/会话）
@@ -214,7 +230,7 @@ public class RagService {
 
         try {
             // ChatClient 的 MessageChatMemoryAdvisor 会自动加载历史
-            String answer = chatClient.prompt()
+            String answer = conversationChatClient.prompt()
                     .user(question)
                     .advisors(a -> a.param(AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId))
                     .call()
@@ -244,7 +260,7 @@ public class RagService {
         VirtualThreadInspector.logThreadInfo("多轮RAG流式查询开始",
                 "conversationId: " + conversationId + ", 问题长度: " + question.length());
 
-        return chatClient.prompt()
+        return conversationChatClient.prompt()
                 .user(question)
                 .advisors(a -> a.param(AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId))
                 .stream()

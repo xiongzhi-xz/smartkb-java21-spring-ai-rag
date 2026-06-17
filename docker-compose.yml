@@ -57,7 +57,7 @@ services:
       # Ollama 在宿主机运行，容器内通过 host.docker.internal 访问
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       # AI 模型配置（通过环境变量注入，不硬编码）
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-your-api-key-here}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-${TRANSIT_API_KEY:-sk-your-api-key-here}}
       TRANSIT_BASE_URL: ${TRANSIT_BASE_URL:-https://elysiver.h-e.top}
       AI_MODEL: ${AI_MODEL:-deepseek-v4-flash}
     depends_on:

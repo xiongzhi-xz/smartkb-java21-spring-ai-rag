@@ -11,6 +11,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
@@ -116,6 +117,7 @@ public class AdvisorConfig {
      * User Question → MessageChatMemoryAdvisor（注入历史）→ QuestionAnswerAdvisor（检索+注入）→ ChatModel → Answer
      */
     @Bean
+    @Primary
     public ChatClient chatClient(ChatMemory chatMemory) {
         log.info("初始化 ChatClient with Advisor 链");
         log.info("RAG 配置 - topK: {}, similarityThreshold: {}", topK, similarityThreshold);
@@ -130,6 +132,23 @@ public class AdvisorConfig {
                                 .withTopK(topK)
                                 .withSimilarityThreshold(similarityThreshold))
                 )
+                .build();
+    }
+
+    /**
+     * 配置多轮对话专用 ChatClient。
+     * <p>
+     * conversation 模式的核心验收是“同一 conversationId 下能读取 ChatMemory 历史”。
+     * 如果沿用默认 RAG ChatClient，QuestionAnswerAdvisor 在没有命中文档时会注入“只根据文档回答”的约束，
+     * 容易压过 ChatMemory 中的历史对话，导致服务重启后 Redis 中已有历史但模型仍回答“不知道”。
+     * 因此这里为 `/api/chat/conversation` 提供一个只挂 MessageChatMemoryAdvisor 的客户端。
+     */
+    @Bean("conversationChatClient")
+    public ChatClient conversationChatClient(ChatMemory chatMemory) {
+        log.info("初始化 Conversation ChatClient with ChatMemory Advisor");
+
+        return ChatClient.builder(chatModel)
+                .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory))
                 .build();
     }
 }

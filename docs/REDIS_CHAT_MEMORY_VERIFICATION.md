@@ -120,3 +120,44 @@ Not verified:
 - Host environment variables `TRANSIT_API_KEY`, `OPENAI_API_KEY`, `TRANSIT_BASE_URL`, and `AI_MODEL` were not present, so the running container used its configured defaults.
 - Browser refresh follow-up memory, app restart follow-up memory, and Advanced RAG history-aware query rewrite still need a valid Chat token.
 - `mvn -Pintegration-tests verify` completed successfully, but `JdbcEvalCaseRunStoreIT` and `RedisChatMemoryIT` were still skipped because Testcontainers could not obtain a valid Java Docker client through the Windows npipe setup, even though Docker CLI and Docker Compose containers were available.
+
+## Live Verification Record - Completed
+
+Date: 2026-06-17
+
+After a valid transit key was added to local `.env`, Docker Compose was adjusted so `OPENAI_API_KEY` can fall back to `TRANSIT_API_KEY` for container mode.
+
+Additional implementation fix:
+
+- Added a dedicated `conversationChatClient` with only `MessageChatMemoryAdvisor`.
+- Kept the existing primary `chatClient` for RAG with `MessageChatMemoryAdvisor + QuestionAnswerAdvisor`.
+- Updated `RagService.queryWithContext` and streaming conversation mode to use `conversationChatClient`.
+- Reason: with the default RAG client, `QuestionAnswerAdvisor` could inject a no-document constraint that outweighed Redis ChatMemory history when the question was not answerable from uploaded documents.
+
+Verified live with `conversationId=redis-memory-fixed-20260617122343` and phrase `smartkb-cypress-122343`:
+
+- `smartkb-app` started healthy and logged `初始化 Conversation ChatClient with ChatMemory Advisor`.
+- First conversation call stored the phrase and wrote Redis list entries.
+- Same `conversationId` follow-up returned the expected phrase.
+- Redis list length before restart was `4`; TTL was `86400`.
+- Restarted only `smartkb-app`; PostgreSQL and Redis were left running.
+- Post-restart follow-up with the same `conversationId` returned the expected phrase.
+- Redis list length after restart was `6`; TTL was refreshed to `86400`.
+- Advanced RAG call loaded 6 ChatMemory messages.
+- Advanced RAG query rewrite included `smartkb-cypress-122343` in `rewrittenQuery`.
+- DELETE `/api/chat/memory/redis-memory-fixed-20260617122343` returned success.
+- Redis `exists smartkb:chat:redis-memory-fixed-20260617122343` returned `0`.
+
+Verification commands run in this stage:
+
+```powershell
+mvn test
+mvn package -DskipTests
+docker cp target/smartkb-java21-spring-ai-rag-1.0.0-SNAPSHOT.jar smartkb-app:/app/app.jar
+docker restart smartkb-app
+```
+
+Notes:
+
+- Full Docker image rebuild with `docker compose up -d --no-deps --build --force-recreate smartkb-app` timed out after 5 minutes in this environment. The live verification used a local Maven package plus `docker cp` to update the running app container.
+- The long-running Docker build process was stopped after timeout so it would not keep consuming local resources.
