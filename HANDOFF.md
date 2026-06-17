@@ -459,3 +459,38 @@ Not verified:
 
 Next step:
 - Continue SmartKB v2 Agent platform polish. A good next slice is to improve the takeover report wording if the UI output feels too dense.
+
+## 2026-06-17 Work Log - Frontend Workspace Layout
+
+Current goal:
+- Make the SmartKB frontend easier to understand after the RAG and Agent features accumulated on one page.
+
+Completed:
+- Reworked the static homepage from a crowded top toolbar into a left-side workspace navigation.
+- Added five clear workspaces: 智能问答, 项目接管, 任务状态, 代码上下文, Eval 评测.
+- Changed workspace switching so only the selected functional panel is visible; RAG mode controls are only shown in the chat workspace.
+- Kept the existing backend APIs and JavaScript function names compatible.
+- Updated Project Intake and Code Context default paths to Docker container paths: `/workspace/projects/smartkb-java21-spring-ai-rag`.
+- Localized the most visible AgentTask, Code Context, and Eval form labels/messages to Chinese.
+- Added a small responsive guard so the sidebar does not force horizontal overflow on narrow screens.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- Inline JavaScript syntax check via Node: passed.
+- `mvn test`: 97 tests passed.
+- `git diff --check`: only LF/CRLF warnings, no whitespace errors.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy at `http://localhost:8082`.
+- `http://localhost:8082/actuator/health`: `UP`, with PostgreSQL and Redis `UP`.
+- Home page HTML contains the new workspace navigation and Docker default project path.
+- POST `/api/agent/projects/intake` with `rootPath=/workspace/projects/smartkb-java21-spring-ai-rag` returned `success=true`, a non-empty takeover brief, and 8 detected stack items.
+
+Not verified:
+- Browser screenshot smoke. `npx playwright screenshot` could not run because the Playwright Chromium binary was missing, and `npx playwright install chromium` timed out after 3 minutes. The leftover Playwright install node processes were stopped.
+
+Next step:
+- Open `http://localhost:8082` manually and click through the five left-side workspaces. If the page still feels dense, split AgentTask/Eval into smaller sub-tabs next.

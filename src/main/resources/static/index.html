@@ -12,22 +12,75 @@
         .message { max-width: 80%; }
         .user-msg { background-color: #3b82f6; color: white; }
         .ai-msg { background-color: #f3f4f6; }
+        .workspace-nav-button {
+            align-items: center;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: #4b5563;
+            display: flex;
+            font-size: 14px;
+            gap: 10px;
+            padding: 10px 12px;
+            text-align: left;
+            transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+            width: 100%;
+        }
+        .workspace-nav-button:hover {
+            background-color: #f8fafc;
+            border-color: #dbeafe;
+            color: #1d4ed8;
+        }
+        .workspace-nav-button.active {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+        .workspace-nav-button i {
+            width: 16px;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
-<div class="flex h-screen">
-    <!-- 左侧：文档管理 -->
-    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+<div class="flex h-screen min-w-0 flex-col lg:flex-row">
+    <!-- 左侧：导航与文档管理 -->
+    <div class="flex max-h-[42vh] w-full shrink-0 flex-col border-b border-gray-200 bg-white lg:h-screen lg:max-h-none lg:w-80 lg:border-b-0 lg:border-r">
         <div class="p-6 border-b">
             <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                 <i class="fa-solid fa-brain text-blue-600"></i> SmartKB
             </h1>
-            <p class="text-sm text-gray-500 mt-1">企业智能知识库系统</p>
+            <p class="text-sm text-gray-500 mt-1">RAG + Agent 工作台</p>
+        </div>
+
+        <nav class="border-b p-4">
+            <div class="mb-2 text-xs font-semibold uppercase text-gray-400">工作区</div>
+            <div class="space-y-1">
+                <button id="workspaceNavChat" type="button" onclick="openWorkspacePanel('chat')" class="workspace-nav-button active">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>智能问答</span>
+                </button>
+                <button id="workspaceNavProjectIntake" type="button" onclick="openWorkspacePanel('projectIntake')" class="workspace-nav-button">
+                    <i class="fa-solid fa-folder-tree"></i>
+                    <span>项目接管</span>
+                </button>
+                <button id="workspaceNavAgentTask" type="button" onclick="openWorkspacePanel('agentTask')" class="workspace-nav-button">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>任务状态</span>
+                </button>
+                <button id="workspaceNavCodeContext" type="button" onclick="openWorkspacePanel('codeContext')" class="workspace-nav-button">
+                    <i class="fa-solid fa-code"></i>
+                    <span>代码上下文</span>
+                </button>
+                <button id="workspaceNavEval" type="button" onclick="openWorkspacePanel('eval')" class="workspace-nav-button">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>Eval 评测</span>
+                </button>
+            </div>
         </div>
         
         <div class="p-4">
             <button onclick="uploadDocument()" 
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium">
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-medium">
                 <i class="fa-solid fa-upload"></i> 上传文档
             </button>
             <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.md,.txt">
@@ -47,11 +100,14 @@
     </div>
 
     <!-- 右侧：聊天区域 -->
-    <div class="flex-1 flex flex-col">
+    <div class="min-h-0 flex-1 flex flex-col">
         <div class="bg-white border-b px-6 py-4 flex items-center justify-between gap-4">
-            <h2 class="font-semibold text-gray-700">智能对话</h2>
+            <div class="min-w-0">
+                <h2 id="workspaceTitle" class="font-semibold text-gray-800">智能问答</h2>
+                <p id="workspaceSubtitle" class="mt-0.5 text-xs text-gray-500">Conversation / Advanced RAG</p>
+            </div>
             <div class="flex items-center justify-end gap-3 flex-wrap">
-                <div class="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1 text-xs">
+                <div id="ragModeControls" class="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1 text-xs">
                     <button id="conversationModeButton" onclick="setRagMode('conversation')"
                             class="px-3 py-1.5 rounded-md flex items-center gap-1.5"
                             title="多轮对话">
@@ -70,30 +126,14 @@
                         class="hidden max-w-52 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500">
                 </select>
                 <span id="conversationStatus" class="max-w-52 truncate text-xs text-gray-400"></span>
-                <button onclick="toggleProjectIntakePanel()"
-                        class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
-                    <i class="fa-solid fa-folder-tree"></i> 项目接管
-                </button>
-                <button onclick="toggleAgentTaskPanel()"
-                        class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
-                    <i class="fa-solid fa-list-check"></i> 任务状态
-                </button>
-                <button onclick="toggleEvalPanel()"
-                        class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
-                    <i class="fa-solid fa-chart-simple"></i> Eval
-                </button>
-                <button onclick="toggleCodeContextPanel()"
-                        class="text-gray-500 hover:text-blue-700 text-sm flex items-center gap-1">
-                    <i class="fa-solid fa-code"></i> Code Context
-                </button>
-                <button onclick="clearChat()"
+                <button id="clearChatButton" onclick="clearChat()"
                         class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1">
                     <i class="fa-solid fa-trash"></i> 新会话
                 </button>
             </div>
         </div>
 
-        <div id="projectIntakePanel" class="hidden border-b bg-white px-6 py-4">
+        <div id="projectIntakePanel" class="hidden flex-1 overflow-auto bg-gray-50 px-6 py-5">
             <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
                 <div class="space-y-3">
                     <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(220px,320px)_auto]">
@@ -101,8 +141,8 @@
                             <span class="mb-1 block text-xs font-medium text-gray-500">项目路径</span>
                             <input id="projectIntakePath" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                   value="E:/project/work/job/ticketrush-java21-high-concurrency"
-                                   placeholder="E:/project/work/job/example-project">
+                                   value="/workspace/projects/smartkb-java21-spring-ai-rag"
+                                   placeholder="/workspace/projects/example-project">
                         </label>
                         <label class="block">
                             <span class="mb-1 block text-xs font-medium text-gray-500">接管目标</span>
@@ -124,12 +164,12 @@
             </div>
         </div>
 
-        <div id="agentTaskPanel" class="hidden border-b bg-white px-6 py-4">
+        <div id="agentTaskPanel" class="hidden flex-1 overflow-auto bg-gray-50 px-6 py-5">
             <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
                 <div class="space-y-3">
                     <div class="grid gap-3 md:grid-cols-[minmax(160px,220px)_minmax(0,1fr)_minmax(180px,240px)_auto]">
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Project ID</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">项目 ID</span>
                             <input id="agentTaskProjectId" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="ticket-project"
@@ -139,8 +179,8 @@
                             <span class="mb-1 block text-xs font-medium text-gray-500">任务标题</span>
                             <input id="agentTaskTitle" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                   value="Run TicketRush k6 benchmark"
-                                   placeholder="Run TicketRush k6 benchmark">
+                                   value="运行首个本地验证任务"
+                                   placeholder="运行首个本地验证任务">
                         </label>
                         <label class="block">
                             <span class="mb-1 block text-xs font-medium text-gray-500">风险等级</span>
@@ -167,8 +207,8 @@
                         <span class="mb-1 block text-xs font-medium text-gray-500">目标</span>
                         <input id="agentTaskGoal" type="text"
                                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                               value="Run first local benchmark and record verification"
-                               placeholder="Run first local benchmark and record verification">
+                               value="完成一次可复现验证并记录结果"
+                               placeholder="完成一次可复现验证并记录结果">
                     </label>
                     <div class="grid gap-3 md:grid-cols-2">
                         <label class="block">
@@ -178,19 +218,19 @@
                                    placeholder="当前状态变化说明">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Plan</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">计划</span>
                             <input id="agentTaskPlan" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    placeholder="文件范围、风险、验证方式">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Verification</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">验证</span>
                             <input id="agentTaskVerification" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    placeholder="测试、lint、接口或手动验证">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Result</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">结果</span>
                             <input id="agentTaskResultSummary" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    placeholder="记录结果或失败原因">
@@ -212,26 +252,26 @@
             </div>
         </div>
 
-        <div id="evalPanel" class="hidden border-b bg-white px-6 py-4">
+        <div id="evalPanel" class="hidden flex-1 overflow-auto bg-gray-50 px-6 py-5">
             <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,340px)_minmax(300px,420px)]">
                 <div class="space-y-3">
                     <div class="grid gap-3 md:grid-cols-[minmax(140px,200px)_minmax(110px,150px)_minmax(140px,180px)_minmax(90px,120px)]">
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Project ID</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">项目 ID</span>
                             <input id="evalProjectId" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="ticket-project"
                                    placeholder="ticket-project">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Case ID</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">用例 ID</span>
                             <input id="evalCaseId" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="E01"
                                    placeholder="E01">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Status</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">状态</span>
                             <select id="evalStatus"
                                     class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">
                                 <option value="PASSED">PASSED</option>
@@ -242,7 +282,7 @@
                         <div class="flex items-end gap-2">
                             <button id="evalCreateButton" onclick="createEvalRun()"
                                     class="h-10 min-w-20 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
-                                <i class="fa-solid fa-plus mr-1.5"></i> Add
+                                <i class="fa-solid fa-plus mr-1.5"></i> 新增
                             </button>
                             <button onclick="loadEvalData()"
                                     class="h-10 w-10 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-700"
@@ -251,13 +291,13 @@
                             </button>
                             <button onclick="importTicketRushEvalReport()"
                                     class="h-10 w-10 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-700"
-                                    title="Import TicketRush eval report">
+                                    title="导入 TicketRush 评测记录">
                                 <i class="fa-solid fa-file-import"></i>
                             </button>
                         </div>
                     </div>
                     <label class="block">
-                        <span class="mb-1 block text-xs font-medium text-gray-500">Title</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">标题</span>
                         <input id="evalTitle" type="text"
                                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                value="TicketRush intake"
@@ -265,31 +305,31 @@
                     </label>
                     <div class="grid gap-3 md:grid-cols-5">
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Score</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">得分</span>
                             <input id="evalScore" type="number" min="0"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="9">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Max</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">满分</span>
                             <input id="evalMaxScore" type="number" min="1"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="10">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Human</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">人工</span>
                             <input id="evalHumanInterventions" type="number" min="0"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="0">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Tools</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">工具</span>
                             <input id="evalToolCallCount" type="number" min="0"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="12">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Seconds</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">耗时</span>
                             <input id="evalDurationSeconds" type="number" min="0"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="180">
@@ -297,13 +337,13 @@
                     </div>
                     <div class="grid gap-3 md:grid-cols-2">
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Evidence paths</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">证据路径</span>
                             <textarea id="evalEvidencePaths" rows="3"
                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">HANDOFF.md
 docs/agent-eval-report.md</textarea>
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Verification commands</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">验证命令</span>
                             <textarea id="evalVerificationCommands" rows="3"
                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">git status --short
 git diff --check</textarea>
@@ -311,16 +351,16 @@ git diff --check</textarea>
                     </div>
                     <div class="grid gap-3 md:grid-cols-2">
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Summary</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">摘要</span>
                             <textarea id="evalSummary" rows="3"
                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                      placeholder="What happened in this run"></textarea>
+                                      placeholder="记录本次执行结果"></textarea>
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Failure reason</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">失败原因</span>
                             <textarea id="evalFailureReason" rows="3"
                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                      placeholder="Required for failed or partial runs"></textarea>
+                                      placeholder="失败或部分通过时填写"></textarea>
                         </label>
                     </div>
                     <div id="evalResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm"></div>
@@ -330,30 +370,30 @@ git diff --check</textarea>
             </div>
         </div>
 
-        <div id="codeContextPanel" class="hidden border-b bg-white px-6 py-4">
+        <div id="codeContextPanel" class="hidden flex-1 overflow-auto bg-gray-50 px-6 py-5">
             <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
                 <div class="space-y-3">
                     <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(180px,240px)_minmax(160px,220px)_auto]">
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Project path</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">项目路径</span>
                             <input id="codeContextPath" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
-                                   value="E:/project/work/job/ticketrush-java21-high-concurrency"
-                                   placeholder="E:/project/work/job/example-project">
+                                   value="/workspace/projects/smartkb-java21-spring-ai-rag"
+                                   placeholder="/workspace/projects/example-project">
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Mode</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">模式</span>
                             <select id="codeContextMode"
                                     class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">
-                                <option value="tree">File tree</option>
-                                <option value="search">Keyword search</option>
+                                <option value="tree">文件树</option>
+                                <option value="search">关键词搜索</option>
                                 <option value="diff">Git diff</option>
-                                <option value="chunks">Chunks</option>
-                                <option value="semantic">Semantic</option>
+                                <option value="chunks">片段</option>
+                                <option value="semantic">语义</option>
                             </select>
                         </label>
                         <label class="block">
-                            <span class="mb-1 block text-xs font-medium text-gray-500">Query</span>
+                            <span class="mb-1 block text-xs font-medium text-gray-500">查询</span>
                             <input id="codeContextQuery" type="text"
                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
                                    value="TicketService"
@@ -362,7 +402,7 @@ git diff --check</textarea>
                         <div class="flex items-end">
                             <button id="codeContextButton" onclick="runCodeContext()"
                                     class="h-10 min-w-24 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
-                                <i class="fa-solid fa-play mr-1.5"></i> Run
+                                <i class="fa-solid fa-play mr-1.5"></i> 运行
                             </button>
                         </div>
                     </div>
@@ -376,7 +416,7 @@ git diff --check</textarea>
             <!-- 聊天记录将在这里显示 -->
         </div>
 
-        <div class="p-6 bg-white border-t">
+        <div id="chatComposer" class="p-6 bg-white border-t">
             <div class="flex gap-3">
                 <input type="text" id="userInput"
                        class="flex-1 border border-gray-300 rounded-2xl px-5 py-3 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -430,6 +470,90 @@ git diff --check</textarea>
     const documentDetailWidthKey = 'smartkb.documentDetailWidth';
     const documentDetailMinWidth = 420;
     const documentDetailMaxWidth = 900;
+    const workspaceConfig = {
+        chat: {
+            navId: 'workspaceNavChat',
+            title: '智能问答',
+            subtitle: 'Conversation / Advanced RAG'
+        },
+        projectIntake: {
+            navId: 'workspaceNavProjectIntake',
+            panelId: 'projectIntakePanel',
+            title: '项目接管',
+            subtitle: '接管摘要'
+        },
+        agentTask: {
+            navId: 'workspaceNavAgentTask',
+            panelId: 'agentTaskPanel',
+            title: '任务状态',
+            subtitle: '状态流转'
+        },
+        codeContext: {
+            navId: 'workspaceNavCodeContext',
+            panelId: 'codeContextPanel',
+            title: '代码上下文',
+            subtitle: '文件树 / 搜索 / Diff'
+        },
+        eval: {
+            navId: 'workspaceNavEval',
+            panelId: 'evalPanel',
+            title: 'Eval 评测',
+            subtitle: '记录 / 报告'
+        }
+    };
+
+    function setElementHidden(id, isHidden) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.classList.toggle('hidden', isHidden);
+        }
+    }
+
+    function openWorkspacePanel(name) {
+        const config = workspaceConfig[name] || workspaceConfig.chat;
+        const isChat = name === 'chat';
+
+        document.getElementById('workspaceTitle').textContent = config.title;
+        document.getElementById('workspaceSubtitle').textContent = config.subtitle;
+
+        Object.entries(workspaceConfig).forEach(([key, item]) => {
+            const nav = document.getElementById(item.navId);
+            if (nav) {
+                nav.classList.toggle('active', key === name);
+            }
+            if (item.panelId) {
+                setElementHidden(item.panelId, true);
+            }
+        });
+
+        setElementHidden('chatContainer', !isChat);
+        setElementHidden('chatComposer', !isChat);
+        setElementHidden('ragModeControls', !isChat);
+        setElementHidden('conversationStatus', !isChat);
+        setElementHidden('clearChatButton', !isChat);
+
+        if (isChat) {
+            updateRagModeUI();
+            document.getElementById('userInput').focus();
+            return;
+        }
+
+        setElementHidden('advancedDocumentFilter', true);
+        setElementHidden(config.panelId, false);
+
+        if (name === 'projectIntake') {
+            document.getElementById('projectIntakePath').focus();
+        } else if (name === 'agentTask') {
+            document.getElementById('agentTaskTitle').focus();
+            renderAgentTask(activeAgentTask);
+            loadAgentTasks();
+        } else if (name === 'eval') {
+            document.getElementById('evalCaseId').focus();
+            loadEvalData();
+        } else if (name === 'codeContext') {
+            document.getElementById('codeContextPath').focus();
+        }
+    }
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -481,11 +605,7 @@ git diff --check</textarea>
     }
 
     function toggleProjectIntakePanel() {
-        const panel = document.getElementById('projectIntakePanel');
-        panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) {
-            document.getElementById('projectIntakePath').focus();
-        }
+        openWorkspacePanel('projectIntake');
     }
 
     function setProjectIntakeLoading(isLoading) {
@@ -634,13 +754,7 @@ git diff --check</textarea>
     }
 
     function toggleAgentTaskPanel() {
-        const panel = document.getElementById('agentTaskPanel');
-        panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) {
-            document.getElementById('agentTaskTitle').focus();
-            renderAgentTask(activeAgentTask);
-            loadAgentTasks();
-        }
+        openWorkspacePanel('agentTask');
     }
 
     function setAgentTaskLoading(isLoading) {
@@ -906,12 +1020,7 @@ git diff --check</textarea>
     }
 
     function toggleEvalPanel() {
-        const panel = document.getElementById('evalPanel');
-        panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) {
-            document.getElementById('evalCaseId').focus();
-            loadEvalData();
-        }
+        openWorkspacePanel('eval');
     }
 
     function setEvalLoading(isLoading) {
@@ -919,8 +1028,8 @@ git diff --check</textarea>
         const button = document.getElementById('evalCreateButton');
         button.disabled = isLoading;
         button.innerHTML = isLoading
-            ? '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Add'
-            : '<i class="fa-solid fa-plus mr-1.5"></i> Add';
+            ? '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 新增中'
+            : '<i class="fa-solid fa-plus mr-1.5"></i> 新增';
     }
 
     function readEvalLines(id) {
@@ -974,30 +1083,30 @@ git diff --check</textarea>
         const list = document.getElementById('evalRunList');
         if (!Array.isArray(runs) || runs.length === 0) {
             list.innerHTML = `
-                <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">Runs</h3>
-                <p class="text-gray-400">No eval runs yet.</p>
+                <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">评测记录</h3>
+                <p class="text-gray-400">暂无评测记录</p>
             `;
             return;
         }
 
         list.innerHTML = `
             <div class="mb-3 flex items-center justify-between gap-2">
-                <h3 class="text-xs font-semibold uppercase text-gray-500">Runs</h3>
-                <span class="text-xs text-gray-400">${runs.length} total</span>
+                <h3 class="text-xs font-semibold uppercase text-gray-500">评测记录</h3>
+                <span class="text-xs text-gray-400">${runs.length} 条</span>
             </div>
             <div class="max-h-[28rem] space-y-2 overflow-auto">
                 ${runs.map(run => `
                     <div class="rounded-md border border-gray-200 bg-white p-3">
                         <div class="flex items-start justify-between gap-2">
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-medium text-gray-700">${renderProjectIntakeValue(run.title, 'Untitled')}</p>
+                                <p class="truncate text-sm font-medium text-gray-700">${renderProjectIntakeValue(run.title, '未命名')}</p>
                                 <p class="mt-0.5 text-xs text-gray-500">${renderText(run.caseId || '')}</p>
                             </div>
                             ${renderEvalStatusBadge(run.status)}
                         </div>
                         <div class="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-500">
-                            <span>score ${formatEvalNumber(run.score)}/${formatEvalNumber(run.maxScore)}</span>
-                            <span>human ${formatEvalNumber(run.humanInterventions)}</span>
+                            <span>得分 ${formatEvalNumber(run.score)}/${formatEvalNumber(run.maxScore)}</span>
+                            <span>人工 ${formatEvalNumber(run.humanInterventions)}</span>
                             <span>${formatEvalNumber(run.durationSeconds, 's')}</span>
                         </div>
                         ${run.summary ? `<p class="mt-2 text-xs text-gray-600">${renderText(run.summary)}</p>` : ''}
@@ -1011,7 +1120,7 @@ git diff --check</textarea>
     function renderEvalReport(report) {
         const target = document.getElementById('evalReport');
         if (!report || typeof report !== 'object') {
-            target.innerHTML = '<p class="text-gray-400">No report loaded.</p>';
+            target.innerHTML = '<p class="text-gray-400">暂无评测报告</p>';
             return;
         }
 
@@ -1020,8 +1129,8 @@ git diff --check</textarea>
         target.innerHTML = `
             <div class="mb-3 flex items-start justify-between gap-2">
                 <div>
-                    <h3 class="text-xs font-semibold uppercase text-gray-500">Report</h3>
-                    <p class="mt-1 text-xs text-gray-400">${renderProjectIntakeValue(report.projectId, 'all projects')}</p>
+                    <h3 class="text-xs font-semibold uppercase text-gray-500">评测报告</h3>
+                    <p class="mt-1 text-xs text-gray-400">${renderProjectIntakeValue(report.projectId, '全部项目')}</p>
                 </div>
                 <span class="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                     ${formatEvalPercent(report.successRate)}
@@ -1029,34 +1138,34 @@ git diff --check</textarea>
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <div class="rounded-md border border-gray-200 bg-white p-3">
-                    <p class="text-xs text-gray-400">Total</p>
+                    <p class="text-xs text-gray-400">总数</p>
                     <p class="mt-1 text-xl font-semibold text-gray-800">${formatEvalNumber(report.totalRuns)}</p>
                 </div>
                 <div class="rounded-md border border-gray-200 bg-white p-3">
-                    <p class="text-xs text-gray-400">Score rate</p>
+                    <p class="text-xs text-gray-400">得分率</p>
                     <p class="mt-1 text-xl font-semibold text-gray-800">${formatEvalPercent(report.scoreRate)}</p>
                 </div>
                 <div class="rounded-md border border-gray-200 bg-white p-3">
-                    <p class="text-xs text-gray-400">Passed / Partial / Failed</p>
+                    <p class="text-xs text-gray-400">通过 / 部分 / 失败</p>
                     <p class="mt-1 text-sm font-semibold text-gray-800">
                         ${formatEvalNumber(report.passedRuns)} / ${formatEvalNumber(report.partialRuns)} / ${formatEvalNumber(report.failedRuns)}
                     </p>
                 </div>
                 <div class="rounded-md border border-gray-200 bg-white p-3">
-                    <p class="text-xs text-gray-400">Avg duration</p>
+                    <p class="text-xs text-gray-400">平均耗时</p>
                     <p class="mt-1 text-sm font-semibold text-gray-800">${formatEvalNumber(report.averageDurationSeconds, 's')}</p>
                 </div>
                 <div class="rounded-md border border-gray-200 bg-white p-3">
-                    <p class="text-xs text-gray-400">Human interventions</p>
+                    <p class="text-xs text-gray-400">人工介入</p>
                     <p class="mt-1 text-sm font-semibold text-gray-800">${formatEvalNumber(report.totalHumanInterventions)}</p>
                 </div>
                 <div class="rounded-md border border-gray-200 bg-white p-3">
-                    <p class="text-xs text-gray-400">Tool calls</p>
+                    <p class="text-xs text-gray-400">工具调用</p>
                     <p class="mt-1 text-sm font-semibold text-gray-800">${formatEvalNumber(report.totalToolCallCount)}</p>
                 </div>
             </div>
             <section class="mt-4">
-                <h4 class="mb-2 text-xs font-semibold uppercase text-gray-500">Latest cases</h4>
+                <h4 class="mb-2 text-xs font-semibold uppercase text-gray-500">最新用例</h4>
                 <div class="space-y-2">
                     ${cases.map(item => `
                         <div class="rounded-md border border-gray-200 bg-white p-2">
@@ -1064,20 +1173,20 @@ git diff --check</textarea>
                                 <span class="text-xs font-medium text-gray-700">${renderText(item.caseId || '')}</span>
                                 ${renderEvalStatusBadge(item.latestStatus)}
                             </div>
-                            <p class="mt-1 truncate text-xs text-gray-500">${renderProjectIntakeValue(item.title, 'Untitled')}</p>
+                            <p class="mt-1 truncate text-xs text-gray-500">${renderProjectIntakeValue(item.title, '未命名')}</p>
                         </div>
-                    `).join('') || '<p class="text-gray-400">No cases.</p>'}
+                    `).join('') || '<p class="text-gray-400">暂无用例</p>'}
                 </div>
             </section>
             <section class="mt-4">
-                <h4 class="mb-2 text-xs font-semibold uppercase text-gray-500">Failure reasons</h4>
+                <h4 class="mb-2 text-xs font-semibold uppercase text-gray-500">失败原因</h4>
                 <div class="space-y-2">
                     ${failureReasons.map(item => `
                         <div class="flex items-center justify-between gap-2 rounded-md border border-red-100 bg-red-50 p-2 text-xs text-red-700">
                             <span class="break-words">${renderText(item.reason || '')}</span>
                             <span class="font-semibold">${formatEvalNumber(item.count)}</span>
                         </div>
-                    `).join('') || '<p class="text-gray-400">No failure reasons.</p>'}
+                    `).join('') || '<p class="text-gray-400">暂无失败原因</p>'}
                 </div>
             </section>
         `;
@@ -1110,8 +1219,8 @@ git diff --check</textarea>
             renderEvalRuns(runs);
             renderEvalReport(report);
         } catch (e) {
-            document.getElementById('evalRunList').innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, 'Eval runs failed')}</p>`;
-            document.getElementById('evalReport').innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, 'Eval report failed')}</p>`;
+            document.getElementById('evalRunList').innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, '评测记录加载失败')}</p>`;
+            document.getElementById('evalReport').innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, '评测报告加载失败')}</p>`;
         }
     }
 
@@ -1153,14 +1262,14 @@ git diff --check</textarea>
             });
             result.innerHTML = `
                 <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-                    <i class="fa-solid fa-circle-check mr-1.5"></i>Recorded ${renderText(run.caseId)} as ${renderText(run.status)}.
+                    <i class="fa-solid fa-circle-check mr-1.5"></i>已记录 ${renderText(run.caseId)}：${renderText(run.status)}
                 </div>
             `;
             await loadEvalData();
         } catch (e) {
             result.innerHTML = `
                 <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, 'Eval run failed')}
+                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, '评测记录保存失败')}
                 </div>
             `;
         } finally {
@@ -1180,7 +1289,7 @@ git diff --check</textarea>
             });
             result.innerHTML = `
                 <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
-                    <i class="fa-solid fa-file-import mr-1.5"></i>Imported ${formatEvalNumber(response.importedCount)}, skipped ${formatEvalNumber(response.skippedCount)}.
+                    <i class="fa-solid fa-file-import mr-1.5"></i>已导入 ${formatEvalNumber(response.importedCount)} 条，跳过 ${formatEvalNumber(response.skippedCount)} 条。
                 </div>
             `;
             await loadEvalData();
@@ -1196,11 +1305,7 @@ git diff --check</textarea>
     }
 
     function toggleCodeContextPanel() {
-        const panel = document.getElementById('codeContextPanel');
-        panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) {
-            document.getElementById('codeContextPath').focus();
-        }
+        openWorkspacePanel('codeContext');
     }
 
     function setCodeContextLoading(isLoading) {
@@ -1208,8 +1313,8 @@ git diff --check</textarea>
         const button = document.getElementById('codeContextButton');
         button.disabled = isLoading;
         button.innerHTML = isLoading
-            ? '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Running'
-            : '<i class="fa-solid fa-play mr-1.5"></i> Run';
+            ? '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 运行中'
+            : '<i class="fa-solid fa-play mr-1.5"></i> 运行';
     }
 
     function buildCodeContextRequest(mode, rootPath, query) {
@@ -1347,7 +1452,7 @@ git diff --check</textarea>
 
         if (!rootPath) {
             result.classList.remove('hidden');
-            result.innerHTML = '<p class="text-sm text-red-600">Project path is required.</p>';
+            result.innerHTML = '<p class="text-sm text-red-600">请先输入项目路径。</p>';
             document.getElementById('codeContextPath').focus();
             return;
         }
@@ -1365,7 +1470,7 @@ git diff --check</textarea>
         result.innerHTML = `
             <div class="flex items-center gap-2 text-sm text-gray-600">
                 <i class="fa-solid fa-spinner fa-spin text-blue-600"></i>
-                Reading code context...
+                正在读取代码上下文...
             </div>
         `;
 
@@ -1377,11 +1482,11 @@ git diff --check</textarea>
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || data.success === false) {
-                throw new Error(data.error || data.message || `Code Context request failed (HTTP ${res.status})`);
+                throw new Error(data.error || data.message || `代码上下文请求失败（HTTP ${res.status}）`);
             }
             renderCodeContextResult(mode, data);
         } catch (e) {
-            result.innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, 'Code Context request failed')}</p>`;
+            result.innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, '代码上下文请求失败')}</p>`;
         } finally {
             setCodeContextLoading(false);
         }
