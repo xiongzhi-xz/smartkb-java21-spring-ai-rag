@@ -530,3 +530,35 @@ Verified:
 
 Next step:
 - Refresh `http://localhost:8082/?v=navtagfix` or hard-refresh `http://localhost:8082` in the browser to bypass any stale page cache.
+
+## 2026-06-17 Work Log - Frontend Workspace Smoke Verification
+
+Current goal:
+- Continue SmartKB takeover and verify the latest frontend sidebar/layout fix in the running Docker app.
+
+Completed:
+- Followed the takeover flow by reading `SPEC.md`, `HANDOFF.md`, `README.md`, `AGENTS.md`, `CLAUDE.md`, git status, and recent git log.
+- Confirmed the working tree was clean before doing verification.
+- Confirmed `smartkb-app`, PostgreSQL, Redis, Prometheus, and Grafana containers were running; `smartkb-app` was healthy.
+- Confirmed `http://localhost:8082/actuator/health` returned `UP` with PostgreSQL and Redis `UP`.
+- Confirmed the served homepage contains the corrected `<nav>...</nav>` workspace navigation and page-level `overflow-hidden`.
+- Captured a fresh headless Chrome screenshot for `http://localhost:8082/?v=navtagfix`; sidebar, upload/document list, chat header, chat body, and composer rendered in the expected areas.
+- Ran a headless Chrome DevTools smoke that switched through all five workspaces: 智能问答, 项目接管, 任务状态, 代码上下文, Eval 评测.
+
+Verified:
+- Workspace switch smoke passed for all five workspaces:
+  - Active menu matched the selected workspace.
+  - Only the expected panel was visible.
+  - Chat composer and RAG controls were visible only in 智能问答.
+  - `window.scrollY` stayed `0`, so menu switching no longer jumps the viewport.
+  - No horizontal page overflow was detected at 1440px desktop width.
+
+Modified files:
+- `HANDOFF.md` only.
+
+Not verified:
+- Mobile viewport screenshot smoke was not run in this continuation step.
+- No Maven test run was needed because no Java/static source code was changed.
+
+Next step:
+- Frontend sidebar refresh risk is closed. A good next slice is to split the dense AgentTask/Eval panels into smaller sub-tabs or continue SmartKB v2 Agent platform polish.
