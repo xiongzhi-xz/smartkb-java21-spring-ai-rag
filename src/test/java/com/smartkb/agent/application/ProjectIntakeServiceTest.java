@@ -95,6 +95,16 @@ class ProjectIntakeServiceTest {
         assertTrue(response.intake().unfinished().contains("用 k6 跑三种库存策略压测。"));
         assertTrue(response.intake().unfinished().contains("Seata 示例"));
         assertEquals("用 k6 跑三种库存策略压测。", response.intake().nextStepOnly());
+        assertTrue(response.intake().takeoverBrief().contains("当前目标："));
+        assertTrue(response.intake().takeoverBrief().contains("下一步只做：用 k6 跑三种库存策略压测。"));
+        assertTrue(response.intake().stackEvidence().stream()
+                .anyMatch(item -> item.startsWith("Java 21：") && item.contains("pom.xml")));
+        assertTrue(response.intake().stackEvidence().stream()
+                .anyMatch(item -> item.startsWith("Redis：") && item.contains("docker-compose.yml")));
+        assertTrue(response.intake().runnableCommands().contains("mvn test"));
+        assertTrue(response.intake().runnableCommands().contains("docker compose up -d"));
+        assertTrue(response.intake().verificationGaps().contains("Virtual Threads 对比报告。"));
+        assertTrue(response.intake().verificationGaps().contains("Seata 示例"));
         assertTrue(response.intake().risks().contains("不要提交运行数据目录。"));
 
         assertFalse(response.intake().workingTree().isGitRepository());

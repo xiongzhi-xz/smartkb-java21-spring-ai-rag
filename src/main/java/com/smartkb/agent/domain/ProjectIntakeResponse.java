@@ -33,7 +33,11 @@ public record ProjectIntakeResponse(
             List<String> unfinished,
             WorkingTreeSummary workingTree,
             List<String> risks,
-            String nextStepOnly
+            String nextStepOnly,
+            String takeoverBrief,
+            List<String> stackEvidence,
+            List<String> runnableCommands,
+            List<String> verificationGaps
     ) {
     }
 

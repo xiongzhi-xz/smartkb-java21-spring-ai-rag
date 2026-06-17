@@ -414,3 +414,35 @@ Notes:
 
 Next step:
 - Docker rebuild risk is closed. Continue with SmartKB v2 Agent platform polish or optionally improve Testcontainers Windows npipe compatibility.
+
+## 2026-06-17 Work Log - Project Intake Report Quality
+
+Current goal:
+- Make Project Intake output closer to a real takeover report, not only extracted fields.
+
+Completed:
+- Added `takeoverBrief`, `stackEvidence`, `runnableCommands`, and `verificationGaps` to `ProjectIntakeResponse.IntakeSummary`.
+- Updated `ProjectIntakeService` to merge HANDOFF/SPEC progress, produce a takeover brief, expose stack evidence, suggest runnable commands, and list verification gaps.
+- Updated the static Project Intake panel to display the new summary fields.
+- Expanded service and Web layer assertions for the new response fields.
+- Marked the enhancement complete in `SPEC.md`.
+
+Modified files:
+- `src/main/java/com/smartkb/agent/domain/ProjectIntakeResponse.java`
+- `src/main/java/com/smartkb/agent/application/ProjectIntakeService.java`
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/agent/application/ProjectIntakeServiceTest.java`
+- `src/test/java/com/smartkb/agent/controller/ProjectIntakeControllerTest.java`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- `mvn "-Dtest=ProjectIntakeServiceTest,ProjectIntakeControllerTest" test`: 5 tests passed.
+- `mvn test`: 97 tests passed.
+- `git diff --check`: only LF/CRLF warnings, no whitespace errors.
+
+Not verified:
+- Browser UI smoke against a rebuilt/rerun app. The static page code is updated and covered by backend contract tests, but the running Docker container may still need rebuild/restart to serve the new HTML.
+
+Next step:
+- Continue SmartKB v2 Agent platform polish. A good next slice is to smoke-test the Project Intake panel in the running app after rebuilding `smartkb-app`, then improve the takeover report wording if the UI output feels too dense.

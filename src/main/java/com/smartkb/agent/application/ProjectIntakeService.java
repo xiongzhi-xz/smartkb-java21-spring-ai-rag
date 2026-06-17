@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Deterministic project intake service.
@@ -90,7 +92,7 @@ public class ProjectIntakeService {
                 "未在文档中明确记录"
         );
 
-        List<String> completed = textExtractor.firstNonEmpty(
+        List<String> completed = textExtractor.merge(
                 textExtractor.bullets(textExtractor.section(handoff, "## 已完成")),
                 textExtractor.checkedItems(spec, true)
         );
@@ -109,6 +111,11 @@ public class ProjectIntakeService {
                 textExtractor.firstItem(unfinished),
                 "先补齐项目接管摘要所需证据"
         );
+        List<String> verificationGaps = textExtractor.merge(
+                textExtractor.bullets(textExtractor.section(handoff, "## 未验证")),
+                textExtractor.checkedItems(spec, false)
+        );
+        String takeoverBrief = buildTakeoverBrief(currentGoal, currentStage, workingTree, nextStepOnly);
 
         return new ProjectIntakeResponse.IntakeSummary(
                 currentGoal,
@@ -117,7 +124,11 @@ public class ProjectIntakeService {
                 textExtractor.limit(unfinished, 20),
                 workingTree,
                 textExtractor.limit(risks, 20),
-                nextStepOnly
+                nextStepOnly,
+                takeoverBrief,
+                textExtractor.limit(buildStackEvidence(raw), 20),
+                buildRunnableCommands(raw),
+                textExtractor.limit(verificationGaps, 20)
         );
     }
 
@@ -169,6 +180,76 @@ public class ProjectIntakeService {
             ));
         }
         return evidence;
+    }
+
+    private String buildTakeoverBrief(
+            String currentGoal,
+            String currentStage,
+            ProjectIntakeResponse.WorkingTreeSummary workingTree,
+            String nextStepOnly
+    ) {
+        String gitState;
+        if (!workingTree.isGitRepository()) {
+            gitState = "非 Git 仓库或无法读取 Git 状态";
+        } else if (workingTree.hasUncommittedChanges()) {
+            gitState = "工作区有未提交改动，接手前先确认归属";
+        } else {
+            gitState = "工作区干净";
+        }
+        return "当前目标：" + currentGoal
+                + " 当前阶段：" + currentStage
+                + " Git 状态：" + gitState
+                + " 下一步只做：" + nextStepOnly;
+    }
+
+    private List<String> buildStackEvidence(ProjectRawContext raw) {
+        List<String> evidence = new ArrayList<>();
+        Map<String, String> contents = raw.fileContents();
+        List<String> stack = detector.detectStack(raw);
+
+        for (String item : stack) {
+            List<String> sources = switch (item) {
+                case "Java 21" -> sourcesContaining(contents, "java 21", "<java.version>21</java.version>");
+                case "Spring Boot" -> sourcesContaining(contents, "spring boot", "spring-boot");
+                case "Maven" -> contents.containsKey("pom.xml") ? List.of("pom.xml") : List.of();
+                case "Docker Compose" -> contents.containsKey("docker-compose.yml") ? List.of("docker-compose.yml") : List.of();
+                case "Redis" -> sourcesContaining(contents, "redis");
+                case "RocketMQ" -> sourcesContaining(contents, "rocketmq");
+                case "Prometheus" -> sourcesContaining(contents, "prometheus");
+                case "Grafana" -> sourcesContaining(contents, "grafana");
+                default -> List.of();
+            };
+            evidence.add(sources.isEmpty()
+                    ? item + "：从项目文档推断"
+                    : item + "：" + String.join(", ", textExtractor.limit(sources, 3)));
+        }
+        return evidence;
+    }
+
+    private List<String> buildRunnableCommands(ProjectRawContext raw) {
+        Set<String> commands = new LinkedHashSet<>(detector.detectTestCommands(raw.fileContents()));
+        if (raw.fileContents().containsKey("docker-compose.yml")) {
+            commands.add("docker compose up -d");
+            commands.add("docker compose ps");
+        }
+        if (raw.gitInfo().gitRepository()) {
+            commands.add("git status --short");
+        }
+        return new ArrayList<>(commands);
+    }
+
+    private List<String> sourcesContaining(Map<String, String> contents, String... needles) {
+        List<String> sources = new ArrayList<>();
+        for (Map.Entry<String, String> entry : contents.entrySet()) {
+            String lower = entry.getValue().toLowerCase();
+            for (String needle : needles) {
+                if (lower.contains(needle.toLowerCase())) {
+                    sources.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return sources;
     }
 
     private String content(ProjectRawContext raw, String path) {

@@ -523,12 +523,16 @@ git diff --check</textarea>
             <div class="grid gap-3 lg:grid-cols-2">
                 ${renderProjectIntakeSection('当前目标', renderProjectIntakeValue(intake.currentGoal))}
                 ${renderProjectIntakeSection('当前阶段', renderProjectIntakeValue(intake.currentStage))}
+                ${renderProjectIntakeSection('接管简报', renderProjectIntakeValue(intake.takeoverBrief))}
                 ${renderProjectIntakeSection('已完成', renderProjectIntakeList(intake.completed))}
                 ${renderProjectIntakeSection('未完成', renderProjectIntakeList(intake.unfinished))}
                 ${renderProjectIntakeSection('风险点', renderProjectIntakeList(intake.risks))}
                 ${renderProjectIntakeSection('下一步只做', renderProjectIntakeValue(intake.nextStepOnly))}
                 ${renderProjectIntakeSection('技术栈', renderProjectIntakeList(project.detectedStack))}
+                ${renderProjectIntakeSection('技术栈证据', renderProjectIntakeList(intake.stackEvidence))}
                 ${renderProjectIntakeSection('验证命令', renderProjectIntakeList(project.testCommands))}
+                ${renderProjectIntakeSection('可运行命令', renderProjectIntakeList(intake.runnableCommands))}
+                ${renderProjectIntakeSection('验证缺口', renderProjectIntakeList(intake.verificationGaps))}
                 ${renderProjectIntakeSection('Git 状态', `
                     <p>${escapeHtml(statusText)}</p>
                     <p class="mt-1 break-words text-xs text-gray-500">${renderProjectIntakeValue(workingTree.statusShort, '无 git status 输出')}</p>

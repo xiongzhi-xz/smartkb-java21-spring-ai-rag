@@ -56,6 +56,10 @@ class ProjectIntakeControllerTest {
                 .andExpect(jsonPath("$.intake.currentStage").value("Docker Compose verified"))
                 .andExpect(jsonPath("$.intake.workingTree.hasUncommittedChanges").value(false))
                 .andExpect(jsonPath("$.intake.nextStepOnly").value("Run first local k6 benchmark"))
+                .andExpect(jsonPath("$.intake.takeoverBrief").value("Take over TicketRush. Next: Run first local k6 benchmark"))
+                .andExpect(jsonPath("$.intake.stackEvidence[0]").value("Java 21: pom.xml"))
+                .andExpect(jsonPath("$.intake.runnableCommands[0]").value("mvn test"))
+                .andExpect(jsonPath("$.intake.verificationGaps[0]").value("k6 benchmark"))
                 .andExpect(jsonPath("$.evidence[0].path").value("HANDOFF.md"));
 
         ArgumentCaptor<ProjectIntakeRequest> captor = ArgumentCaptor.forClass(ProjectIntakeRequest.class);
@@ -108,7 +112,11 @@ class ProjectIntakeControllerTest {
                                 List.of("38d7c1d fix: disable nacos config health noise in docker profile")
                         ),
                         List.of("Do not add new scope"),
-                        "Run first local k6 benchmark"
+                        "Run first local k6 benchmark",
+                        "Take over TicketRush. Next: Run first local k6 benchmark",
+                        List.of("Java 21: pom.xml"),
+                        List.of("mvn test"),
+                        List.of("k6 benchmark")
                 ),
                 List.of(new ProjectIntakeResponse.ProjectEvidence(
                         "handoff",
