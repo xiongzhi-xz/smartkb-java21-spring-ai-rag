@@ -512,3 +512,21 @@ Verified:
 
 Next step:
 - Manually click through the left-side workspaces in the browser and confirm there is no viewport jump. If any panel still feels too tall, split that panel into smaller sub-tabs.
+
+## 2026-06-17 Work Log - Frontend Sidebar Restore Fix
+
+Completed:
+- Fixed the homepage refresh layout bug where the left menu appeared missing and document controls moved into the main area.
+- Root cause: the workspace navigation opened with `<nav>` but was closed with `</div>`, so the browser repaired the DOM differently after refresh.
+- Corrected the closing tag to `</nav>`.
+- Kept the desktop layout stable with a fixed left sidebar and right workspace area.
+
+Verified:
+- Inline JavaScript syntax check via Node: passed.
+- `git diff --check`: only LF/CRLF warnings, no whitespace errors.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy at `http://localhost:8082`.
+- Headless Chrome screenshot confirmed the sidebar menu, upload/document list, chat header, chat body, and composer render in the correct areas after a fresh load.
+
+Next step:
+- Refresh `http://localhost:8082/?v=navtagfix` or hard-refresh `http://localhost:8082` in the browser to bypass any stale page cache.
