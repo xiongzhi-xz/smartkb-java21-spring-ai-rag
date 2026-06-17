@@ -389,3 +389,28 @@ Operational note:
 
 Next step:
 - Redis ChatMemory live verification is closed. A good next task is either optimizing Docker rebuild speed or continuing SmartKB v2 Agent platform polish.
+
+## 2026-06-17 Work Log - Docker Build Reproducibility
+
+Completed:
+- Added `.dockerignore` to keep `.env`, `.git`, `target`, IDE files, docs, k8s manifests, monitoring assets, and local compose files out of the Docker build context.
+- Updated `Dockerfile` to use BuildKit syntax `docker/dockerfile:1.7`.
+- Moved Maven settings to `/tmp/maven-settings.xml`.
+- Added BuildKit cache mounts for `/root/.m2/repository` in both `dependency:go-offline` and `mvn clean package -DskipTests`.
+- Verified full Docker build no longer needs the manual `docker cp` workaround.
+- Recreated `smartkb-app` from the rebuilt image without touching PostgreSQL, Redis, or TicketRush containers.
+
+Verified:
+- `docker compose build smartkb-app --progress=plain`: passed.
+- First cold/cache-fill build transferred only `11.08kB` build context and completed successfully. It still took about 6.5 minutes because Maven dependencies had to populate the BuildKit cache.
+- `docker compose --progress=plain build smartkb-app`: passed in about 1.5 seconds with Maven build steps `CACHED`.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed in about 9 seconds with cached layers.
+- `smartkb-app` returned healthy.
+- `http://localhost:8082/actuator/health` returned `UP` with PostgreSQL and Redis `UP`.
+
+Notes:
+- `.env` remains ignored and was not committed.
+- The optimized path depends on BuildKit, which Docker Desktop already used successfully in this environment.
+
+Next step:
+- Docker rebuild risk is closed. Continue with SmartKB v2 Agent platform polish or optionally improve Testcontainers Windows npipe compatibility.

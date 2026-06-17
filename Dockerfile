@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # ========== 多阶段构建 — 容器内完成 Maven 编译 ==========
 # 面试讲法：多阶段构建是云原生标准做法，Dockerfile 自身就是完整构建方案，
 # CI/CD 只需 docker build，不依赖宿主机环境。
@@ -9,15 +10,17 @@ FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
 # 先复制 Maven 配置和 pom.xml，利用 Docker 缓存加速依赖下载
-COPY .mvn/settings.xml /root/.m2/settings.xml
+COPY .mvn/settings.xml /tmp/maven-settings.xml
 COPY pom.xml .
 
 # 下载依赖（阿里云镜像已在 settings.xml 中配置，Docker 内下载速度快）
-RUN mvn dependency:go-offline -B
+RUN --mount=type=cache,target=/root/.m2/repository \
+    mvn -s /tmp/maven-settings.xml dependency:go-offline -B
 
 # 复制源代码并构建
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2/repository \
+    mvn -s /tmp/maven-settings.xml clean package -DskipTests -B
 
 # ---- 运行阶段 ----
 FROM eclipse-temurin:21-jre-alpine
