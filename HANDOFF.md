@@ -494,3 +494,21 @@ Not verified:
 
 Next step:
 - Open `http://localhost:8082` manually and click through the five left-side workspaces. If the page still feels dense, split AgentTask/Eval into smaller sub-tabs next.
+
+## 2026-06-17 Work Log - Frontend Menu Jump Fix
+
+Completed:
+- Fixed workspace menu switching causing the browser window to jump downward.
+- Removed automatic focus calls from workspace menu switching.
+- Locked the page-level scroll with `overflow-hidden` and kept scrolling inside the selected workspace panel.
+- Kept validation-time focus behavior for missing required fields.
+
+Verified:
+- Inline JavaScript syntax check via Node: passed.
+- `git diff --check`: only LF/CRLF warnings, no whitespace errors.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy at `http://localhost:8082`.
+- Home page HTML includes page-level `overflow-hidden` and the workspace navigation.
+
+Next step:
+- Manually click through the left-side workspaces in the browser and confirm there is no viewport jump. If any panel still feels too tall, split that panel into smaller sub-tabs.

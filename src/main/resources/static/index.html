@@ -41,8 +41,8 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
-<div class="flex h-screen min-w-0 flex-col lg:flex-row">
+<body class="overflow-hidden bg-gray-50">
+<div class="flex h-screen min-w-0 flex-col overflow-hidden lg:flex-row">
     <!-- 左侧：导航与文档管理 -->
     <div class="flex max-h-[42vh] w-full shrink-0 flex-col border-b border-gray-200 bg-white lg:h-screen lg:max-h-none lg:w-80 lg:border-b-0 lg:border-r">
         <div class="p-6 border-b">
@@ -534,24 +534,24 @@ git diff --check</textarea>
 
         if (isChat) {
             updateRagModeUI();
-            document.getElementById('userInput').focus();
             return;
         }
 
         setElementHidden('advancedDocumentFilter', true);
         setElementHidden(config.panelId, false);
 
-        if (name === 'projectIntake') {
-            document.getElementById('projectIntakePath').focus();
-        } else if (name === 'agentTask') {
-            document.getElementById('agentTaskTitle').focus();
+        if (config.panelId) {
+            const panel = document.getElementById(config.panelId);
+            if (panel) {
+                panel.scrollTop = 0;
+            }
+        }
+
+        if (name === 'agentTask') {
             renderAgentTask(activeAgentTask);
             loadAgentTasks();
         } else if (name === 'eval') {
-            document.getElementById('evalCaseId').focus();
             loadEvalData();
-        } else if (name === 'codeContext') {
-            document.getElementById('codeContextPath').focus();
         }
     }
 
