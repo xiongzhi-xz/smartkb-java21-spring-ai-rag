@@ -1168,3 +1168,20 @@ Verified:
 - `http://localhost:8082/actuator/health`: `UP`.
 - Served homepage contains `renderAgentTaskSummary`.
 - `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=agent-summary-runtime"`: passed.
+
+## 2026-06-18 Work Log - K3d Runtime Retry
+
+Attempted:
+- Checked local tools: `kubectl` client exists, but there is no current Kubernetes context.
+- Checked local tools: `k3d` and `kind` are not installed.
+- Retried downloading `k3d-windows-amd64.exe` v5.8.3 into ignored `target/tools/k3d.exe`.
+
+Result:
+- Download timed out after several minutes with a partial file of about 3 MB.
+- Stopped the lingering `curl.exe` process that held the partial file.
+- Removed the incomplete `target/tools/k3d.exe`.
+- No K3d cluster was created.
+- Git working tree remained clean before this HANDOFF note.
+
+Still blocked:
+- True K3s/K3d runtime verification needs a usable `k3d`/`kind` binary or an existing Kubernetes context.
