@@ -1301,3 +1301,20 @@ Verified:
 - `mvn "-Dtest=K8sDraftManifestTest,K3sDemoManifestTest" test`: 3 tests passed.
 - `mvn test`: 105 tests passed.
 - `git diff --check`: passed with CRLF warnings only.
+
+## 2026-06-18 Work Log - README Verification Status Refresh
+
+Current goal:
+- Keep the GitHub-facing README aligned with the latest verification state after the K8s draft guard test.
+
+Completed:
+- Updated README full test count from 103 to 105.
+- Added a README bullet for `K8sDraftManifestTest` covering the draft warning, placeholder Secret markers, and verified README deploy entry point.
+
+Modified files:
+- `README.md`
+- `HANDOFF.md`
+
+Verified:
+- Documentation-only change; no application tests required.
+- `git diff --check`: passed with CRLF warnings only.

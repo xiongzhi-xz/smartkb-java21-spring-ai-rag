@@ -217,7 +217,7 @@ test-docs/advanced-rag-demo.md
 
 当前已验证：
 
-- `mvn test`：103 tests passed。
+- `mvn test`：105 tests passed。
 - Docker Compose 全链路启动：`smartkb-app` healthy。
 - Redis ChatMemory live checklist：6/6 通过。
 - Docker BuildKit 缓存构建：缓存命中后重建约秒级。
@@ -228,6 +228,7 @@ test-docs/advanced-rag-demo.md
 - 移动端边界 smoke：长文本输入、必填错误提示、窄屏按钮/导航宽度已在本地静态页和 Docker 运行态首页通过。
 - 工作台摘要指标 smoke：`node .\scripts\smoke\workbench-summary-smoke.mjs` 已覆盖 Project Intake / AgentTask / Code Context / Eval 指标渲染和横向溢出检查，并已在 Docker 运行态首页通过。
 - K3s demo manifest：已增加 JUnit 结构守卫，并已在一次性 K3d 集群中验证 PostgreSQL、Redis、SmartKB、PVC、health 和 Eval report API。
+- K8s draft guard：`K8sDraftManifestTest` 已覆盖 `deployment-draft.yaml` 警告、占位 Secret 和 README 部署入口。
 
 说明：
 
