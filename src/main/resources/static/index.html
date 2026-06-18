@@ -1243,6 +1243,28 @@ git diff --check</textarea>
         `;
     }
 
+    function countAgentTasksByStatus(tasks, statuses) {
+        const accepted = new Set(statuses);
+        return (Array.isArray(tasks) ? tasks : [])
+            .filter(task => accepted.has(String(task.status || '').toUpperCase()))
+            .length;
+    }
+
+    function renderAgentTaskSummary(tasks) {
+        const total = Array.isArray(tasks) ? tasks.length : 0;
+        const active = countAgentTasksByStatus(tasks, ['INTAKE', 'PLAN', 'EXECUTE', 'VERIFY']);
+        const recorded = countAgentTasksByStatus(tasks, ['RECORD']);
+        const needsIntervention = countAgentTasksByStatus(tasks, ['BLOCKED', 'FAILED']);
+        return `
+            <div class="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                ${renderCompactMetric('任务', total, total > 0 ? 'blue' : 'gray')}
+                ${renderCompactMetric('进行中', active, active > 0 ? 'amber' : 'gray')}
+                ${renderCompactMetric('已记录', recorded, recorded > 0 ? 'green' : 'gray')}
+                ${renderCompactMetric('待介入', needsIntervention, needsIntervention > 0 ? 'red' : 'green')}
+            </div>
+        `;
+    }
+
     function renderAgentTaskList(tasks) {
         const list = document.getElementById('agentTaskList');
         if (!Array.isArray(tasks) || tasks.length === 0) {
@@ -1252,6 +1274,7 @@ git diff --check</textarea>
 
         list.innerHTML = `
             <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">任务列表</h3>
+            ${renderAgentTaskSummary(tasks)}
             <div class="max-h-52 space-y-2 overflow-auto">
                 ${tasks.map(task => `
                     <button onclick="selectAgentTask('${escapeHtml(task.id)}')"

@@ -80,6 +80,8 @@ class StaticWorkbenchHtmlTest {
                 "function renderCompactMetric(label, value, tone = 'gray')",
                 "function runProjectIntake()",
                 "function createAgentTask()",
+                "function renderAgentTaskSummary(tasks)",
+                "function countAgentTasksByStatus(tasks, statuses)",
                 "function loadMemoryRecords()",
                 "function createMemoryRecord()",
                 "function importHighAuthorityMemory()",

@@ -32,6 +32,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - SmartKB v2 首批 Agent eval 模板：`docs/agent-eval-report.md`，包含 TicketRush 10 个 eval case。
 - 静态工作台 HTML 结构回归测试：覆盖工作区导航、AgentTask/Eval 子 Tab、静态 ID 唯一性和核心函数存在性。
 - Project Intake / Code Context 摘要指标：结果顶部展示技术栈、可运行命令、验证缺口、警告、结果数、跳过数和 Git 状态。
+- AgentTask 摘要指标：任务列表顶部展示总数、进行中、已记录和待介入。
 - MemoryRecord 摘要指标：列表顶部展示总数、高权威、来源类型和标签数。
 - 移动端工作台布局：小屏下侧栏变为顶部工作区入口，主工作区保持完整宽度，无横向溢出。
 - 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 在 390px 视口通过。
@@ -83,6 +84,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - Local mocked browser summary smoke passed：Project Intake / Code Context 摘要指标均渲染成功，无横向溢出。
 - Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderCompactMetric`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-runtime-smoke"` 通过。
 - Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderEvalRunSummary`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=eval-summary-runtime"` 通过，Eval 指标为 `3,1,1,1`。
+- Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderAgentTaskSummary`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=agent-summary-runtime"` 通过，AgentTask 指标为 `4,2,1,1`。
 - K3s demo manifest offline guard passed：`mvn -Dtest=K3sDemoManifestTest test` 覆盖 env、Secret、探针、Service、Ingress 和 PostgreSQL `PGDATA`。
 - `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
 - `mvn test`：103 tests passed，0 failures，0 errors。
@@ -1136,3 +1138,33 @@ Verified:
 - `http://localhost:8082/actuator/health`: `UP`.
 - Served homepage contains `renderEvalRunSummary`.
 - `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=eval-summary-runtime"`: passed.
+
+## 2026-06-18 Work Log - AgentTask Summary Metrics
+
+Current goal:
+- Improve AgentTask workspace scan density without changing backend APIs.
+
+Completed:
+- Added `renderAgentTaskSummary(tasks)` to show total tasks, active tasks, recorded tasks, and tasks needing intervention.
+- Added `countAgentTasksByStatus(tasks, statuses)` for normalized status counting.
+- Extended `scripts/smoke/workbench-summary-smoke.mjs` to mock AgentTask records and assert summary metrics `4,2,1,1`.
+- Updated README, SPEC, and HANDOFF.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java`
+- `scripts/smoke/workbench-summary-smoke.mjs`
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 5 tests passed.
+- `node --check .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed on local `index.html`; AgentTask metrics `4,2,1,1`.
+- `mvn test`: 103 tests passed.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy.
+- `http://localhost:8082/actuator/health`: `UP`.
+- Served homepage contains `renderAgentTaskSummary`.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=agent-summary-runtime"`: passed.

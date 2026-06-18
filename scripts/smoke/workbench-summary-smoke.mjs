@@ -57,6 +57,38 @@ function mockFetchExpression() {
           warnings: ['mock warning']
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
+      if (url.includes('/api/agent/tasks')) {
+        return new Response(JSON.stringify([
+          {
+            id: 'TASK-SUMMARY-1',
+            title: 'Plan the summary polish',
+            goal: 'Keep AgentTask list scannable.',
+            status: 'PLAN',
+            events: [{ status: 'INTAKE', note: 'Created from smoke.' }]
+          },
+          {
+            id: 'TASK-SUMMARY-2',
+            title: 'Verify the summary polish',
+            goal: 'Check the browser summary cards.',
+            status: 'VERIFY',
+            events: [{ status: 'VERIFY', note: 'Ready to verify.' }]
+          },
+          {
+            id: 'TASK-SUMMARY-3',
+            title: 'Record finished polish',
+            goal: 'Persist the result.',
+            status: 'RECORD',
+            events: [{ status: 'RECORD', note: 'Recorded.' }]
+          },
+          {
+            id: 'TASK-SUMMARY-4',
+            title: 'Blocked follow-up',
+            goal: 'Wait for external cluster tooling.',
+            status: 'BLOCKED',
+            events: [{ status: 'BLOCKED', note: 'Needs intervention.' }]
+          }
+        ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
       if (url.includes('/api/agent/eval/runs')) {
         return new Response(JSON.stringify([
           {
@@ -145,6 +177,25 @@ async function runSmoke(cdp) {
   assert(projectSummary.cardCount === 4, `Expected 4 Project Intake summary cards: ${JSON.stringify(projectSummary)}`);
   assert(projectSummary.values.join(',') === '3,2,1,0', `Unexpected Project Intake metrics: ${JSON.stringify(projectSummary)}`);
 
+  await evaluate(cdp, `(async () => {
+    document.getElementById('workspaceNavAgentTask').click();
+    openWorkspaceSubTab('agentTask', 'agentTaskListTab');
+    await loadAgentTasks(false);
+  })()`);
+  await waitFor(cdp, `Boolean(document.querySelector('#agentTaskList > div.mb-3.grid'))`);
+
+  const agentTaskSummary = await evaluate(cdp, `(() => {
+    const summary = document.querySelector('#agentTaskList > div.mb-3.grid');
+    return {
+      cardCount: summary?.children.length || 0,
+      values: [...(summary?.children || [])].map((card) => card.querySelector('p:last-child')?.textContent.trim()),
+      visible: !document.getElementById('agentTaskListTab').classList.contains('hidden')
+    };
+  })()`);
+  assert(agentTaskSummary.visible, 'AgentTask list did not become visible');
+  assert(agentTaskSummary.cardCount === 4, `Expected 4 AgentTask summary cards: ${JSON.stringify(agentTaskSummary)}`);
+  assert(agentTaskSummary.values.join(',') === '4,2,1,1', `Unexpected AgentTask metrics: ${JSON.stringify(agentTaskSummary)}`);
+
   await evaluate(cdp, `(() => {
     document.getElementById('workspaceNavCodeContext').click();
     document.getElementById('codeContextMode').value = 'search';
@@ -195,7 +246,7 @@ async function runSmoke(cdp) {
   }))()`);
   assert(!layout.overflow, `Summary smoke caused horizontal overflow: ${JSON.stringify(layout)}`);
 
-  return { pageUrl, projectSummary, codeSummary, evalSummary, layout };
+  return { pageUrl, projectSummary, agentTaskSummary, codeSummary, evalSummary, layout };
 }
 
 runChromeSmoke(pageUrl, { profileName: 'workbench-summary', width: 390, height: 844 }, runSmoke)
