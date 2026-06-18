@@ -225,6 +225,7 @@ test-docs/advanced-rag-demo.md
 - Eval Run：内存存储、JDBC 持久化和 Testcontainers profile 已覆盖。
 - 工作台浏览器 smoke：桌面端和 390px 移动视口均覆盖 6 个工作区切换，移动端无横向溢出。
 - 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 均已在 390px 视口通过。
+- 移动端边界 smoke：长文本输入、必填错误提示、窄屏按钮/导航宽度已在本地静态页和 Docker 运行态首页通过。
 - 工作台摘要指标 smoke：`node .\scripts\smoke\workbench-summary-smoke.mjs` 已覆盖 Project Intake / Code Context 指标渲染和横向溢出检查，并已在 Docker 运行态首页通过。
 
 说明：

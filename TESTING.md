@@ -285,6 +285,18 @@ node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summa
 
 脚本会启动本机 Chrome headless，检查摘要指标卡片数量、关键数值和 390px 视口横向溢出。
 
+移动端边界交互可以用下面的脚本覆盖 390px 视口下的长文本、必填错误提示、导航和按钮宽度：
+
+```powershell
+node .\scripts\smoke\workbench-mobile-edge-smoke.mjs
+```
+
+Docker 服务重建后也可以指向运行中的首页：
+
+```powershell
+node .\scripts\smoke\workbench-mobile-edge-smoke.mjs "http://localhost:8082/?v=mobile-edge-smoke"
+```
+
 ---
 
 ## 下一步

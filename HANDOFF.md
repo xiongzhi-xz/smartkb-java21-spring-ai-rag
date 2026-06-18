@@ -44,8 +44,8 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 ## 下一步
 
-1. 按需继续补工作台移动端细节交互 smoke。
-2. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
+1. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
+2. 继续 SmartKB v2 Agent 平台体验打磨，例如更密集的 Project Intake / Memory / Code Context 信息展示。
 
 ## 已修改文件
 
@@ -76,6 +76,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - 移动表单截图已人工检查：`target/mobile-form-project-intake.png`、`target/mobile-form-code-context.png`。
 - Headless Chrome mobile Agent/Eval CDP smoke passed：AgentTask 创建并流转到 PLAN，Eval 新增记录、运行列表、聚合报告均通过，均无横向溢出。
 - Agent/Eval 移动截图已人工检查：`target/mobile-agent-task.png`、`target/mobile-eval-list.png`、`target/mobile-eval-report.png`。
+- Mobile edge browser smoke passed：390px 视口覆盖长文本、必填错误提示、窄屏导航/按钮宽度，本地静态页和 Docker 运行态首页均通过。
 - Local mocked browser summary smoke passed：Project Intake / Code Context 摘要指标均渲染成功，无横向溢出。
 - Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderCompactMetric`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-runtime-smoke"` 通过。
 - `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
@@ -84,7 +85,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 ## 未验证
 
 - K3s/K3d 真实集群部署。
-- 更细的移动端边界交互，例如长文本输入、错误提示和窄屏按钮换行。
+
 
 ## 风险和注意事项
 
@@ -1009,3 +1010,39 @@ Not verified:
 
 Next step:
 - Continue SmartKB v2 Agent platform polish or run a focused mobile edge-case smoke if needed.
+
+## 2026-06-18 Work Log - Mobile Edge Smoke Script
+
+Current goal:
+- Add repeatable browser coverage for narrow mobile edge cases that are easy to miss manually.
+
+Completed:
+- Extracted shared Chrome CDP helpers into `scripts/smoke/lib/chrome-cdp.mjs`.
+- Updated `scripts/smoke/workbench-summary-smoke.mjs` to reuse the shared helper.
+- Added `scripts/smoke/workbench-mobile-edge-smoke.mjs`.
+- The new smoke opens a 390x844 mobile viewport and checks Project Intake, AgentTask, Memory, Code Context, and Eval edge states.
+- Covered required-field validation messages, long single-token inputs, long textareas, workspace nav buttons, visible action buttons, and page-level horizontal overflow.
+- Updated README, SPEC, TESTING, and HANDOFF.
+
+Verified:
+- `node --check .\scripts\smoke\lib\chrome-cdp.mjs`: passed.
+- `node --check .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `node --check .\scripts\smoke\workbench-mobile-edge-smoke.mjs`: passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `node .\scripts\smoke\workbench-mobile-edge-smoke.mjs`: passed on local `index.html`.
+- `node .\scripts\smoke\workbench-mobile-edge-smoke.mjs "http://localhost:8082/?v=mobile-edge-smoke"`: passed against Docker runtime.
+
+Modified files:
+- `scripts/smoke/lib/chrome-cdp.mjs`
+- `scripts/smoke/workbench-summary-smoke.mjs`
+- `scripts/smoke/workbench-mobile-edge-smoke.mjs`
+- `README.md`
+- `SPEC.md`
+- `TESTING.md`
+- `HANDOFF.md`
+
+Not verified:
+- K3s/K3d real cluster deployment remains pending.
+
+Next step:
+- Continue SmartKB v2 Agent platform polish, with K3s/K3d verification as the remaining larger environment task.
