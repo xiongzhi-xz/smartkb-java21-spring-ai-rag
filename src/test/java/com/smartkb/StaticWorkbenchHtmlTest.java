@@ -77,6 +77,7 @@ class StaticWorkbenchHtmlTest {
         assertThat(html).contains(
                 "function openWorkspacePanel(name)",
                 "function openWorkspaceSubTab(scope, targetId)",
+                "function renderCompactMetric(label, value, tone = 'gray')",
                 "function runProjectIntake()",
                 "function createAgentTask()",
                 "function loadMemoryRecords()",

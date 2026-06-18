@@ -11,7 +11,7 @@
 
 ## 当前阶段
 
-Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、移动端响应式布局、移动端表单 smoke、MemoryRecord 前端工作区、Memory 浏览器点击 smoke、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
+Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、Project Intake / Code Context 摘要指标、移动端响应式布局、移动端表单 smoke、MemoryRecord 前端工作区、Memory 浏览器点击 smoke、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
 
 ## 已完成
 
@@ -31,6 +31,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - SmartKB v2 Agent 工程平台规格文档：`docs/AGENT_PLATFORM_SPEC.md`。
 - SmartKB v2 首批 Agent eval 模板：`docs/agent-eval-report.md`，包含 TicketRush 10 个 eval case。
 - 静态工作台 HTML 结构回归测试：覆盖工作区导航、AgentTask/Eval 子 Tab、静态 ID 唯一性和核心函数存在性。
+- Project Intake / Code Context 摘要指标：结果顶部展示技术栈、可运行命令、验证缺口、警告、结果数、跳过数和 Git 状态。
 - 移动端工作台布局：小屏下侧栏变为顶部工作区入口，主工作区保持完整宽度，无横向溢出。
 - 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 在 390px 视口通过。
 - 工作区隐藏兜底：本页自有 CSS 提供 `.hidden { display: none !important; }`，避免 Tailwind CDN 慢或失败时面板串出。
@@ -43,7 +44,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 ## 下一步
 
-1. 继续打磨 Project Intake / Code Context 面板的信息密度。
+1. Docker API 恢复后，优先重试 `docker compose up -d --no-deps --build --force-recreate smartkb-app` 并跑 Project Intake / Code Context 浏览器 smoke。
 2. 按需继续补工作台移动端细节交互 smoke。
 3. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
 
@@ -51,9 +52,11 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 本轮改动：
 
+- `src/main/resources/static/index.html` — 增加 Project Intake / Code Context 摘要指标
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java` — 增加摘要指标 helper 静态守卫
 - `README.md` — 更新验证状态
-- `SPEC.md` — 标记 AgentTask / Eval 移动端表单 smoke
-- `HANDOFF.md` — 记录 AgentTask / Eval 移动端 smoke 的验证结果和下一步
+- `SPEC.md` — 标记 Project Intake / Code Context 摘要指标
+- `HANDOFF.md` — 记录本轮验证结果和 Docker runtime 风险
 
 安全性检查：
 - 本轮不涉及密钥、token、私有路径或账号信息。
@@ -74,10 +77,14 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - 移动表单截图已人工检查：`target/mobile-form-project-intake.png`、`target/mobile-form-code-context.png`。
 - Headless Chrome mobile Agent/Eval CDP smoke passed：AgentTask 创建并流转到 PLAN，Eval 新增记录、运行列表、聚合报告均通过，均无横向溢出。
 - Agent/Eval 移动截图已人工检查：`target/mobile-agent-task.png`、`target/mobile-eval-list.png`、`target/mobile-eval-report.png`。
+- Local mocked browser summary smoke passed：Project Intake / Code Context 摘要指标均渲染成功，无横向溢出。
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
+- `mvn test`：102 tests passed，0 failures，0 errors。
 
 ## 未验证
 
 - K3s/K3d 真实集群部署。
+- 本轮 Docker runtime 重建验证未完成：`docker compose up -d --no-deps --build --force-recreate smartkb-app` 超时，之后 Docker API 对 `docker version` 也超时；`http://localhost:8082/actuator/health` 仍为 `UP`，但运行中首页还未包含 `renderCompactMetric`。
 - 更细的移动端边界交互，例如长文本输入、错误提示和窄屏按钮换行。
 
 ## 风险和注意事项
@@ -901,3 +908,41 @@ Not verified:
 
 Next step:
 - Continue Project Intake / Code Context display density polish, or add narrow edge-case smoke only if needed.
+
+## 2026-06-18 Work Log - Project Intake Code Context Summary Metrics
+
+Current goal:
+- Improve the scan density of Project Intake and Code Context results.
+
+Completed:
+- Added reusable `renderCompactMetric(label, value, tone)` helper.
+- Added a Project Intake summary strip for stack count, runnable-command count, verification-gap count, and warning count.
+- Added a Code Context summary strip for result count, skipped-file count, warning count, and Git repository status.
+- Kept existing detailed sections and backend API contracts unchanged.
+- Added static regression coverage for the new summary helper.
+- Updated README, SPEC, and HANDOFF.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java`
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Temporary files:
+- `target/project-code-summary-cdp-smoke.js`
+
+Verified:
+- Inline JavaScript syntax check via Node: passed.
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 5 tests passed.
+- `mvn test`: 102 tests passed, 0 failures, 0 errors.
+- `node .\target\project-code-summary-cdp-smoke.js`: passed against local `index.html` with mocked Project Intake / Code Context API responses.
+- Mocked browser smoke confirmed Project Intake and Code Context summary metrics rendered and did not create horizontal overflow.
+
+Not verified:
+- Docker runtime rebuild for this exact change. `docker compose up -d --no-deps --build --force-recreate smartkb-app` timed out after 5 minutes.
+- After stopping stuck docker/compose client processes, Docker API still timed out on `docker version`.
+- The existing running app stayed healthy at `http://localhost:8082/actuator/health`, but the served homepage was still the previous image and did not include `renderCompactMetric`.
+
+Next step:
+- When Docker API responds again, rebuild only `smartkb-app`, confirm the served homepage contains `renderCompactMetric`, then rerun Project Intake / Code Context browser smoke against `http://localhost:8082`.

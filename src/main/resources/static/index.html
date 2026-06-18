@@ -937,6 +937,22 @@ git diff --check</textarea>
         `;
     }
 
+    function renderCompactMetric(label, value, tone = 'gray') {
+        const tones = {
+            blue: 'border-blue-200 bg-blue-50 text-blue-700',
+            green: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+            amber: 'border-amber-200 bg-amber-50 text-amber-700',
+            red: 'border-red-200 bg-red-50 text-red-700',
+            gray: 'border-gray-200 bg-white text-gray-700'
+        };
+        return `
+            <div class="rounded-lg border ${tones[tone] || tones.gray} px-3 py-2">
+                <p class="text-[11px] font-medium uppercase tracking-wide opacity-70">${escapeHtml(label)}</p>
+                <p class="mt-1 text-lg font-semibold leading-none">${escapeHtml(value)}</p>
+            </div>
+        `;
+    }
+
     function toggleProjectIntakePanel() {
         openWorkspacePanel('projectIntake');
     }
@@ -960,6 +976,14 @@ git diff --check</textarea>
         const statusText = workingTree.isGitRepository === false
             ? '不是 Git 仓库'
             : workingTree.hasUncommittedChanges ? '有未提交改动' : '工作区干净';
+        const detectedStack = Array.isArray(project.detectedStack) ? project.detectedStack : [];
+        const runnableCommands = Array.isArray(intake.runnableCommands) ? intake.runnableCommands : [];
+        const verificationGaps = Array.isArray(intake.verificationGaps) ? intake.verificationGaps : [];
+        const evidenceItems = Array.isArray(data.evidence) ? data.evidence : [];
+        const readLog = data.readLog || {};
+        const readFiles = Array.isArray(readLog.readFiles) ? readLog.readFiles : [];
+        const commands = Array.isArray(readLog.commands) ? readLog.commands : [];
+        const warnings = Array.isArray(data.warnings) ? data.warnings : [];
 
         result.classList.remove('hidden');
         meta.classList.remove('hidden');
@@ -973,6 +997,12 @@ git diff --check</textarea>
                     ${escapeHtml(statusText)}
                 </span>
             </div>
+            <div class="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                ${renderCompactMetric('技术栈', detectedStack.length, detectedStack.length > 0 ? 'blue' : 'gray')}
+                ${renderCompactMetric('可运行命令', runnableCommands.length, runnableCommands.length > 0 ? 'green' : 'gray')}
+                ${renderCompactMetric('验证缺口', verificationGaps.length, verificationGaps.length > 0 ? 'amber' : 'green')}
+                ${renderCompactMetric('警告', warnings.length, warnings.length > 0 ? 'red' : 'green')}
+            </div>
             <div class="grid gap-3 lg:grid-cols-2">
                 ${renderProjectIntakeSection('当前目标', renderProjectIntakeValue(intake.currentGoal))}
                 ${renderProjectIntakeSection('当前阶段', renderProjectIntakeValue(intake.currentStage))}
@@ -981,11 +1011,11 @@ git diff --check</textarea>
                 ${renderProjectIntakeSection('未完成', renderProjectIntakeList(intake.unfinished))}
                 ${renderProjectIntakeSection('风险点', renderProjectIntakeList(intake.risks))}
                 ${renderProjectIntakeSection('下一步只做', renderProjectIntakeValue(intake.nextStepOnly))}
-                ${renderProjectIntakeSection('技术栈', renderProjectIntakeList(project.detectedStack))}
+                ${renderProjectIntakeSection('技术栈', renderProjectIntakeList(detectedStack))}
                 ${renderProjectIntakeSection('技术栈证据', renderProjectIntakeList(intake.stackEvidence))}
                 ${renderProjectIntakeSection('验证命令', renderProjectIntakeList(project.testCommands))}
-                ${renderProjectIntakeSection('可运行命令', renderProjectIntakeList(intake.runnableCommands))}
-                ${renderProjectIntakeSection('验证缺口', renderProjectIntakeList(intake.verificationGaps))}
+                ${renderProjectIntakeSection('可运行命令', renderProjectIntakeList(runnableCommands))}
+                ${renderProjectIntakeSection('验证缺口', renderProjectIntakeList(verificationGaps))}
                 ${renderProjectIntakeSection('Git 状态', `
                     <p>${escapeHtml(statusText)}</p>
                     <p class="mt-1 break-words text-xs text-gray-500">${renderProjectIntakeValue(workingTree.statusShort, '无 git status 输出')}</p>
@@ -993,12 +1023,6 @@ git diff --check</textarea>
                 ${renderProjectIntakeSection('最新提交', renderProjectIntakeList(commits))}
             </div>
         `;
-
-        const evidenceItems = Array.isArray(data.evidence) ? data.evidence : [];
-        const readLog = data.readLog || {};
-        const readFiles = Array.isArray(readLog.readFiles) ? readLog.readFiles : [];
-        const commands = Array.isArray(readLog.commands) ? readLog.commands : [];
-        const warnings = Array.isArray(data.warnings) ? data.warnings : [];
 
         meta.innerHTML = `
             <div class="space-y-4">
@@ -1933,19 +1957,34 @@ git diff --check</textarea>
         const meta = document.getElementById('codeContextMeta');
         const warnings = Array.isArray(data.warnings) ? data.warnings : [];
         const skipped = Array.isArray(data.skippedFiles) ? data.skippedFiles : [];
+        const resultItems = mode === 'tree'
+            ? (Array.isArray(data.files) ? data.files : [])
+            : mode === 'diff'
+                ? (Array.isArray(data.files) ? data.files : [])
+                : mode === 'chunks'
+                    ? (Array.isArray(data.chunks) ? data.chunks : [])
+                    : (Array.isArray(data.matches) ? data.matches : []);
+        const summaryHtml = `
+            <div class="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                ${renderCompactMetric('结果', resultItems.length, resultItems.length > 0 ? 'blue' : 'gray')}
+                ${renderCompactMetric('跳过', skipped.length, skipped.length > 0 ? 'amber' : 'green')}
+                ${renderCompactMetric('警告', warnings.length, warnings.length > 0 ? 'red' : 'green')}
+                ${renderCompactMetric('Git', data.gitRepository === true ? 'yes' : data.gitRepository === false ? 'no' : 'n/a', data.gitRepository === true ? 'green' : 'gray')}
+            </div>
+        `;
 
         result.classList.remove('hidden');
         meta.classList.remove('hidden');
 
         if (mode === 'tree') {
-            result.innerHTML = renderCodeContextItems(data.files, file => `
+            result.innerHTML = summaryHtml + renderCodeContextItems(resultItems, file => `
                 <div class="rounded-md border border-gray-200 bg-white p-2">
                     <p class="break-all font-medium text-gray-700">${renderText(file.path)}</p>
                     <p class="mt-1 text-xs text-gray-500">${Number(file.bytes || 0)} bytes · ${renderText(file.extension || 'file')}</p>
                 </div>
             `);
         } else if (mode === 'diff') {
-            result.innerHTML = renderCodeContextItems(data.files, file => `
+            result.innerHTML = summaryHtml + renderCodeContextItems(resultItems, file => `
                 <div class="rounded-md border border-gray-200 bg-white p-2">
                     <p class="break-all font-medium text-gray-700">${renderText(file.path)}</p>
                     <div class="mt-2 max-h-64 overflow-auto rounded bg-gray-900 p-2 font-mono text-xs text-gray-100">
@@ -1962,14 +2001,14 @@ git diff --check</textarea>
                 </div>
             `);
         } else if (mode === 'chunks') {
-            result.innerHTML = renderCodeContextItems(data.chunks, chunk => `
+            result.innerHTML = summaryHtml + renderCodeContextItems(resultItems, chunk => `
                 <div class="rounded-md border border-gray-200 bg-white p-2">
                     <p class="break-all font-medium text-gray-700">${renderText(chunk.path)}:${escapeHtml(chunk.startLine)}-${escapeHtml(chunk.endLine)}</p>
                     <pre class="mt-2 max-h-48 overflow-auto rounded bg-gray-900 p-2 text-xs text-gray-100">${escapeHtml(chunk.content)}</pre>
                 </div>
             `);
         } else if (mode === 'semantic') {
-            result.innerHTML = renderCodeContextItems(data.matches, match => `
+            result.innerHTML = summaryHtml + renderCodeContextItems(resultItems, match => `
                 <div class="rounded-md border border-gray-200 bg-white p-2">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <p class="break-all font-medium text-gray-700">${renderText(match.path)}:${escapeHtml(match.startLine)}-${escapeHtml(match.endLine)}</p>
@@ -1982,7 +2021,7 @@ git diff --check</textarea>
                 </div>
             `);
         } else {
-            result.innerHTML = renderCodeContextItems(data.matches, match => `
+            result.innerHTML = summaryHtml + renderCodeContextItems(resultItems, match => `
                 <div class="rounded-md border border-gray-200 bg-white p-2">
                     <p class="break-all font-medium text-gray-700">${renderText(match.path)}:${escapeHtml(match.lineNumber)}</p>
                     <pre class="mt-2 overflow-auto rounded bg-gray-900 p-2 text-xs text-gray-100">${escapeHtml(match.line)}</pre>
