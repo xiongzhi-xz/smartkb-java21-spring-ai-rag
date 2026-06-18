@@ -1249,3 +1249,25 @@ Verified:
 - `mvn -Dtest=K3sDemoManifestTest test`: passed.
 - Markdown links in README/K3s docs: passed.
 - `git diff --check`: passed with CRLF warnings only.
+
+## 2026-06-18 Work Log - K8s Draft Guard Test
+
+Current goal:
+- Add regression coverage so the old Kubernetes draft is not mistaken for the verified demo manifest again.
+
+Completed:
+- Added `K8sDraftManifestTest`.
+- Guarded that `k8s/deployment-draft.yaml` remains marked as a draft and says not to apply it directly.
+- Guarded that draft Secret placeholders use non-usable `replace-at-deploy-time` markers.
+- Guarded that `k8s/README.md` applies `k8s/k3s-demo.yaml`, not the old `k8s/deployment.yaml`.
+- Marked the guard in `SPEC.md`.
+
+Modified files:
+- `src/test/java/com/smartkb/K8sDraftManifestTest.java`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- `mvn "-Dtest=K8sDraftManifestTest,K3sDemoManifestTest" test`: 3 tests passed.
+- `mvn test`: 105 tests passed.
+- `git diff --check`: passed with CRLF warnings only.
