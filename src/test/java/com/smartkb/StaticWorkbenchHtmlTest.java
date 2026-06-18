@@ -84,6 +84,9 @@ class StaticWorkbenchHtmlTest {
                 "function createMemoryRecord()",
                 "function importHighAuthorityMemory()",
                 "function checkMemoryConflict()",
+                "function renderMemorySummary(records)",
+                "function getUniqueMemoryValues(records, key)",
+                "function getUniqueMemoryTags(records)",
                 "function runCodeContext()",
                 "function createEvalRun()",
                 "function loadEvalData()"

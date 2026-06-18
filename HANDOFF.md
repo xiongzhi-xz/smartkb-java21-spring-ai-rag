@@ -32,10 +32,12 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - SmartKB v2 首批 Agent eval 模板：`docs/agent-eval-report.md`，包含 TicketRush 10 个 eval case。
 - 静态工作台 HTML 结构回归测试：覆盖工作区导航、AgentTask/Eval 子 Tab、静态 ID 唯一性和核心函数存在性。
 - Project Intake / Code Context 摘要指标：结果顶部展示技术栈、可运行命令、验证缺口、警告、结果数、跳过数和 Git 状态。
+- MemoryRecord 摘要指标：列表顶部展示总数、高权威、来源类型和标签数。
 - 移动端工作台布局：小屏下侧栏变为顶部工作区入口，主工作区保持完整宽度，无横向溢出。
 - 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 在 390px 视口通过。
 - 工作区隐藏兜底：本页自有 CSS 提供 `.hidden { display: none !important; }`，避免 Tailwind CDN 慢或失败时面板串出。
 - MemoryRecord 前端工作区：支持导入高权威记忆、手工新增记忆、列表查看和冲突检查。
+- MemoryRecord 列表摘要指标：总数、高权威、来源类型、标签数，并已纳入 mobile edge smoke。
 - MemoryRecord 浏览器点击 smoke：覆盖 6 个工作区切换、页面不跳转、无横向溢出、手工新增记忆后列表可见。
 
 ## 正在做
@@ -1070,3 +1072,35 @@ Not verified:
 
 Next step:
 - If K3d/kind becomes available, create a disposable cluster, import `smartkb:local`, apply `k8s/k3s-demo.yaml`, and verify `/actuator/health` through port-forward.
+
+## 2026-06-18 Work Log - Memory Summary Metrics
+
+Current goal:
+- Improve Memory workspace scan density without changing backend APIs.
+
+Completed:
+- Added `renderMemorySummary(records)` to show total memories, high-authority count, source-type count, and unique tag count.
+- Added small helpers for unique memory values and tags.
+- Updated mobile edge smoke to mock Memory records and assert summary metrics `3,2,2,3`.
+- Updated README, SPEC, and HANDOFF.
+
+Verified:
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 5 tests passed.
+- `node --check .\scripts\smoke\workbench-mobile-edge-smoke.mjs`: passed.
+- `node .\scripts\smoke\workbench-mobile-edge-smoke.mjs`: passed on local `index.html`.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy.
+- `node .\scripts\smoke\workbench-mobile-edge-smoke.mjs "http://localhost:8082/?v=memory-summary-edge-rebuilt"`: passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=memory-summary-regression"`: passed.
+- `http://localhost:8082/actuator/health`: `UP`.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java`
+- `scripts/smoke/workbench-mobile-edge-smoke.mjs`
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Next step:
+- Continue SmartKB v2 Agent platform information-density polish, or do the K3s/K3d runtime verification when a cluster tool is available.

@@ -76,7 +76,7 @@ flowchart LR
 
 - 项目接管：读取 `README/SPEC/AGENTS/HANDOFF/pom.xml/docker-compose.yml/Git` 信息，生成接管摘要和指标速览。
 - 任务状态机：`INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD`，记录状态流转和验证结果。
-- 记忆分层：高权威记忆、中权威记忆、低权威记忆，工作台支持导入、手工新增、列表查看和冲突提示。
+- 记忆分层：高权威记忆、中权威记忆、低权威记忆，工作台支持导入、手工新增、列表查看、摘要指标和冲突提示。
 - 代码上下文：文件树、关键词搜索、Git diff、代码 chunk、语义检索，并展示结果数、跳过数、警告和 Git 状态。
 - Eval 评测：记录 TicketRush eval case，聚合成功率、得分率、失败原因和人工介入指标。
 

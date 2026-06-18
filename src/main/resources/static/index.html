@@ -1432,6 +1432,33 @@ git diff --check</textarea>
         `).join('');
     }
 
+    function getUniqueMemoryValues(records, key) {
+        return new Set((Array.isArray(records) ? records : [])
+            .map(record => String(record[key] || '').trim())
+            .filter(Boolean));
+    }
+
+    function getUniqueMemoryTags(records) {
+        return new Set((Array.isArray(records) ? records : [])
+            .flatMap(record => Array.isArray(record.tags) ? record.tags : [])
+            .map(tag => String(tag || '').trim())
+            .filter(Boolean));
+    }
+
+    function renderMemorySummary(records) {
+        const highAuthorityCount = records.filter(memory => String(memory.authorityLevel || '').toUpperCase() === 'HIGH').length;
+        const sourceTypeCount = getUniqueMemoryValues(records, 'sourceType').size;
+        const tagCount = getUniqueMemoryTags(records).size;
+        return `
+            <div class="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                ${renderCompactMetric('记忆', records.length, records.length > 0 ? 'blue' : 'gray')}
+                ${renderCompactMetric('高权威', highAuthorityCount, highAuthorityCount > 0 ? 'green' : 'gray')}
+                ${renderCompactMetric('来源类型', sourceTypeCount, sourceTypeCount > 0 ? 'amber' : 'gray')}
+                ${renderCompactMetric('标签', tagCount, tagCount > 0 ? 'blue' : 'gray')}
+            </div>
+        `;
+    }
+
     function renderMemoryRecords(records) {
         const target = document.getElementById('memoryList');
         if (!Array.isArray(records) || records.length === 0) {
@@ -1447,6 +1474,7 @@ git diff --check</textarea>
                 <h3 class="text-xs font-semibold uppercase text-gray-500">记忆列表</h3>
                 <span class="text-xs text-gray-400">${records.length} 条</span>
             </div>
+            ${renderMemorySummary(records)}
             <div class="max-h-[34rem] space-y-2 overflow-auto">
                 ${records.map(memory => `
                     <div class="rounded-md border border-gray-200 bg-white p-3">

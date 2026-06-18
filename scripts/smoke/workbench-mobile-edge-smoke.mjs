@@ -10,6 +10,46 @@ const pageUrl = process.argv[2] || defaultWorkbenchPage();
 const longToken = 'LONG-MOBILE-EDGE-TEXT-'.repeat(18);
 const longSentence = `${longToken} keeps narrow panels honest without changing backend state.`;
 
+function mockMobileEdgeFetchExpression() {
+  return `(() => {
+    window.fetch = async (input) => {
+      const url = String(input);
+      if (url.includes('/api/agent/memories')) {
+        return new Response(JSON.stringify([
+          {
+            id: 'M-EDGE-1',
+            projectId: 'smartkb-edge',
+            authorityLevel: 'HIGH',
+            sourceType: 'SPEC',
+            sourcePath: 'SPEC.md',
+            content: 'High authority memory for mobile edge smoke.',
+            tags: ['mobile', 'layout']
+          },
+          {
+            id: 'M-EDGE-2',
+            projectId: 'smartkb-edge',
+            authorityLevel: 'HIGH',
+            sourceType: 'HANDOFF',
+            sourcePath: 'HANDOFF.md',
+            content: 'Second high authority memory for summary counts.',
+            tags: ['mobile', 'handoff']
+          },
+          {
+            id: 'M-EDGE-3',
+            projectId: 'smartkb-edge',
+            authorityLevel: 'MEDIUM',
+            sourceType: 'SPEC',
+            sourcePath: 'docs/notes.md',
+            content: 'Medium authority memory for source-type counts.',
+            tags: []
+          }
+        ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      throw new Error('Unexpected mocked fetch: ' + url);
+    };
+  })()`;
+}
+
 async function assertNoOverflow(cdp, label) {
   const layout = await evaluate(cdp, `(() => {
     const viewportWidth = window.innerWidth;
@@ -53,6 +93,7 @@ async function visibleText(cdp, selector) {
 
 async function runSmoke(cdp) {
   await waitFor(cdp, 'Boolean(document.getElementById("workspaceNavProjectIntake"))');
+  await evaluate(cdp, mockMobileEdgeFetchExpression());
   await assertNoOverflow(cdp, 'initial chat workspace');
 
   const results = [];
@@ -96,6 +137,16 @@ async function runSmoke(cdp) {
     document.getElementById('memoryContent').value = '';
     document.getElementById('memoryCreateButton').click();
   })()`);
+  await waitFor(cdp, `Boolean(document.querySelector('#memoryList > div.mb-3.grid'))`);
+  const memorySummary = await evaluate(cdp, `(() => {
+    const summary = document.querySelector('#memoryList > div.mb-3.grid');
+    return {
+      cardCount: summary?.children.length || 0,
+      values: [...(summary?.children || [])].map((card) => card.querySelector('p:last-child')?.textContent.trim())
+    };
+  })()`);
+  assert(memorySummary.cardCount === 4, `Expected 4 memory summary cards: ${JSON.stringify(memorySummary)}`);
+  assert(memorySummary.values.join(',') === '3,2,2,3', `Unexpected memory summary metrics: ${JSON.stringify(memorySummary)}`);
   await waitFor(cdp, `document.getElementById('memoryActionResult').innerText.length > 0`);
   assert((await visibleText(cdp, '#memoryActionResult')).length > 0, 'Memory validation message did not render');
   results.push(await assertNoOverflow(cdp, 'memory validation'));
