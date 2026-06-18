@@ -44,7 +44,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 ## 下一步
 
-1. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
+1. 在一次性 K3s/K3d 集群中真实运行验证 `k8s/k3s-demo.yaml`。
 2. 继续 SmartKB v2 Agent 平台体验打磨，例如更密集的 Project Intake / Memory / Code Context 信息展示。
 
 ## 已修改文件
@@ -64,7 +64,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 - `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
 - Inline JavaScript syntax check via Node：passed。
-- `mvn test`：102 tests passed，0 failures，0 errors。
+- `mvn test`：103 tests passed，0 failures，0 errors。
 - `docker compose up -d --no-deps --build --force-recreate smartkb-app`：passed。
 - `smartkb-app` health：healthy，`/actuator/health` 返回 `UP`。
 - 首页 HTML 包含 `workspaceNavMemory`。
@@ -79,8 +79,9 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - Mobile edge browser smoke passed：390px 视口覆盖长文本、必填错误提示、窄屏导航/按钮宽度，本地静态页和 Docker 运行态首页均通过。
 - Local mocked browser summary smoke passed：Project Intake / Code Context 摘要指标均渲染成功，无横向溢出。
 - Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderCompactMetric`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-runtime-smoke"` 通过。
+- K3s demo manifest offline guard passed：`mvn -Dtest=K3sDemoManifestTest test` 覆盖 env、Secret、探针、Service、Ingress 和 PostgreSQL `PGDATA`。
 - `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
-- `mvn test`：102 tests passed，0 failures，0 errors。
+- `mvn test`：103 tests passed，0 failures，0 errors。
 
 ## 未验证
 
@@ -1046,3 +1047,26 @@ Not verified:
 
 Next step:
 - Continue SmartKB v2 Agent platform polish, with K3s/K3d verification as the remaining larger environment task.
+
+## 2026-06-18 Work Log - K3s Manifest Offline Guard
+
+Current goal:
+- Continue toward K3s readiness without requiring user intervention.
+
+Completed:
+- Attempted disposable K3d verification using a temporary binary under `target/tools`.
+- Confirmed Docker is available and `kubectl` exists, but no usable Kubernetes context is configured.
+- GitHub release metadata for k3d was reachable, but downloading `k3d-windows-amd64.exe` timed out twice and produced incomplete files, so no cluster was created.
+- Updated `k8s/k3s-demo.yaml` to set PostgreSQL `PGDATA=/var/lib/postgresql/data/pgdata`, avoiding common PVC root-directory initialization failures.
+- Added `K3sDemoManifestTest` to parse `k8s/k3s-demo.yaml` with SnakeYAML and guard key deployment contracts offline.
+- Updated K3s docs, README, SPEC, and HANDOFF.
+
+Verified:
+- `npx --yes js-yaml k8s/k3s-demo.yaml`: passed.
+- `mvn -Dtest=K3sDemoManifestTest test`: passed.
+
+Not verified:
+- Disposable K3s/K3d runtime deployment remains blocked until a K3d/kind binary or another reachable Kubernetes cluster is available.
+
+Next step:
+- If K3d/kind becomes available, create a disposable cluster, import `smartkb:local`, apply `k8s/k3s-demo.yaml`, and verify `/actuator/health` through port-forward.

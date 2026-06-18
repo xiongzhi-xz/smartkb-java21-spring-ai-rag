@@ -28,12 +28,12 @@ curl.exe http://localhost:18080/actuator/health
 ### 1. 构建 Docker 镜像
 
 ```bash
-# 构建镜像
-docker build -t smartkb:latest .
+# 构建本地 K3s/K3d demo 镜像
+docker build -t smartkb:local .
 
 # （可选）推送到镜像仓库
-docker tag smartkb:latest your-registry/smartkb:latest
-docker push your-registry/smartkb:latest
+docker tag smartkb:local your-registry/smartkb:<tag>
+docker push your-registry/smartkb:<tag>
 ```
 
 ### 2. 配置 Secrets

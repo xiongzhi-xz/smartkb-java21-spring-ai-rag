@@ -217,7 +217,7 @@ test-docs/advanced-rag-demo.md
 
 当前已验证：
 
-- `mvn test`：102 tests passed。
+- `mvn test`：103 tests passed。
 - Docker Compose 全链路启动：`smartkb-app` healthy。
 - Redis ChatMemory live checklist：6/6 通过。
 - Docker BuildKit 缓存构建：缓存命中后重建约秒级。
@@ -227,11 +227,12 @@ test-docs/advanced-rag-demo.md
 - 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 均已在 390px 视口通过。
 - 移动端边界 smoke：长文本输入、必填错误提示、窄屏按钮/导航宽度已在本地静态页和 Docker 运行态首页通过。
 - 工作台摘要指标 smoke：`node .\scripts\smoke\workbench-summary-smoke.mjs` 已覆盖 Project Intake / Code Context 指标渲染和横向溢出检查，并已在 Docker 运行态首页通过。
+- K3s demo manifest：已增加 JUnit 结构守卫，覆盖环境变量、Secret 引用、探针、Service、Ingress 和 PostgreSQL PVC `PGDATA`。
 
 说明：
 
 - Testcontainers 集成测试在部分 Windows Docker Desktop 环境中可能因为 npipe Java Docker client 配置被跳过。
-- K3s demo manifest 已做 YAML 语法检查，仍建议在一次性 K3s/K3d 集群中再做真实部署验证。
+- K3s demo manifest 已做 YAML 语法和结构检查，仍建议在一次性 K3s/K3d 集群中再做真实部署验证。
 
 ## 项目结构
 

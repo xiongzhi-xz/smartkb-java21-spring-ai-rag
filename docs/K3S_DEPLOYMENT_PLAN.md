@@ -164,13 +164,16 @@ Do not delete PVCs in a shared environment without an explicit data-retention de
 - Does not commit real Secret values.
 - References `smartkb-secrets` for PostgreSQL and model API credentials.
 - Sets `SPRING_DATASOURCE_URL`, `SPRING_DATA_REDIS_HOST`, and `SMARTKB_AGENT_EVAL_RUN_PERSISTENCE`.
+- Sets PostgreSQL `PGDATA=/var/lib/postgresql/data/pgdata` so a Kubernetes PVC root can contain system directories such as `lost+found` without breaking database initialization.
 - Uses `smartkb:local` with `imagePullPolicy: IfNotPresent`.
 - Uses Traefik ingress through `ingressClassName: traefik`.
 
 Local syntax check:
 
 - `npx --yes js-yaml k8s/k3s-demo.yaml` passed.
+- `mvn -Dtest=K3sDemoManifestTest test` passed and guards the demo manifest structure, required app env vars, Secret references, probes, services, ingress, and PostgreSQL `PGDATA`.
 - `kubectl apply --dry-run=client` could not run without a reachable Kubernetes API server in this environment.
+- A disposable K3d runtime verification was attempted, but downloading the `k3d-windows-amd64.exe` release asset timed out before a complete binary was available.
 
 ## Next Implementation Step
 

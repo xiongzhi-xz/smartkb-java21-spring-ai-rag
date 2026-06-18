@@ -58,6 +58,8 @@ spec:
                 secretKeyRef:
                   name: smartkb-secrets
                   key: postgres-password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           readinessProbe:
             exec:
               command:
