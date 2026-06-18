@@ -11,7 +11,7 @@
 
 ## 当前阶段
 
-Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、移动端响应式布局、MemoryRecord 前端工作区、Memory 浏览器点击 smoke、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
+Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、移动端响应式布局、移动端表单 smoke、MemoryRecord 前端工作区、Memory 浏览器点击 smoke、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
 
 ## 已完成
 
@@ -32,6 +32,8 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - SmartKB v2 首批 Agent eval 模板：`docs/agent-eval-report.md`，包含 TicketRush 10 个 eval case。
 - 静态工作台 HTML 结构回归测试：覆盖工作区导航、AgentTask/Eval 子 Tab、静态 ID 唯一性和核心函数存在性。
 - 移动端工作台布局：小屏下侧栏变为顶部工作区入口，主工作区保持完整宽度，无横向溢出。
+- 移动端表单 smoke：Project Intake 提交和 Code Context 查询在 390px 视口通过。
+- 工作区隐藏兜底：本页自有 CSS 提供 `.hidden { display: none !important; }`，避免 Tailwind CDN 慢或失败时面板串出。
 - MemoryRecord 前端工作区：支持导入高权威记忆、手工新增记忆、列表查看和冲突检查。
 - MemoryRecord 浏览器点击 smoke：覆盖 6 个工作区切换、页面不跳转、无横向溢出、手工新增记忆后列表可见。
 
@@ -42,7 +44,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 ## 下一步
 
 1. 继续打磨 Project Intake / Code Context 面板的信息密度。
-2. 按需补更多移动端表单交互 smoke。
+2. 按需补 AgentTask / Eval 移动端表单交互 smoke。
 3. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
 
 ## 已修改文件
@@ -50,10 +52,10 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 本轮改动：
 
 - `src/main/resources/static/index.html` — 增加移动端响应式工作台布局
-- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java` — 增加移动布局静态守卫测试
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java` — 增加移动布局和 `.hidden` 兜底静态守卫测试
 - `README.md` — 更新验证状态
-- `SPEC.md` — 标记移动端响应式布局和测试
-- `HANDOFF.md` — 记录移动端 smoke 的验证结果和下一步
+- `SPEC.md` — 标记移动端响应式布局、表单 smoke 和 `.hidden` 兜底
+- `HANDOFF.md` — 记录移动端表单 smoke 的验证结果和下一步
 
 安全性检查：
 - 本轮不涉及密钥、token、私有路径或账号信息。
@@ -70,11 +72,13 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - Memory 工作区手工新增记忆后，浏览器列表中可见新增内容。
 - Headless Chrome mobile CDP smoke passed：390x844 视口覆盖 6 个工作区切换，侧栏/主区/面板宽度均为 390px，无横向溢出。
 - 移动截图已人工检查：`target/mobile-workbench-chat.png`、`target/mobile-workbench-memory.png`。
+- Headless Chrome mobile form CDP smoke passed：Project Intake 提交成功，Code Context 查询 `StaticWorkbenchHtmlTest` 成功，均无横向溢出。
+- 移动表单截图已人工检查：`target/mobile-form-project-intake.png`、`target/mobile-form-code-context.png`。
 
 ## 未验证
 
 - K3s/K3d 真实集群部署。
-- 更多移动端表单交互路径，例如 Project Intake 提交和 Code Context 查询。
+- AgentTask / Eval 移动端表单交互路径。
 
 ## 风险和注意事项
 
@@ -816,3 +820,48 @@ Not verified:
 
 Next step:
 - Continue Project Intake / Code Context display polish or add mobile form interaction smoke.
+
+## 2026-06-18 Work Log - Mobile Form Interaction Smoke
+
+Current goal:
+- Verify real mobile form interactions for Project Intake and Code Context.
+
+Problem found:
+- A fresh headless Chrome profile sometimes loaded the page before Tailwind CDN utilities were available.
+- Without a local `.hidden` rule, workspace panels could visually stack because JavaScript toggled the `hidden` class but no CSS made it `display:none`.
+
+Completed:
+- Added a local `.hidden { display: none !important; }` fallback in `src/main/resources/static/index.html`.
+- Extended `StaticWorkbenchHtmlTest` to guard the `.hidden` fallback.
+- Ran a mobile CDP form smoke at 390x844 against the running Docker app.
+- Submitted Project Intake with `/workspace/projects/smartkb-java21-spring-ai-rag` and verified the takeover result rendered.
+- Ran Code Context keyword search for `StaticWorkbenchHtmlTest` and verified matching results rendered.
+- Captured and visually checked mobile form screenshots under `target/`.
+- Updated README, SPEC, and HANDOFF verification records.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java`
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Temporary files:
+- `target/mobile-form-cdp-smoke.js`
+- `target/mobile-form-project-intake.png`
+- `target/mobile-form-code-context.png`
+
+Verified:
+- Inline JavaScript syntax check via Node: passed.
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 5 tests passed.
+- `mvn test`: 102 tests passed, 0 failures, 0 errors.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy.
+- `node .\target\mobile-form-cdp-smoke.js`: passed.
+- `node .\target\memory-workspace-cdp-smoke.js`: passed.
+
+Not verified:
+- AgentTask / Eval mobile form interaction smoke.
+
+Next step:
+- Continue Project Intake / Code Context display polish, or add AgentTask / Eval mobile form interaction smoke.

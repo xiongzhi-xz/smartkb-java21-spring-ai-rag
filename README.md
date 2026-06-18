@@ -224,6 +224,7 @@ test-docs/advanced-rag-demo.md
 - Project Intake Docker 宿主机只读挂载：通过容器路径读取项目。
 - Eval Run：内存存储、JDBC 持久化和 Testcontainers profile 已覆盖。
 - 工作台浏览器 smoke：桌面端和 390px 移动视口均覆盖 6 个工作区切换，移动端无横向溢出。
+- 移动端表单 smoke：Project Intake 提交和 Code Context 查询已在 390px 视口通过。
 
 说明：
 

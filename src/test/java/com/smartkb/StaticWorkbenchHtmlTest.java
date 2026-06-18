@@ -95,6 +95,7 @@ class StaticWorkbenchHtmlTest {
 
         assertThat(html).contains(
                 "@media (max-width: 768px)",
+                ".hidden { display: none !important; }",
                 ".app-shell",
                 ".app-sidebar",
                 ".app-main",
