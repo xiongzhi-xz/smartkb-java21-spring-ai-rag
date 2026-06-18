@@ -59,20 +59,123 @@
             box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
             color: #1d4ed8;
         }
+        @media (max-width: 768px) {
+            .app-shell {
+                flex-direction: column;
+            }
+            .app-sidebar {
+                border-bottom: 1px solid #e5e7eb;
+                border-right: 0;
+                height: auto !important;
+                max-height: 44vh;
+                width: 100% !important;
+            }
+            .app-brand {
+                padding: 12px 16px;
+            }
+            .app-brand h1 {
+                font-size: 20px;
+                line-height: 28px;
+            }
+            .workspace-nav {
+                padding: 10px 12px;
+            }
+            .workspace-nav .space-y-1 {
+                display: grid;
+                gap: 6px;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .workspace-nav .space-y-1 > :not([hidden]) ~ :not([hidden]) {
+                margin-top: 0;
+            }
+            .workspace-nav-button {
+                font-size: 12px;
+                gap: 6px;
+                justify-content: center;
+                min-height: 42px;
+                padding: 8px 6px;
+            }
+            .workspace-nav-button i {
+                width: auto;
+            }
+            .document-upload {
+                padding: 10px 12px;
+            }
+            .document-upload button {
+                border-radius: 8px;
+                min-height: 42px;
+                padding: 8px 12px;
+            }
+            .document-heading,
+            .document-list,
+            .sidebar-status {
+                display: none;
+            }
+            .app-main {
+                min-height: 0;
+                min-width: 0;
+                width: 100%;
+            }
+            .workspace-header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 10px;
+                padding: 12px 14px;
+            }
+            .workspace-header-actions {
+                gap: 8px;
+                justify-content: flex-start;
+                width: 100%;
+            }
+            #advancedDocumentFilter,
+            #conversationStatus {
+                max-width: 100%;
+                width: 100%;
+            }
+            #projectIntakePanel,
+            #agentTaskPanel,
+            #memoryPanel,
+            #evalPanel,
+            #codeContextPanel,
+            #chatContainer {
+                padding: 14px;
+            }
+            #chatComposer {
+                padding: 12px 14px;
+            }
+            .chat-composer-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+            #userInput {
+                border-radius: 12px;
+                min-height: 44px;
+                padding: 10px 14px;
+            }
+            #sendButton {
+                min-height: 44px;
+                padding-left: 16px;
+                padding-right: 16px;
+                width: 100%;
+            }
+            .message {
+                max-width: 100%;
+            }
+        }
     </style>
 </head>
 <body class="overflow-hidden bg-gray-50">
-<div class="flex h-screen min-w-0 overflow-hidden">
+<div class="app-shell flex h-screen min-w-0 overflow-hidden">
     <!-- 左侧：导航与文档管理 -->
-    <div class="flex h-screen w-80 shrink-0 flex-col border-r border-gray-200 bg-white">
-        <div class="p-6 border-b">
+    <div class="app-sidebar flex h-screen w-80 shrink-0 flex-col border-r border-gray-200 bg-white">
+        <div class="app-brand p-6 border-b">
             <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                 <i class="fa-solid fa-brain text-blue-600"></i> SmartKB
             </h1>
             <p class="text-sm text-gray-500 mt-1">RAG + Agent 工作台</p>
         </div>
 
-        <nav class="border-b p-4">
+        <nav class="workspace-nav border-b p-4">
             <div class="mb-2 text-xs font-semibold uppercase text-gray-400">工作区</div>
             <div class="space-y-1">
                 <button id="workspaceNavChat" type="button" onclick="openWorkspacePanel('chat')" class="workspace-nav-button active">
@@ -102,7 +205,7 @@
             </div>
         </nav>
         
-        <div class="p-4">
+        <div class="document-upload p-4">
             <button onclick="uploadDocument()" 
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-medium">
                 <i class="fa-solid fa-upload"></i> 上传文档
@@ -110,12 +213,12 @@
             <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.md,.txt">
         </div>
 
-        <div class="px-4 text-xs font-medium text-gray-500 mt-4 mb-2">已上传文档</div>
-        <div id="documentList" class="flex-1 overflow-auto px-4 space-y-2 text-sm">
+        <div class="document-heading px-4 text-xs font-medium text-gray-500 mt-4 mb-2">已上传文档</div>
+        <div id="documentList" class="document-list flex-1 overflow-auto px-4 space-y-2 text-sm">
             <!-- JS动态填充 -->
         </div>
 
-        <div class="p-4 border-t text-xs text-gray-500">
+        <div class="sidebar-status p-4 border-t text-xs text-gray-500">
             <div class="flex items-center gap-2">
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 Virtual Threads 已启用
@@ -124,13 +227,13 @@
     </div>
 
     <!-- 右侧：聊天区域 -->
-    <div class="min-h-0 min-w-0 flex-1 flex flex-col">
-        <div class="bg-white border-b px-6 py-4 flex items-center justify-between gap-4">
+    <div class="app-main min-h-0 min-w-0 flex-1 flex flex-col">
+        <div class="workspace-header bg-white border-b px-6 py-4 flex items-center justify-between gap-4">
             <div class="min-w-0">
                 <h2 id="workspaceTitle" class="font-semibold text-gray-800">智能问答</h2>
                 <p id="workspaceSubtitle" class="mt-0.5 text-xs text-gray-500">Conversation / Advanced RAG</p>
             </div>
-            <div class="flex items-center justify-end gap-3 flex-wrap">
+            <div class="workspace-header-actions flex items-center justify-end gap-3 flex-wrap">
                 <div id="ragModeControls" class="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1 text-xs">
                     <button id="conversationModeButton" onclick="setRagMode('conversation')"
                             class="px-3 py-1.5 rounded-md flex items-center gap-1.5"
@@ -625,7 +728,7 @@ git diff --check</textarea>
         </div>
 
         <div id="chatComposer" class="p-6 bg-white border-t">
-            <div class="flex gap-3">
+            <div class="chat-composer-row flex gap-3">
                 <input type="text" id="userInput"
                        class="flex-1 border border-gray-300 rounded-2xl px-5 py-3 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                        placeholder="输入你的问题... (例如：请总结请假流程)"

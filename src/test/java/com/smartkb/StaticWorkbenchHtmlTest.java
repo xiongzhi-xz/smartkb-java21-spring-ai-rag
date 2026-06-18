@@ -90,6 +90,30 @@ class StaticWorkbenchHtmlTest {
     }
 
     @Test
+    void shouldKeepMobileWorkbenchLayoutGuard() throws IOException {
+        String html = readIndexHtml();
+
+        assertThat(html).contains(
+                "@media (max-width: 768px)",
+                ".app-shell",
+                ".app-sidebar",
+                ".app-main",
+                "grid-template-columns: repeat(3, minmax(0, 1fr))",
+                "width: 100% !important",
+                ".document-list",
+                ".sidebar-status",
+                ".chat-composer-row"
+        );
+        assertThat(html).contains(
+                "class=\"app-shell flex h-screen min-w-0 overflow-hidden\"",
+                "class=\"app-sidebar flex h-screen w-80 shrink-0 flex-col border-r border-gray-200 bg-white\"",
+                "class=\"app-main min-h-0 min-w-0 flex-1 flex flex-col\"",
+                "class=\"workspace-header bg-white border-b px-6 py-4 flex items-center justify-between gap-4\"",
+                "class=\"workspace-header-actions flex items-center justify-end gap-3 flex-wrap\""
+        );
+    }
+
+    @Test
     void shouldKeepStaticElementIdsUnique() throws IOException {
         String html = readIndexHtml();
         Matcher matcher = ID_PATTERN.matcher(html);

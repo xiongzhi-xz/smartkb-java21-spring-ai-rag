@@ -11,7 +11,7 @@
 
 ## 当前阶段
 
-Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、MemoryRecord 前端工作区、Memory 浏览器点击 smoke、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
+Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、移动端响应式布局、MemoryRecord 前端工作区、Memory 浏览器点击 smoke、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
 
 ## 已完成
 
@@ -31,6 +31,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - SmartKB v2 Agent 工程平台规格文档：`docs/AGENT_PLATFORM_SPEC.md`。
 - SmartKB v2 首批 Agent eval 模板：`docs/agent-eval-report.md`，包含 TicketRush 10 个 eval case。
 - 静态工作台 HTML 结构回归测试：覆盖工作区导航、AgentTask/Eval 子 Tab、静态 ID 唯一性和核心函数存在性。
+- 移动端工作台布局：小屏下侧栏变为顶部工作区入口，主工作区保持完整宽度，无横向溢出。
 - MemoryRecord 前端工作区：支持导入高权威记忆、手工新增记忆、列表查看和冲突检查。
 - MemoryRecord 浏览器点击 smoke：覆盖 6 个工作区切换、页面不跳转、无横向溢出、手工新增记忆后列表可见。
 
@@ -41,34 +42,39 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 ## 下一步
 
 1. 继续打磨 Project Intake / Code Context 面板的信息密度。
-2. 按需补工作台移动端截图 smoke。
+2. 按需补更多移动端表单交互 smoke。
 3. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
 
 ## 已修改文件
 
 本轮改动：
 
-- `SPEC.md` — 标记 MemoryRecord 前端工作区浏览器点击 smoke
-- `HANDOFF.md` — 记录 Memory 浏览器 smoke 的验证结果和下一步
+- `src/main/resources/static/index.html` — 增加移动端响应式工作台布局
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java` — 增加移动布局静态守卫测试
+- `README.md` — 更新验证状态
+- `SPEC.md` — 标记移动端响应式布局和测试
+- `HANDOFF.md` — 记录移动端 smoke 的验证结果和下一步
 
 安全性检查：
 - 本轮不涉及密钥、token、私有路径或账号信息。
 
 ## 已验证
 
-- `mvn -Dtest=StaticWorkbenchHtmlTest test`：4 tests passed。
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
 - Inline JavaScript syntax check via Node：passed。
-- `mvn test`：101 tests passed，0 failures，0 errors。
+- `mvn test`：102 tests passed，0 failures，0 errors。
 - `docker compose up -d --no-deps --build --force-recreate smartkb-app`：passed。
 - `smartkb-app` health：healthy，`/actuator/health` 返回 `UP`。
 - 首页 HTML 包含 `workspaceNavMemory`。
 - Headless Chrome CDP smoke passed：覆盖 6 个工作区（智能问答、项目接管、任务状态、记忆层、代码上下文、Eval 评测）切换，`window.scrollY=0`，无横向溢出。
 - Memory 工作区手工新增记忆后，浏览器列表中可见新增内容。
+- Headless Chrome mobile CDP smoke passed：390x844 视口覆盖 6 个工作区切换，侧栏/主区/面板宽度均为 390px，无横向溢出。
+- 移动截图已人工检查：`target/mobile-workbench-chat.png`、`target/mobile-workbench-memory.png`。
 
 ## 未验证
 
 - K3s/K3d 真实集群部署。
-- 移动端截图 smoke。
+- 更多移动端表单交互路径，例如 Project Intake 提交和 Code Context 查询。
 
 ## 风险和注意事项
 
@@ -763,3 +769,50 @@ Not verified:
 
 Next step:
 - Continue SmartKB v2 Agent platform polish, likely Project Intake / Code Context display density or mobile screenshot smoke.
+
+## 2026-06-18 Work Log - Mobile Workbench Layout
+
+Current goal:
+- Fix and verify the SmartKB workbench on a 390px mobile viewport.
+
+Problem found:
+- Before the fix, the fixed desktop sidebar kept `w-80` on mobile. At 390px width, the sidebar consumed 320px and the main workspace was squeezed to 70px.
+
+Completed:
+- Added mobile responsive rules for the static workbench.
+- On small screens, the sidebar becomes a top area and the workspace nav becomes a compact 3-column grid.
+- Hidden the uploaded-document list/status area on small screens so the workspace can use the viewport.
+- Kept chat composer controls stacked on mobile and full-width.
+- Added semantic layout classes such as `app-shell`, `app-sidebar`, `app-main`, `workspace-header`, and `chat-composer-row`.
+- Added static regression coverage for the mobile layout media query and required container classes.
+- Rebuilt and restarted `smartkb-app` from Docker Compose.
+- Captured and visually checked mobile screenshots for chat and memory workspaces under `target/`.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java`
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Temporary files:
+- `target/mobile-workbench-cdp-smoke.js`
+- `target/mobile-workbench-chat.png`
+- `target/mobile-workbench-memory.png`
+
+Verified:
+- Inline JavaScript syntax check via Node: passed.
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 5 tests passed.
+- `mvn test`: 102 tests passed, 0 failures, 0 errors.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy.
+- `http://localhost:8082/actuator/health`: `UP`.
+- `node .\target\mobile-workbench-cdp-smoke.js`: passed at 390x844.
+- Mobile smoke covered all six workspaces and confirmed sidebar/main/panel widths are 390px with no horizontal overflow.
+- `node .\target\memory-workspace-cdp-smoke.js`: passed on desktop and still verified Memory create/list.
+
+Not verified:
+- Mobile form submission flows such as Project Intake submit and Code Context query.
+
+Next step:
+- Continue Project Intake / Code Context display polish or add mobile form interaction smoke.
