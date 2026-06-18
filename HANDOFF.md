@@ -49,7 +49,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 ## 下一步
 
 1. 继续 SmartKB v2 Agent 平台体验打磨，例如更密集的 Project Intake / Memory / Code Context 信息展示。
-2. 决定是否替换旧版草案 `k8s/deployment.yaml`，或保留并用更清晰的命名区分 demo / draft。
+2. 生产级 K3s/Kubernetes 部署仍需单独设计，包括镜像仓库、TLS、监控、托管 Secret 和数据库 HA。
 
 ## 已修改文件
 
@@ -1222,3 +1222,30 @@ Cleanup:
 - Deleted disposable `smartkb-demo` cluster after verification.
 - Removed temporary kubeconfig and port-forward logs under ignored `target/`.
 - `k3d` v5.9.0 remains installed through `winget` for future local K3d checks.
+
+## 2026-06-18 Work Log - K8s Manifest Naming
+
+Current goal:
+- Remove ambiguity between the verified local K3d demo manifest and the older unverified Kubernetes draft.
+
+Completed:
+- Renamed `k8s/deployment.yaml` to `k8s/deployment-draft.yaml`.
+- Added a top-of-file warning that `deployment-draft.yaml` must not be applied directly.
+- Replaced draft Secret placeholder values with non-usable `replace-at-deploy-time` markers.
+- Updated `docs/K3S_DEPLOYMENT_PLAN.md` to treat `k8s/k3s-demo.yaml` as the verified local demo entry point.
+- Updated `k8s/README.md` so deploy commands apply `k8s/k3s-demo.yaml` and secrets are created at deploy time.
+- Marked the naming cleanup in `SPEC.md`.
+
+Modified files:
+- `k8s/deployment-draft.yaml`
+- `k8s/README.md`
+- `docs/K3S_DEPLOYMENT_PLAN.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- `npx --yes js-yaml k8s/k3s-demo.yaml`: passed.
+- `npx --yes js-yaml k8s/deployment-draft.yaml`: passed.
+- `mvn -Dtest=K3sDemoManifestTest test`: passed.
+- Markdown links in README/K3s docs: passed.
+- `git diff --check`: passed with CRLF warnings only.

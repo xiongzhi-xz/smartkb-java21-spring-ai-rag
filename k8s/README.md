@@ -2,7 +2,7 @@
 
 K3s 部署方案和现有 manifest 审计见：`../docs/K3S_DEPLOYMENT_PLAN.md`。
 
-当前 `k8s/deployment.yaml` 是草案，应用到 K3s 前需要先补齐应用环境变量、Secret 注入和本地集群验证。
+当前已验证入口是 `k8s/k3s-demo.yaml`。`k8s/deployment-draft.yaml` 仅保留为历史草案，不要直接应用。
 
 K3s demo manifest: `k8s/k3s-demo.yaml`.
 
@@ -42,19 +42,19 @@ docker push your-registry/smartkb:<tag>
 
 ### 2. 配置 Secrets
 
-编辑 `k8s/deployment.yaml`，修改以下内容：
+不要把真实密钥写入仓库。部署 demo 前通过 `kubectl create secret` 创建以下字段：
 
-```yaml
-# 在 Secret 中配置你的 OpenAI API Key
-stringData:
-  openai-api-key: sk-your-actual-api-key-here
+```powershell
+kubectl -n smartkb create secret generic smartkb-secrets `
+  --from-literal=postgres-password='<postgres-password>' `
+  --from-literal=openai-api-key='<api-key>'
 ```
 
 ### 3. 部署到 Kubernetes
 
 ```bash
-# 应用所有配置
-kubectl apply -f k8s/deployment.yaml
+# 应用已验证的 K3s/K3d demo manifest
+kubectl apply -f k8s/k3s-demo.yaml
 
 # 查看部署状态
 kubectl get pods -n smartkb

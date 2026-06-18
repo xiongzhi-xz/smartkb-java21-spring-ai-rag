@@ -10,11 +10,11 @@ Existing files:
 
 - `Dockerfile`: builds the Spring Boot app inside Docker with Maven and runs as a non-root user.
 - `docker-compose.yml`: verified local full-chain deployment for PostgreSQL, Redis, app, Prometheus, and Grafana.
-- `k8s/deployment.yaml`: draft Kubernetes manifest for namespace, PostgreSQL, Redis, SmartKB app, service, and ingress.
+- `k8s/deployment-draft.yaml`: draft Kubernetes manifest kept for historical design notes.
 - `k8s/k3s-demo.yaml`: K3s demo manifest with explicit app environment variables and Secret references.
 - `k8s/README.md`: generic Kubernetes deployment notes.
 
-The current `k8s/deployment.yaml` should be treated as a draft, not a verified K3s manifest.
+The current `k8s/deployment-draft.yaml` should be treated as a draft, not a verified K3s manifest.
 
 ## Current Manifest Gaps
 
@@ -188,4 +188,4 @@ Local syntax check:
 
 ## Next Implementation Step
 
-Decide whether to replace the older draft `k8s/deployment.yaml` or keep both with clearer naming. Keep production hardening, registry strategy, TLS, monitoring, and managed secrets out of the demo manifest until they are explicit goals.
+Keep `k8s/k3s-demo.yaml` as the verified local demo entry point and `k8s/deployment-draft.yaml` as a clearly named draft. Keep production hardening, registry strategy, TLS, monitoring, and managed secrets out of the demo manifest until they are explicit goals.

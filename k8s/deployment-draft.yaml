@@ -1,3 +1,9 @@
+# Draft Kubernetes manifest kept for historical design notes.
+# Do not apply this file directly. The verified local K3d demo manifest is:
+#   k8s/k3s-demo.yaml
+# This draft still needs production decisions for registry tags, managed secrets,
+# TLS/Ingress class, HA database shape, monitoring, and environment profiles.
+
 ---
 # Namespace
 apiVersion: v1
@@ -41,8 +47,8 @@ metadata:
   namespace: smartkb
 type: Opaque
 stringData:
-  postgres-password: smartkb123
-  openai-api-key: sk-your-api-key-here  # 需要替换
+  postgres-password: replace-at-deploy-time
+  openai-api-key: replace-at-deploy-time
 
 ---
 # PostgreSQL Deployment
