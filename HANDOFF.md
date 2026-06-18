@@ -39,6 +39,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - MemoryRecord 前端工作区：支持导入高权威记忆、手工新增记忆、列表查看和冲突检查。
 - MemoryRecord 列表摘要指标：总数、高权威、来源类型、标签数，并已纳入 mobile edge smoke。
 - MemoryRecord 浏览器点击 smoke：覆盖 6 个工作区切换、页面不跳转、无横向溢出、手工新增记忆后列表可见。
+- Eval 运行记录摘要指标：总数、通过、部分、失败，并已纳入 summary smoke。
 
 ## 正在做
 
@@ -81,6 +82,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - Mobile edge browser smoke passed：390px 视口覆盖长文本、必填错误提示、窄屏导航/按钮宽度，本地静态页和 Docker 运行态首页均通过。
 - Local mocked browser summary smoke passed：Project Intake / Code Context 摘要指标均渲染成功，无横向溢出。
 - Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderCompactMetric`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-runtime-smoke"` 通过。
+- Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderEvalRunSummary`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=eval-summary-runtime"` 通过，Eval 指标为 `3,1,1,1`。
 - K3s demo manifest offline guard passed：`mvn -Dtest=K3sDemoManifestTest test` 覆盖 env、Secret、探针、Service、Ingress 和 PostgreSQL `PGDATA`。
 - `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
 - `mvn test`：103 tests passed，0 failures，0 errors。
@@ -1104,3 +1106,33 @@ Modified files:
 
 Next step:
 - Continue SmartKB v2 Agent platform information-density polish, or do the K3s/K3d runtime verification when a cluster tool is available.
+
+## 2026-06-18 Work Log - Eval Run Summary Metrics
+
+Current goal:
+- Improve Eval workspace scan density without changing backend APIs.
+
+Completed:
+- Added `renderEvalRunSummary(runs)` to show total runs, passed runs, partial runs, and failed runs.
+- Added `countEvalRunsByStatus(runs, status)` for normalized status counting.
+- Extended `scripts/smoke/workbench-summary-smoke.mjs` to mock Eval runs/report and assert summary metrics `3,1,1,1`.
+- Updated README, SPEC, and HANDOFF.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java`
+- `scripts/smoke/workbench-summary-smoke.mjs`
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 5 tests passed.
+- `node --check .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed on local `index.html`; Project Intake metrics `3,2,1,0`, Code Context metrics `2,1,1,yes`, Eval metrics `3,1,1,1`.
+- `mvn test`: 103 tests passed.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy.
+- `http://localhost:8082/actuator/health`: `UP`.
+- Served homepage contains `renderEvalRunSummary`.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=eval-summary-runtime"`: passed.

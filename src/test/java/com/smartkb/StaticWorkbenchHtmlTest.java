@@ -88,6 +88,8 @@ class StaticWorkbenchHtmlTest {
                 "function getUniqueMemoryValues(records, key)",
                 "function getUniqueMemoryTags(records)",
                 "function runCodeContext()",
+                "function renderEvalRunSummary(runs)",
+                "function countEvalRunsByStatus(runs, status)",
                 "function createEvalRun()",
                 "function loadEvalData()"
         );

@@ -57,6 +57,61 @@ function mockFetchExpression() {
           warnings: ['mock warning']
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
+      if (url.includes('/api/agent/eval/runs')) {
+        return new Response(JSON.stringify([
+          {
+            caseId: 'E-SUMMARY-1',
+            title: 'Passed eval summary case',
+            status: 'PASSED',
+            score: 9,
+            maxScore: 10,
+            humanInterventions: 0,
+            durationSeconds: 12,
+            summary: 'Eval run summary smoke passed.'
+          },
+          {
+            caseId: 'E-SUMMARY-2',
+            title: 'Partial eval summary case',
+            status: 'PARTIAL',
+            score: 5,
+            maxScore: 10,
+            humanInterventions: 1,
+            durationSeconds: 30,
+            summary: 'Eval run summary smoke partial.'
+          },
+          {
+            caseId: 'E-SUMMARY-3',
+            title: 'Failed eval summary case',
+            status: 'FAILED',
+            score: 1,
+            maxScore: 10,
+            humanInterventions: 2,
+            durationSeconds: 45,
+            summary: 'Eval run summary smoke failed.',
+            failureReason: 'Mock failure reason'
+          }
+        ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (url.includes('/api/agent/eval/report')) {
+        return new Response(JSON.stringify({
+          projectId: 'summary-smoke-project',
+          totalRuns: 3,
+          passedRuns: 1,
+          partialRuns: 1,
+          failedRuns: 1,
+          successRate: 0.333,
+          scoreRate: 0.5,
+          averageDurationSeconds: 29,
+          totalHumanInterventions: 3,
+          totalToolCallCount: 6,
+          cases: [
+            { caseId: 'E-SUMMARY-1', title: 'Passed eval summary case', latestStatus: 'PASSED' }
+          ],
+          failureReasons: [
+            { reason: 'Mock failure reason', count: 1 }
+          ]
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
       throw new Error('Unexpected mocked fetch: ' + url);
     };
   })()`;
@@ -113,6 +168,25 @@ async function runSmoke(cdp) {
   assert(codeSummary.cardCount === 4, `Expected 4 Code Context summary cards: ${JSON.stringify(codeSummary)}`);
   assert(codeSummary.values.join(',') === '2,1,1,yes', `Unexpected Code Context metrics: ${JSON.stringify(codeSummary)}`);
 
+  await evaluate(cdp, `(async () => {
+    document.getElementById('workspaceNavEval').click();
+    openWorkspaceSubTab('eval', 'evalRunList');
+    await loadEvalData();
+  })()`);
+  await waitFor(cdp, `Boolean(document.querySelector('#evalRunList > div.mb-3.grid'))`);
+
+  const evalSummary = await evaluate(cdp, `(() => {
+    const summary = document.querySelector('#evalRunList > div.mb-3.grid');
+    return {
+      cardCount: summary?.children.length || 0,
+      values: [...(summary?.children || [])].map((card) => card.querySelector('p:last-child')?.textContent.trim()),
+      visible: !document.getElementById('evalRunList').classList.contains('hidden')
+    };
+  })()`);
+  assert(evalSummary.visible, 'Eval run list did not become visible');
+  assert(evalSummary.cardCount === 4, `Expected 4 Eval summary cards: ${JSON.stringify(evalSummary)}`);
+  assert(evalSummary.values.join(',') === '3,1,1,1', `Unexpected Eval summary metrics: ${JSON.stringify(evalSummary)}`);
+
   const layout = await evaluate(cdp, `(() => ({
     viewportWidth: window.innerWidth,
     documentScrollWidth: document.documentElement.scrollWidth,
@@ -121,7 +195,7 @@ async function runSmoke(cdp) {
   }))()`);
   assert(!layout.overflow, `Summary smoke caused horizontal overflow: ${JSON.stringify(layout)}`);
 
-  return { pageUrl, projectSummary, codeSummary, layout };
+  return { pageUrl, projectSummary, codeSummary, evalSummary, layout };
 }
 
 runChromeSmoke(pageUrl, { profileName: 'workbench-summary', width: 390, height: 844 }, runSmoke)

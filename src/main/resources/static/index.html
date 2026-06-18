@@ -1710,6 +1710,27 @@ git diff --check</textarea>
         `;
     }
 
+    function countEvalRunsByStatus(runs, status) {
+        return (Array.isArray(runs) ? runs : [])
+            .filter(run => String(run.status || '').toUpperCase() === status)
+            .length;
+    }
+
+    function renderEvalRunSummary(runs) {
+        const total = Array.isArray(runs) ? runs.length : 0;
+        const passed = countEvalRunsByStatus(runs, 'PASSED');
+        const partial = countEvalRunsByStatus(runs, 'PARTIAL');
+        const failed = countEvalRunsByStatus(runs, 'FAILED');
+        return `
+            <div class="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                ${renderCompactMetric('记录', total, total > 0 ? 'blue' : 'gray')}
+                ${renderCompactMetric('通过', passed, passed > 0 ? 'green' : 'gray')}
+                ${renderCompactMetric('部分', partial, partial > 0 ? 'amber' : 'gray')}
+                ${renderCompactMetric('失败', failed, failed > 0 ? 'red' : 'green')}
+            </div>
+        `;
+    }
+
     function renderEvalRuns(runs) {
         const list = document.getElementById('evalRunList');
         if (!Array.isArray(runs) || runs.length === 0) {
@@ -1725,6 +1746,7 @@ git diff --check</textarea>
                 <h3 class="text-xs font-semibold uppercase text-gray-500">评测记录</h3>
                 <span class="text-xs text-gray-400">${runs.length} 条</span>
             </div>
+            ${renderEvalRunSummary(runs)}
             <div class="max-h-[28rem] space-y-2 overflow-auto">
                 ${runs.map(run => `
                     <div class="rounded-md border border-gray-200 bg-white p-3">

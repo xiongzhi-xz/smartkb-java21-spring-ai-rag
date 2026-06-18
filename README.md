@@ -78,7 +78,7 @@ flowchart LR
 - 任务状态机：`INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD`，记录状态流转和验证结果。
 - 记忆分层：高权威记忆、中权威记忆、低权威记忆，工作台支持导入、手工新增、列表查看、摘要指标和冲突提示。
 - 代码上下文：文件树、关键词搜索、Git diff、代码 chunk、语义检索，并展示结果数、跳过数、警告和 Git 状态。
-- Eval 评测：记录 TicketRush eval case，聚合成功率、得分率、失败原因和人工介入指标。
+- Eval 评测：记录 TicketRush eval case，运行列表提供摘要指标，并聚合成功率、得分率、失败原因和人工介入指标。
 
 ## 快速启动
 
@@ -226,7 +226,7 @@ test-docs/advanced-rag-demo.md
 - 工作台浏览器 smoke：桌面端和 390px 移动视口均覆盖 6 个工作区切换，移动端无横向溢出。
 - 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 均已在 390px 视口通过。
 - 移动端边界 smoke：长文本输入、必填错误提示、窄屏按钮/导航宽度已在本地静态页和 Docker 运行态首页通过。
-- 工作台摘要指标 smoke：`node .\scripts\smoke\workbench-summary-smoke.mjs` 已覆盖 Project Intake / Code Context 指标渲染和横向溢出检查，并已在 Docker 运行态首页通过。
+- 工作台摘要指标 smoke：`node .\scripts\smoke\workbench-summary-smoke.mjs` 已覆盖 Project Intake / Code Context / Eval 指标渲染和横向溢出检查，并已在 Docker 运行态首页通过。
 - K3s demo manifest：已增加 JUnit 结构守卫，覆盖环境变量、Secret 引用、探针、Service、Ingress 和 PostgreSQL PVC `PGDATA`。
 
 说明：
