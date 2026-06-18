@@ -25,9 +25,11 @@ Verified latest:
 - `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed locally; takeover report rows `6`, Project Intake metrics `3,2,1,0`, AgentTask metrics `4,2,1,1`, Code Context metrics `2,1,1,yes`, Eval metrics `3,1,1,1`, no 390px overflow.
 - `mvn test`: 106 tests passed.
 - `git diff --check`: passed with LF/CRLF warnings only.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed; `smartkb-app` health returned `UP`.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=takeover-final-smoke"`: passed against Docker runtime; takeover report rows `6`, no 390px overflow.
 
 Next step only:
-- Stop expanding features. Only run final verification, commit this slice, and use this HANDOFF if another window needs to inspect the closed state.
+- Closed. Stop expanding features unless the user explicitly opens a new scope.
 
 Note:
 - Older sections below are historical work logs and may describe earlier "current" tasks before the K3d verification was completed.
@@ -58,9 +60,10 @@ Verified:
 - `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed locally with 6 takeover-report rows and no 390px horizontal overflow.
 - `mvn test`: 106 tests passed.
 - `git diff --check`: passed with LF/CRLF warnings only.
+- Docker runtime final verification passed after rebuilding only `smartkb-app`; health returned `UP`, served homepage contained `renderProjectIntakeTakeoverReport`, and the summary smoke passed at `http://localhost:8082/?v=takeover-final-smoke`.
 
 Next step:
-- Run final project verification and commit. Do not start another feature unless the user explicitly opens a new scope.
+- Closed. Do not start another feature unless the user explicitly opens a new scope.
 
 ## 当前目标
 
