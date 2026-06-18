@@ -974,8 +974,7 @@ Verified:
 
 Not verified:
 - Docker runtime rebuild for the summary metrics remains blocked by the Docker API timeout.
-- Push to `origin/main` is still pending: HTTPS push failed with TLS EOF / schannel handshake errors, and SSH to GitHub was closed by the current network path.
+- Push to `origin/main` succeeded after a later HTTPS retry; latest local commits are on GitHub.
 
 Next step:
 - When Docker API recovers, rebuild only `smartkb-app`, confirm the served homepage includes `renderCompactMetric`, then run `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-smoke"`.
-- When GitHub TLS recovers, push the local commit; `git status` should show `main...origin/main [ahead 1]` until then.
