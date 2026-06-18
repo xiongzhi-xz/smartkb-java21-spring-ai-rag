@@ -269,6 +269,24 @@ mvn dependency:tree | grep spring-boot
 
 ---
 
+## 工作台 smoke
+
+Project Intake / Code Context 摘要指标可以用本地静态页面 + mocked API 做浏览器回归：
+
+```powershell
+node .\scripts\smoke\workbench-summary-smoke.mjs
+```
+
+Docker 服务重建后，也可以指向运行中的首页，确认容器内静态资源已经更新：
+
+```powershell
+node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-smoke"
+```
+
+脚本会启动本机 Chrome headless，检查摘要指标卡片数量、关键数值和 390px 视口横向溢出。
+
+---
+
 ## 下一步
 
 测试通过后，可以：

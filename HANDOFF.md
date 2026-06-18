@@ -44,7 +44,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 ## 下一步
 
-1. Docker API 恢复后，优先重试 `docker compose up -d --no-deps --build --force-recreate smartkb-app` 并跑 Project Intake / Code Context 浏览器 smoke。
+1. Docker API 恢复后，优先重试 `docker compose up -d --no-deps --build --force-recreate smartkb-app`，确认首页包含 `renderCompactMetric`，再跑 `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-smoke"`。
 2. 按需继续补工作台移动端细节交互 smoke。
 3. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
 
@@ -946,3 +946,36 @@ Not verified:
 
 Next step:
 - When Docker API responds again, rebuild only `smartkb-app`, confirm the served homepage contains `renderCompactMetric`, then rerun Project Intake / Code Context browser smoke against `http://localhost:8082`.
+
+## 2026-06-18 Work Log - Workbench Summary Smoke Script
+
+Current goal:
+- Make the Project Intake / Code Context summary metric browser smoke repeatable outside ignored `target/` files.
+
+Completed:
+- Added `scripts/smoke/workbench-summary-smoke.mjs`.
+- The script opens Chrome headless through CDP, loads either local `index.html` or a provided URL, mocks Project Intake / Code Context API responses, and verifies summary card counts, metric values, visibility, and 390px horizontal overflow.
+- Documented the command in README, SPEC, TESTING, and HANDOFF.
+- Rechecked Docker API after the takeover; it still timed out on `docker version`.
+- Confirmed the existing `http://localhost:8082/actuator/health` endpoint stayed `UP`.
+- Confirmed the currently served Docker homepage is still the previous image and does not contain `renderCompactMetric`.
+
+Modified files:
+- `scripts/smoke/workbench-summary-smoke.mjs`
+- `README.md`
+- `SPEC.md`
+- `TESTING.md`
+- `HANDOFF.md`
+
+Verified:
+- `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- Smoke output showed Project Intake metrics `3,2,1,0`, Code Context metrics `2,1,1,yes`, and no horizontal overflow.
+- Local commit `test: add workbench summary smoke` was created.
+
+Not verified:
+- Docker runtime rebuild for the summary metrics remains blocked by the Docker API timeout.
+- Push to `origin/main` is still pending: HTTPS push failed with TLS EOF / schannel handshake errors, and SSH to GitHub was closed by the current network path.
+
+Next step:
+- When Docker API recovers, rebuild only `smartkb-app`, confirm the served homepage includes `renderCompactMetric`, then run `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-smoke"`.
+- When GitHub TLS recovers, push the local commit; `git status` should show `main...origin/main [ahead 1]` until then.
