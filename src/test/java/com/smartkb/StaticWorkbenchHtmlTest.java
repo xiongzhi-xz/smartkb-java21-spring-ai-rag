@@ -25,10 +25,12 @@ class StaticWorkbenchHtmlTest {
                 "id=\"workspaceNavChat\"",
                 "id=\"workspaceNavProjectIntake\"",
                 "id=\"workspaceNavAgentTask\"",
+                "id=\"workspaceNavMemory\"",
                 "id=\"workspaceNavCodeContext\"",
                 "id=\"workspaceNavEval\"",
                 "id=\"projectIntakePanel\"",
                 "id=\"agentTaskPanel\"",
+                "id=\"memoryPanel\"",
                 "id=\"codeContextPanel\"",
                 "id=\"evalPanel\"",
                 "id=\"chatContainer\"",
@@ -38,6 +40,7 @@ class StaticWorkbenchHtmlTest {
                 "onclick=\"openWorkspacePanel('chat')\"",
                 "onclick=\"openWorkspacePanel('projectIntake')\"",
                 "onclick=\"openWorkspacePanel('agentTask')\"",
+                "onclick=\"openWorkspacePanel('memory')\"",
                 "onclick=\"openWorkspacePanel('codeContext')\"",
                 "onclick=\"openWorkspacePanel('eval')\""
         );
@@ -76,6 +79,10 @@ class StaticWorkbenchHtmlTest {
                 "function openWorkspaceSubTab(scope, targetId)",
                 "function runProjectIntake()",
                 "function createAgentTask()",
+                "function loadMemoryRecords()",
+                "function createMemoryRecord()",
+                "function importHighAuthorityMemory()",
+                "function checkMemoryConflict()",
                 "function runCodeContext()",
                 "function createEvalRun()",
                 "function loadEvalData()"
@@ -101,6 +108,9 @@ class StaticWorkbenchHtmlTest {
                 "workspaceTitle",
                 "workspaceSubtitle",
                 "documentList",
+                "memoryProjectId",
+                "memoryList",
+                "memoryConflictResult",
                 "documentDetailOverlay",
                 "documentDetailPanel",
                 "documentDetailBody"

@@ -76,7 +76,7 @@ flowchart LR
 
 - 项目接管：读取 `README/SPEC/AGENTS/HANDOFF/pom.xml/docker-compose.yml/Git` 信息，生成接管摘要。
 - 任务状态机：`INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD`，记录状态流转和验证结果。
-- 记忆分层：高权威记忆、中权威记忆、低权威记忆，并支持冲突提示。
+- 记忆分层：高权威记忆、中权威记忆、低权威记忆，工作台支持导入、手工新增、列表查看和冲突提示。
 - 代码上下文：文件树、关键词搜索、Git diff、代码 chunk、语义检索。
 - Eval 评测：记录 TicketRush eval case，聚合成功率、得分率、失败原因和人工介入指标。
 
@@ -178,7 +178,7 @@ test-docs/advanced-rag-demo.md
 
 6. 展开引用片段并定位到文档详情 chunk。
 7. 切到“项目接管”，输入 Docker 容器内项目路径，运行 Project Intake。
-8. 查看“任务状态”“代码上下文”“Eval 评测”工作区。
+8. 查看“任务状态”“记忆层”“代码上下文”“Eval 评测”工作区。
 
 详细脚本见 [DEMO.md](DEMO.md)。
 
@@ -203,7 +203,10 @@ test-docs/advanced-rag-demo.md
 | `POST` | `/api/agent/projects/intake` | 项目接管摘要 |
 | `POST` | `/api/agent/tasks` | 创建 Agent 任务 |
 | `POST` | `/api/agent/tasks/{id}/transition` | 状态流转 |
+| `GET` | `/api/agent/memories` | 记忆列表 |
+| `POST` | `/api/agent/memories` | 创建分层记忆 |
 | `POST` | `/api/agent/memories/import/high-authority` | 导入高权威记忆 |
+| `POST` | `/api/agent/memories/conflicts/check` | 检查记忆冲突 |
 | `POST` | `/api/agent/code/search` | 代码关键词搜索 |
 | `POST` | `/api/agent/code/diff` | Git diff 检索 |
 | `POST` | `/api/agent/code/semantic` | 语义补充检索 |

@@ -11,7 +11,7 @@
 
 ## 当前阶段
 
-Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
+Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、MemoryRecord 前端工作区、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
 
 ## 已完成
 
@@ -31,6 +31,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - SmartKB v2 Agent 工程平台规格文档：`docs/AGENT_PLATFORM_SPEC.md`。
 - SmartKB v2 首批 Agent eval 模板：`docs/agent-eval-report.md`，包含 TicketRush 10 个 eval case。
 - 静态工作台 HTML 结构回归测试：覆盖工作区导航、AgentTask/Eval 子 Tab、静态 ID 唯一性和核心函数存在性。
+- MemoryRecord 前端工作区：支持导入高权威记忆、手工新增记忆、列表查看和冲突检查。
 
 ## 正在做
 
@@ -38,7 +39,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 ## 下一步
 
-1. 继续打磨 Project Intake / Memory / Code Context 面板的信息密度。
+1. 继续打磨 Project Intake / Code Context 面板的信息密度。
 2. 按需补工作台移动端或截图 smoke。
 3. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
 
@@ -46,9 +47,10 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 本轮改动：
 
-- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java` — 新增静态工作台结构回归测试
-- `SPEC.md` — 更新测试数量和工作台回归测试进度
-- `README.md` — 更新测试数量
+- `src/main/resources/static/index.html` — 新增 MemoryRecord 前端工作区
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java` — 扩展静态工作台结构回归测试覆盖记忆层
+- `SPEC.md` — 标记 MemoryRecord 前端工作区
+- `README.md` — 更新 Agent 能力、演示路径和 Memory API 表
 - `HANDOFF.md` — 更新当前阶段和本轮记录
 
 安全性检查：
@@ -57,12 +59,16 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 ## 已验证
 
 - `mvn -Dtest=StaticWorkbenchHtmlTest test`：4 tests passed。
+- Inline JavaScript syntax check via Node：passed。
 - `mvn test`：101 tests passed，0 failures，0 errors。
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`：passed。
+- `smartkb-app` health：healthy，`/actuator/health` 返回 `UP`。
+- 首页 HTML 包含 `workspaceNavMemory`。
 
 ## 未验证
 
 - K3s/K3d 真实集群部署。
-- 本轮未重新跑 Docker Compose 容器 smoke，因为只新增测试和文档。
+- 本轮未做浏览器点击截图 smoke。
 
 ## 风险和注意事项
 
@@ -686,3 +692,40 @@ Not verified:
 
 Next step:
 - Continue SmartKB v2 Agent platform polish, likely Project Intake / Memory / Code Context display density or mobile/screenshot smoke.
+
+## 2026-06-18 Work Log - Memory Workspace
+
+Current goal:
+- Make MemoryRecord visible and usable from the SmartKB v2 workbench.
+
+Completed:
+- Added a new left-nav workspace: `记忆层`.
+- Added high-authority memory import from a project path.
+- Added manual memory creation with authority level, source type/path, tags, and content.
+- Added memory list rendering with authority badges and tags.
+- Added conflict checking against higher-authority memories.
+- Wired the panel to existing MemoryRecord APIs without changing backend contracts.
+- Updated README and SPEC.
+- Extended `StaticWorkbenchHtmlTest` to cover the memory workspace and core memory functions.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java`
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- Inline JavaScript syntax check via Node: passed.
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 4 tests passed.
+- `mvn test`: 101 tests passed, 0 failures, 0 errors.
+- `docker compose up -d --no-deps --build --force-recreate smartkb-app`: passed.
+- `smartkb-app`: healthy.
+- `http://localhost:8082/actuator/health`: `UP`.
+- Served homepage contains `workspaceNavMemory`.
+
+Not verified:
+- Browser click-through screenshot smoke was not rerun in this step.
+
+Next step:
+- Continue Project Intake / Code Context display polish or add browser click-through smoke for the new memory workspace.

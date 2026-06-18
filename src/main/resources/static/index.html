@@ -87,6 +87,10 @@
                     <i class="fa-solid fa-list-check"></i>
                     <span>任务状态</span>
                 </button>
+                <button id="workspaceNavMemory" type="button" onclick="openWorkspacePanel('memory')" class="workspace-nav-button">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>记忆层</span>
+                </button>
                 <button id="workspaceNavCodeContext" type="button" onclick="openWorkspacePanel('codeContext')" class="workspace-nav-button">
                     <i class="fa-solid fa-code"></i>
                     <span>代码上下文</span>
@@ -300,6 +304,130 @@
                         </button>
                     </div>
                     <div id="agentTaskList" class="text-sm"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="memoryPanel" class="hidden flex-1 overflow-auto bg-gray-50 px-6 py-5">
+            <div class="space-y-4">
+                <div class="grid gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 md:grid-cols-[minmax(160px,220px)_minmax(0,1fr)_auto]">
+                    <label class="block">
+                        <span class="mb-1 block text-xs font-medium text-gray-500">项目 ID</span>
+                        <input id="memoryProjectId" type="text"
+                               class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                               value="ticket-project"
+                               placeholder="ticket-project">
+                    </label>
+                    <label class="block">
+                        <span class="mb-1 block text-xs font-medium text-gray-500">项目路径</span>
+                        <input id="memoryRootPath" type="text"
+                               class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                               value="/workspace/projects/smartkb-java21-spring-ai-rag"
+                               placeholder="/workspace/projects/example-project">
+                    </label>
+                    <div class="flex items-end gap-2">
+                        <button id="memoryRefreshButton" onclick="loadMemoryRecords()"
+                                class="h-10 w-10 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                                title="刷新记忆">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                        <button id="memoryImportButton" onclick="importHighAuthorityMemory()"
+                                class="h-10 min-w-32 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
+                            <i class="fa-solid fa-file-import mr-1.5"></i> 导入高权威
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(340px,460px)]">
+                    <div class="space-y-4">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                            <h3 class="mb-3 text-xs font-semibold uppercase text-gray-500">新增记忆</h3>
+                            <div class="grid gap-3 md:grid-cols-3">
+                                <label class="block">
+                                    <span class="mb-1 block text-xs font-medium text-gray-500">权威级别</span>
+                                    <select id="memoryAuthorityLevel"
+                                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">
+                                        <option value="HIGH">HIGH</option>
+                                        <option value="MEDIUM">MEDIUM</option>
+                                        <option value="LOW">LOW</option>
+                                    </select>
+                                </label>
+                                <label class="block">
+                                    <span class="mb-1 block text-xs font-medium text-gray-500">来源类型</span>
+                                    <input id="memorySourceType" type="text"
+                                           class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                           value="manual-note"
+                                           placeholder="SPEC / HANDOFF / manual-note">
+                                </label>
+                                <label class="block">
+                                    <span class="mb-1 block text-xs font-medium text-gray-500">标签</span>
+                                    <input id="memoryTags" type="text"
+                                           class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                           value="agent,project"
+                                           placeholder="agent,project">
+                                </label>
+                            </div>
+                            <label class="mt-3 block">
+                                <span class="mb-1 block text-xs font-medium text-gray-500">来源路径</span>
+                                <input id="memorySourcePath" type="text"
+                                       class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                       value="manual"
+                                       placeholder="SPEC.md / HANDOFF.md / manual">
+                            </label>
+                            <label class="mt-3 block">
+                                <span class="mb-1 block text-xs font-medium text-gray-500">内容</span>
+                                <textarea id="memoryContent" rows="4"
+                                          class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                          placeholder="记录一条可复用的项目事实、决策或验证结果"></textarea>
+                            </label>
+                            <div class="mt-3 flex justify-end">
+                                <button id="memoryCreateButton" onclick="createMemoryRecord()"
+                                        class="h-10 min-w-28 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:hover:bg-blue-400">
+                                    <i class="fa-solid fa-plus mr-1.5"></i> 新增
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                            <h3 class="mb-3 text-xs font-semibold uppercase text-gray-500">冲突检查</h3>
+                            <div class="grid gap-3 md:grid-cols-[160px_minmax(0,1fr)]">
+                                <label class="block">
+                                    <span class="mb-1 block text-xs font-medium text-gray-500">新记忆级别</span>
+                                    <select id="memoryConflictAuthorityLevel"
+                                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none">
+                                        <option value="LOW">LOW</option>
+                                        <option value="MEDIUM">MEDIUM</option>
+                                        <option value="HIGH">HIGH</option>
+                                    </select>
+                                </label>
+                                <label class="block">
+                                    <span class="mb-1 block text-xs font-medium text-gray-500">标签</span>
+                                    <input id="memoryConflictTags" type="text"
+                                           class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                           value="agent,project"
+                                           placeholder="agent,project">
+                                </label>
+                            </div>
+                            <label class="mt-3 block">
+                                <span class="mb-1 block text-xs font-medium text-gray-500">待检查内容</span>
+                                <textarea id="memoryConflictContent" rows="3"
+                                          class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                                          placeholder="输入一条低权威观察，检查是否和高权威记忆冲突"></textarea>
+                            </label>
+                            <div class="mt-3 flex justify-end">
+                                <button id="memoryConflictButton" onclick="checkMemoryConflict()"
+                                        class="h-10 min-w-28 rounded-lg border border-blue-200 bg-white px-4 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-70">
+                                    <i class="fa-solid fa-shield-halved mr-1.5"></i> 检查
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div id="memoryActionResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                        <div id="memoryConflictResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                        <div id="memoryList" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -544,6 +672,7 @@ git diff --check</textarea>
     let chatBusy = false;
     let projectIntakeBusy = false;
     let agentTaskBusy = false;
+    let memoryBusy = false;
     let evalCaseBusy = false;
     let codeContextBusy = false;
     let activeAgentTask = null;
@@ -567,6 +696,12 @@ git diff --check</textarea>
             panelId: 'agentTaskPanel',
             title: '任务状态',
             subtitle: '状态流转'
+        },
+        memory: {
+            navId: 'workspaceNavMemory',
+            panelId: 'memoryPanel',
+            title: '记忆层',
+            subtitle: '高权威记忆 / 冲突检查'
         },
         codeContext: {
             navId: 'workspaceNavCodeContext',
@@ -642,6 +777,8 @@ git diff --check</textarea>
         if (name === 'agentTask') {
             renderAgentTask(activeAgentTask);
             loadAgentTasks();
+        } else if (name === 'memory') {
+            loadMemoryRecords();
         } else if (name === 'eval') {
             loadEvalData();
         }
@@ -1117,6 +1254,244 @@ git diff --check</textarea>
             throw new Error(data.error || data.message || `任务请求失败（HTTP ${res.status}）`);
         }
         return data;
+    }
+
+    function setMemoryLoading(isLoading) {
+        memoryBusy = isLoading;
+        ['memoryCreateButton', 'memoryImportButton', 'memoryConflictButton', 'memoryRefreshButton']
+            .forEach(id => {
+                const button = document.getElementById(id);
+                if (button) {
+                    button.disabled = isLoading;
+                    button.classList.toggle('opacity-70', isLoading);
+                    button.classList.toggle('cursor-not-allowed', isLoading);
+                }
+            });
+    }
+
+    function readMemoryTags(id) {
+        return document.getElementById(id).value
+            .split(',')
+            .map(item => item.trim())
+            .filter(Boolean);
+    }
+
+    function getMemoryAuthorityClass(level) {
+        const classes = {
+            HIGH: 'border-red-200 bg-red-50 text-red-700',
+            MEDIUM: 'border-amber-200 bg-amber-50 text-amber-700',
+            LOW: 'border-slate-200 bg-slate-50 text-slate-700'
+        };
+        return classes[level] || 'border-gray-200 bg-gray-50 text-gray-600';
+    }
+
+    function renderMemoryAuthorityBadge(level) {
+        return `
+            <span class="rounded-full border px-2.5 py-1 text-xs font-medium ${getMemoryAuthorityClass(level)}">
+                ${escapeHtml(level || 'LOW')}
+            </span>
+        `;
+    }
+
+    function renderMemoryTags(tags) {
+        if (!Array.isArray(tags) || tags.length === 0) {
+            return '<span class="text-gray-400">无标签</span>';
+        }
+        return tags.map(tag => `
+            <span class="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] text-gray-600">
+                ${escapeHtml(tag)}
+            </span>
+        `).join('');
+    }
+
+    function renderMemoryRecords(records) {
+        const target = document.getElementById('memoryList');
+        if (!Array.isArray(records) || records.length === 0) {
+            target.innerHTML = `
+                <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">记忆列表</h3>
+                <p class="text-gray-400">暂无记忆。可以先导入 SPEC/HANDOFF 或手工新增一条。</p>
+            `;
+            return;
+        }
+
+        target.innerHTML = `
+            <div class="mb-3 flex items-center justify-between gap-2">
+                <h3 class="text-xs font-semibold uppercase text-gray-500">记忆列表</h3>
+                <span class="text-xs text-gray-400">${records.length} 条</span>
+            </div>
+            <div class="max-h-[34rem] space-y-2 overflow-auto">
+                ${records.map(memory => `
+                    <div class="rounded-md border border-gray-200 bg-white p-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="break-all text-xs font-medium text-gray-700">${renderProjectIntakeValue(memory.sourcePath, '无来源')}</p>
+                                <p class="mt-0.5 text-[11px] text-gray-400">${renderProjectIntakeValue(memory.sourceType, 'unknown')}</p>
+                            </div>
+                            ${renderMemoryAuthorityBadge(memory.authorityLevel)}
+                        </div>
+                        <p class="mt-2 line-clamp-4 text-xs leading-5 text-gray-600">${renderText(memory.content || '')}</p>
+                        <div class="mt-2 flex flex-wrap gap-1.5">${renderMemoryTags(memory.tags)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function renderMemoryAction(message, type = 'blue') {
+        const result = document.getElementById('memoryActionResult');
+        const color = type === 'red'
+            ? 'border-red-200 bg-red-50 text-red-700'
+            : type === 'emerald'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-blue-200 bg-blue-50 text-blue-700';
+        result.classList.remove('hidden');
+        result.className = `rounded-lg border p-4 text-sm ${color}`;
+        result.innerHTML = message;
+    }
+
+    async function requestMemory(url, options = {}) {
+        const fetchOptions = {
+            method: options.method || 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        };
+        if (options.body) {
+            fetchOptions.body = JSON.stringify(options.body);
+        }
+        const res = await fetch(url, fetchOptions);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.success === false) {
+            throw new Error(data.error || data.message || `记忆请求失败（HTTP ${res.status}）`);
+        }
+        return data;
+    }
+
+    async function loadMemoryRecords() {
+        const projectId = document.getElementById('memoryProjectId').value.trim();
+        const suffix = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+        try {
+            const records = await requestMemory(`/api/agent/memories${suffix}`);
+            renderMemoryRecords(records);
+        } catch (e) {
+            document.getElementById('memoryList').innerHTML = `
+                <p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, '记忆列表加载失败')}</p>
+            `;
+        }
+    }
+
+    async function createMemoryRecord() {
+        if (memoryBusy) return;
+
+        const projectId = document.getElementById('memoryProjectId').value.trim();
+        const contentInput = document.getElementById('memoryContent');
+        const content = contentInput.value.trim();
+        if (!projectId || !content) {
+            renderMemoryAction('请填写项目 ID 和记忆内容。', 'red');
+            (!projectId ? document.getElementById('memoryProjectId') : contentInput).focus();
+            return;
+        }
+
+        setMemoryLoading(true);
+        try {
+            const memory = await requestMemory('/api/agent/memories', {
+                method: 'POST',
+                body: {
+                    projectId,
+                    authorityLevel: document.getElementById('memoryAuthorityLevel').value,
+                    sourceType: document.getElementById('memorySourceType').value.trim(),
+                    sourcePath: document.getElementById('memorySourcePath').value.trim(),
+                    content,
+                    tags: readMemoryTags('memoryTags')
+                }
+            });
+            renderMemoryAction(`<i class="fa-solid fa-circle-check mr-1.5"></i>已新增记忆 ${renderText(memory.id)}`, 'emerald');
+            contentInput.value = '';
+            await loadMemoryRecords();
+        } catch (e) {
+            renderMemoryAction(`<i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, '记忆保存失败')}`, 'red');
+        } finally {
+            setMemoryLoading(false);
+        }
+    }
+
+    async function importHighAuthorityMemory() {
+        if (memoryBusy) return;
+
+        const projectId = document.getElementById('memoryProjectId').value.trim();
+        const rootPath = document.getElementById('memoryRootPath').value.trim();
+        if (!projectId || !rootPath) {
+            renderMemoryAction('请填写项目 ID 和项目路径。', 'red');
+            (!projectId ? document.getElementById('memoryProjectId') : document.getElementById('memoryRootPath')).focus();
+            return;
+        }
+
+        setMemoryLoading(true);
+        try {
+            const response = await requestMemory('/api/agent/memories/import/high-authority', {
+                method: 'POST',
+                body: { projectId, rootPath, maxFileBytes: 65536 }
+            });
+            const imported = Array.isArray(response.imported) ? response.imported.length : 0;
+            const skipped = Array.isArray(response.skipped) ? response.skipped.length : 0;
+            renderMemoryAction(`<i class="fa-solid fa-file-import mr-1.5"></i>已导入 ${imported} 条高权威记忆，跳过 ${skipped} 个文件。`, 'blue');
+            await loadMemoryRecords();
+        } catch (e) {
+            renderMemoryAction(`<i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderProjectIntakeValue(e.message, '高权威记忆导入失败')}`, 'red');
+        } finally {
+            setMemoryLoading(false);
+        }
+    }
+
+    async function checkMemoryConflict() {
+        if (memoryBusy) return;
+
+        const projectId = document.getElementById('memoryProjectId').value.trim();
+        const contentInput = document.getElementById('memoryConflictContent');
+        const content = contentInput.value.trim();
+        const target = document.getElementById('memoryConflictResult');
+        if (!projectId || !content) {
+            target.classList.remove('hidden');
+            target.innerHTML = '<p class="text-sm text-red-600">请填写项目 ID 和待检查内容。</p>';
+            (!projectId ? document.getElementById('memoryProjectId') : contentInput).focus();
+            return;
+        }
+
+        setMemoryLoading(true);
+        try {
+            const response = await requestMemory('/api/agent/memories/conflicts/check', {
+                method: 'POST',
+                body: {
+                    projectId,
+                    authorityLevel: document.getElementById('memoryConflictAuthorityLevel').value,
+                    content,
+                    tags: readMemoryTags('memoryConflictTags')
+                }
+            });
+            const conflicts = Array.isArray(response.conflictingMemories) ? response.conflictingMemories : [];
+            target.classList.remove('hidden');
+            target.innerHTML = `
+                <h3 class="mb-2 text-xs font-semibold uppercase text-gray-500">冲突检查结果</h3>
+                <div class="rounded-lg border ${response.hasConflict ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-700'} p-3">
+                    <p class="text-sm">${renderProjectIntakeValue(response.recommendation, '无建议')}</p>
+                </div>
+                <div class="mt-3 space-y-2">
+                    ${conflicts.map(memory => `
+                        <div class="rounded-md border border-gray-200 bg-white p-3">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="break-all text-xs text-gray-500">${renderProjectIntakeValue(memory.sourcePath, '无来源')}</span>
+                                ${renderMemoryAuthorityBadge(memory.authorityLevel)}
+                            </div>
+                            <p class="text-xs leading-5 text-gray-600">${renderText(memory.content || '')}</p>
+                            <div class="mt-2 flex flex-wrap gap-1.5">${renderMemoryTags(memory.tags)}</div>
+                        </div>
+                    `).join('') || '<p class="text-xs text-gray-400">没有发现更高权威记忆冲突。</p>'}
+                </div>
+            `;
+        } catch (e) {
+            target.classList.remove('hidden');
+            target.innerHTML = `<p class="text-sm text-red-600">${renderProjectIntakeValue(e.message, '冲突检查失败')}</p>`;
+        } finally {
+            setMemoryLoading(false);
+        }
     }
 
     function toggleEvalPanel() {
