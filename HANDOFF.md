@@ -48,8 +48,8 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 ## 下一步
 
-1. 在一次性 K3s/K3d 集群中真实运行验证 `k8s/k3s-demo.yaml`。
-2. 继续 SmartKB v2 Agent 平台体验打磨，例如更密集的 Project Intake / Memory / Code Context 信息展示。
+1. 继续 SmartKB v2 Agent 平台体验打磨，例如更密集的 Project Intake / Memory / Code Context 信息展示。
+2. 决定是否替换旧版草案 `k8s/deployment.yaml`，或保留并用更清晰的命名区分 demo / draft。
 
 ## 已修改文件
 
@@ -86,12 +86,13 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderEvalRunSummary`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=eval-summary-runtime"` 通过，Eval 指标为 `3,1,1,1`。
 - Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderAgentTaskSummary`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=agent-summary-runtime"` 通过，AgentTask 指标为 `4,2,1,1`。
 - K3s demo manifest offline guard passed：`mvn -Dtest=K3sDemoManifestTest test` 覆盖 env、Secret、探针、Service、Ingress 和 PostgreSQL `PGDATA`。
+- K3s/K3d runtime verification passed：一次性 `smartkb-demo` K3d 集群中 PostgreSQL、Redis、SmartKB 均 `Running`，PVC 均 `Bound`，port-forward 后 `/actuator/health` 返回 `UP`，`db`/`redis`/`diskSpace` 均 `UP`，`/api/agent/eval/report` 返回成功。
 - `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
 - `mvn test`：103 tests passed，0 failures，0 errors。
 
 ## 未验证
 
-- K3s/K3d 真实集群部署。
+- 生产级 K3s/Kubernetes 部署尚未设计；当前仅验证本地一次性 K3d demo。
 
 
 ## 风险和注意事项
@@ -1185,3 +1186,39 @@ Result:
 
 Still blocked:
 - True K3s/K3d runtime verification needs a usable `k3d`/`kind` binary or an existing Kubernetes context.
+
+## 2026-06-18 Work Log - K3d Runtime Verification
+
+Current goal:
+- Verify `k8s/k3s-demo.yaml` against a real disposable local K3d cluster.
+
+Completed:
+- Installed `k3d` v5.9.0 through `winget` after direct GitHub release downloads failed.
+- Created disposable cluster `smartkb-demo` with K3s v1.35.5+k3s1.
+- Tagged the Docker Compose app image as `smartkb:local`.
+- Imported `smartkb:local` into the cluster.
+- Created namespace `smartkb` and `smartkb-secrets` with placeholder demo values.
+- Applied `k8s/k3s-demo.yaml`.
+- Verified PostgreSQL, Redis, and SmartKB pods reached `Running`.
+- Verified PostgreSQL and Redis PVCs reached `Bound`.
+- Verified rollouts for `postgres`, `redis`, and `smartkb-app`.
+- Verified `/actuator/health` through temporary port-forward returned `UP` with `db`, `redis`, and `diskSpace` all `UP`.
+- Verified `/api/agent/eval/report` returned successfully without requiring an LLM call.
+
+Important notes:
+- The generated K3d kubeconfig used `https://host.docker.internal:<port>`, which failed TLS handshake on this Windows environment.
+- A temporary kubeconfig under ignored `target/` with the server URL changed to `https://127.0.0.1:<port>` fixed kubectl access.
+- Initial Docker Hub pulls inside K3s had transient EOF errors, but retries succeeded.
+- App startup had early restarts while PostgreSQL/Redis were not ready, then stabilized after dependencies came up.
+
+Modified files:
+- `docs/K3S_DEPLOYMENT_PLAN.md`
+- `k8s/README.md`
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Cleanup:
+- Deleted disposable `smartkb-demo` cluster after verification.
+- Removed temporary kubeconfig and port-forward logs under ignored `target/`.
+- `k3d` v5.9.0 remains installed through `winget` for future local K3d checks.

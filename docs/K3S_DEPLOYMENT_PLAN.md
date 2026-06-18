@@ -172,9 +172,20 @@ Local syntax check:
 
 - `npx --yes js-yaml k8s/k3s-demo.yaml` passed.
 - `mvn -Dtest=K3sDemoManifestTest test` passed and guards the demo manifest structure, required app env vars, Secret references, probes, services, ingress, and PostgreSQL `PGDATA`.
-- `kubectl apply --dry-run=client` could not run without a reachable Kubernetes API server in this environment.
-- A disposable K3d runtime verification was attempted, but downloading the `k3d-windows-amd64.exe` release asset timed out before a complete binary was available.
+- Disposable K3d runtime verification passed on 2026-06-18 with `k3d` v5.9.0 and K3s v1.35.5+k3s1.
+- Verified path:
+  - tagged the Docker Compose app image as `smartkb:local`;
+  - created a disposable `smartkb-demo` K3d cluster;
+  - imported `smartkb:local`;
+  - created the `smartkb` namespace and `smartkb-secrets` with placeholder demo values;
+  - applied `k8s/k3s-demo.yaml`;
+  - confirmed PostgreSQL, Redis, and SmartKB pods reached `Running`;
+  - confirmed PostgreSQL and Redis PVCs reached `Bound`;
+  - confirmed `kubectl -n smartkb rollout status deploy/smartkb-app` succeeded;
+  - verified `http://localhost:18080/actuator/health` through port-forward returned `UP` with `db`, `redis`, and `diskSpace` all `UP`;
+  - verified `http://localhost:18080/api/agent/eval/report` returned successfully without requiring an LLM call.
+- Windows K3d note: the generated kubeconfig used `https://host.docker.internal:<port>`, which failed TLS handshake on this machine. Replacing that temporary kubeconfig server URL with `https://127.0.0.1:<port>` fixed `kubectl` access.
 
 ## Next Implementation Step
 
-Verify `k8s/k3s-demo.yaml` against a disposable local K3s or K3d cluster, then decide whether to replace the older draft `k8s/deployment.yaml` or keep both with clearer naming.
+Decide whether to replace the older draft `k8s/deployment.yaml` or keep both with clearer naming. Keep production hardening, registry strategy, TLS, monitoring, and managed secrets out of the demo manifest until they are explicit goals.

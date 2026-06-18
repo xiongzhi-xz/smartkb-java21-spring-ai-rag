@@ -227,12 +227,12 @@ test-docs/advanced-rag-demo.md
 - 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 均已在 390px 视口通过。
 - 移动端边界 smoke：长文本输入、必填错误提示、窄屏按钮/导航宽度已在本地静态页和 Docker 运行态首页通过。
 - 工作台摘要指标 smoke：`node .\scripts\smoke\workbench-summary-smoke.mjs` 已覆盖 Project Intake / AgentTask / Code Context / Eval 指标渲染和横向溢出检查，并已在 Docker 运行态首页通过。
-- K3s demo manifest：已增加 JUnit 结构守卫，覆盖环境变量、Secret 引用、探针、Service、Ingress 和 PostgreSQL PVC `PGDATA`。
+- K3s demo manifest：已增加 JUnit 结构守卫，并已在一次性 K3d 集群中验证 PostgreSQL、Redis、SmartKB、PVC、health 和 Eval report API。
 
 说明：
 
 - Testcontainers 集成测试在部分 Windows Docker Desktop 环境中可能因为 npipe Java Docker client 配置被跳过。
-- K3s demo manifest 已做 YAML 语法和结构检查，仍建议在一次性 K3s/K3d 集群中再做真实部署验证。
+- K3s demo manifest 仍是本地演示形态；生产级 HA、TLS、镜像仓库、监控和托管 Secret 尚未纳入。
 
 ## 项目结构
 
