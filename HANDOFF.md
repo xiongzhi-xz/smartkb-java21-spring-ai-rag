@@ -1,5 +1,35 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-18
+
+Current goal:
+- Keep SmartKB stable as a local demoable Java 21 + Spring AI RAG project while continuing SmartKB v2 Agent platform polish.
+
+Current stage:
+- Docker Compose, RAG demo flow, Agent workbench, Eval Run persistence, README presentation, static workbench regression tests, and local K3d demo verification are complete.
+- The verified Kubernetes demo entry point is `k8s/k3s-demo.yaml`.
+- The historical Kubernetes draft is `k8s/deployment-draft.yaml` and must not be applied directly.
+
+Recently completed:
+- Verified `k8s/k3s-demo.yaml` on a disposable K3d cluster: PostgreSQL, Redis, and SmartKB pods reached `Running`; PVCs reached `Bound`; `/actuator/health` returned `UP`; `/api/agent/eval/report` returned successfully.
+- Renamed the old `k8s/deployment.yaml` draft to `k8s/deployment-draft.yaml` and added warnings/placeholders.
+- Added `K8sDraftManifestTest` to guard the draft warning, placeholder secrets, and README deploy entry point.
+
+Workspace status:
+- Latest pushed commit: `641e83a test: guard k8s draft manifest`.
+- Working tree was clean after that push.
+
+Verified latest:
+- `mvn "-Dtest=K8sDraftManifestTest,K3sDemoManifestTest" test`: 3 tests passed.
+- `mvn test`: 105 tests passed.
+- `git diff --check`: passed with LF/CRLF warnings only.
+
+Next step only:
+- Continue SmartKB v2 Agent platform polish in a small slice, or do a docs/readme clarity pass. Production Kubernetes hardening remains out of scope until explicitly requested.
+
+Note:
+- Older sections below are historical work logs and may describe earlier "current" tasks before the K3d verification was completed.
+
 ## 当前目标
 
 把 SmartKB 收口为可本地运行、可演示、可面试讲解的 Java 21 + Spring AI RAG 项目，并作为后续 AI 工程化转型主项目继续升级。
