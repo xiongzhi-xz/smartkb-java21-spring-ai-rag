@@ -3,32 +3,64 @@
 ## Latest Snapshot - 2026-06-18
 
 Current goal:
-- Keep SmartKB stable as a local demoable Java 21 + Spring AI RAG project while continuing SmartKB v2 Agent platform polish.
+- Keep SmartKB stable as a local demoable Java 21 + Spring AI RAG project and close the final Project Intake frontend takeover-report polish.
 
 Current stage:
-- Docker Compose, RAG demo flow, Agent workbench, Eval Run persistence, README presentation, static workbench regression tests, and local K3d demo verification are complete.
+- Docker Compose, RAG demo flow, Agent workbench, Eval Run persistence, README presentation, static workbench regression tests, local K3d demo verification, and the final Project Intake frontend takeover-report enhancement are complete.
 - The verified Kubernetes demo entry point is `k8s/k3s-demo.yaml`.
 - The historical Kubernetes draft is `k8s/deployment-draft.yaml` and must not be applied directly.
 
 Recently completed:
-- Verified `k8s/k3s-demo.yaml` on a disposable K3d cluster: PostgreSQL, Redis, and SmartKB pods reached `Running`; PVCs reached `Bound`; `/actuator/health` returned `UP`; `/api/agent/eval/report` returned successfully.
-- Renamed the old `k8s/deployment.yaml` draft to `k8s/deployment-draft.yaml` and added warnings/placeholders.
-- Added `K8sDraftManifestTest` to guard the draft warning, placeholder secrets, and README deploy entry point.
+- Added a Project Intake frontend takeover report that mirrors the AGENTS/HANDOFF takeover shape: current goal, current stage, completed, unfinished, workspace status, and next step only.
+- Extended `scripts/smoke/workbench-summary-smoke.mjs` to assert the takeover report renders 6 rows and still has no 390px horizontal overflow.
+- Updated `SPEC.md` and `TESTING.md` for this final frontend handoff-report slice.
 
 Workspace status:
 - Check the latest pushed commit with `git log --oneline -5`.
 - Check the current working tree with `git status --short --branch`.
 
 Verified latest:
-- `mvn "-Dtest=K8sDraftManifestTest,K3sDemoManifestTest" test`: 3 tests passed.
+- `node --check .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 5 tests passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed locally; takeover report rows `6`, Project Intake metrics `3,2,1,0`, AgentTask metrics `4,2,1,1`, Code Context metrics `2,1,1,yes`, Eval metrics `3,1,1,1`, no 390px overflow.
 - `mvn test`: 106 tests passed.
 - `git diff --check`: passed with LF/CRLF warnings only.
 
 Next step only:
-- Continue SmartKB v2 Agent platform polish in a small slice, or do a docs/readme clarity pass. Production Kubernetes hardening remains out of scope until explicitly requested.
+- Stop expanding features. Only run final verification, commit this slice, and use this HANDOFF if another window needs to inspect the closed state.
 
 Note:
 - Older sections below are historical work logs and may describe earlier "current" tasks before the K3d verification was completed.
+
+## 2026-06-18 Work Log - Project Intake Frontend Takeover Report
+
+Current goal:
+- Finish the final Project Intake frontend takeover-report enhancement and close the SmartKB v2 polish round without adding new feature scope.
+
+Completed:
+- Added `renderProjectIntakeTakeoverReport(...)` in `src/main/resources/static/index.html`.
+- The Project Intake result now shows a first-screen takeover report with six AGENTS/HANDOFF-compatible rows: current goal, current stage, completed, unfinished, workspace status, and next step only.
+- Added compact list rendering for completed/unfinished rows so long reports stay scannable on mobile.
+- Extended static HTML guards and browser summary smoke coverage for the takeover report.
+- Updated `SPEC.md` and `TESTING.md`.
+
+Modified files:
+- `src/main/resources/static/index.html`
+- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java`
+- `scripts/smoke/workbench-summary-smoke.mjs`
+- `SPEC.md`
+- `TESTING.md`
+- `HANDOFF.md`
+
+Verified:
+- `node --check .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: 5 tests passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed locally with 6 takeover-report rows and no 390px horizontal overflow.
+- `mvn test`: 106 tests passed.
+- `git diff --check`: passed with LF/CRLF warnings only.
+
+Next step:
+- Run final project verification and commit. Do not start another feature unless the user explicitly opens a new scope.
 
 ## 当前目标
 

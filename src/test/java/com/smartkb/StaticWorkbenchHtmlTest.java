@@ -78,6 +78,8 @@ class StaticWorkbenchHtmlTest {
                 "function openWorkspacePanel(name)",
                 "function openWorkspaceSubTab(scope, targetId)",
                 "function renderCompactMetric(label, value, tone = 'gray')",
+                "function renderProjectIntakeTakeoverReport(intake, statusText)",
+                "function renderProjectIntakeReportRow(label, bodyHtml, tone = 'gray')",
                 "function runProjectIntake()",
                 "function createAgentTask()",
                 "function renderAgentTaskSummary(tasks)",
@@ -93,7 +95,9 @@ class StaticWorkbenchHtmlTest {
                 "function renderEvalRunSummary(runs)",
                 "function countEvalRunsByStatus(runs, status)",
                 "function createEvalRun()",
-                "function loadEvalData()"
+                "function loadEvalData()",
+                "id=\"projectIntakeTakeoverReport\"",
+                "data-takeover-report-row"
         );
     }
 
@@ -140,6 +144,7 @@ class StaticWorkbenchHtmlTest {
         assertThat(seenIds).contains(
                 "workspaceTitle",
                 "workspaceSubtitle",
+                "projectIntakeTakeoverReport",
                 "documentList",
                 "memoryProjectId",
                 "memoryList",

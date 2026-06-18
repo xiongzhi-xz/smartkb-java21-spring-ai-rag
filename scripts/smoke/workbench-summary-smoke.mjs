@@ -165,6 +165,21 @@ async function runSmoke(cdp) {
     return !result.classList.contains('hidden') && result.textContent.includes('summary-smoke-project');
   })()`);
 
+  const takeoverReport = await evaluate(cdp, `(() => {
+    const report = document.getElementById('projectIntakeTakeoverReport');
+    return {
+      visible: Boolean(report),
+      rowCount: report?.querySelectorAll('[data-takeover-report-row]').length || 0,
+      text: report?.textContent || ''
+    };
+  })()`);
+  assert(takeoverReport.visible, 'Project Intake takeover report did not render');
+  assert(takeoverReport.rowCount === 6, `Expected 6 takeover report rows: ${JSON.stringify(takeoverReport)}`);
+  assert(takeoverReport.text.includes('当前目标'), `Takeover report missed current goal label: ${JSON.stringify(takeoverReport)}`);
+  assert(takeoverReport.text.includes('Polish display density'), `Takeover report missed current goal value: ${JSON.stringify(takeoverReport)}`);
+  assert(takeoverReport.text.includes('工作区干净'), `Takeover report missed workspace status: ${JSON.stringify(takeoverReport)}`);
+  assert(takeoverReport.text.includes('Inspect summary metrics'), `Takeover report missed next step: ${JSON.stringify(takeoverReport)}`);
+
   const projectSummary = await evaluate(cdp, `(() => {
     const summary = document.querySelector('#projectIntakeResult > div.mb-3.grid');
     return {
@@ -246,7 +261,7 @@ async function runSmoke(cdp) {
   }))()`);
   assert(!layout.overflow, `Summary smoke caused horizontal overflow: ${JSON.stringify(layout)}`);
 
-  return { pageUrl, projectSummary, agentTaskSummary, codeSummary, evalSummary, layout };
+  return { pageUrl, takeoverReport, projectSummary, agentTaskSummary, codeSummary, evalSummary, layout };
 }
 
 runChromeSmoke(pageUrl, { profileName: 'workbench-summary', width: 390, height: 844 }, runSmoke)
