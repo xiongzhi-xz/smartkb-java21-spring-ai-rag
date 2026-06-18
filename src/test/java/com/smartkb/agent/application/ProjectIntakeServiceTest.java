@@ -116,6 +116,73 @@ class ProjectIntakeServiceTest {
     }
 
     @Test
+    void shouldPreferLatestSnapshotFromHandoff() throws IOException {
+        write("HANDOFF.md", """
+                # HANDOFF
+
+                ## Latest Snapshot - 2026-06-18
+
+                Current goal:
+                - Keep SmartKB stable while continuing Agent platform polish.
+
+                Current stage:
+                - Docker Compose, Eval Run persistence, and K3d demo verification are complete.
+
+                Recently completed:
+                - Added K8s draft guard coverage.
+
+                Next step only:
+                - Continue SmartKB v2 Agent platform polish in a small slice.
+
+                ## 当前目标
+
+                Stale historical goal.
+
+                ## 当前阶段
+
+                Stale historical stage.
+
+                ## 下一步
+                1. Stale historical next step.
+                """);
+        write("SPEC.md", """
+                # SPEC
+
+                - [x] Completed SPEC item
+                - [ ] Pending SPEC item
+                """);
+        write("README.md", "# Demo\n\nJava 21 Spring Boot demo.");
+        write("pom.xml", """
+                <project>
+                  <properties>
+                    <java.version>21</java.version>
+                  </properties>
+                  <dependencies>
+                    <dependency>
+                      <artifactId>spring-boot-starter-web</artifactId>
+                    </dependency>
+                  </dependencies>
+                </project>
+                """);
+
+        ProjectIntakeResponse response = service().intake(new ProjectIntakeRequest(
+                tempDir.toString(),
+                "Take over SmartKB",
+                true,
+                100,
+                65_536
+        ));
+
+        assertTrue(response.intake().currentGoal().contains("Keep SmartKB stable"));
+        assertTrue(response.intake().currentStage().contains("K3d demo verification are complete"));
+        assertTrue(response.intake().completed().contains("Added K8s draft guard coverage."));
+        assertTrue(response.intake().unfinished().contains("Continue SmartKB v2 Agent platform polish in a small slice."));
+        assertEquals("Continue SmartKB v2 Agent platform polish in a small slice.", response.intake().nextStepOnly());
+        assertFalse(response.intake().currentGoal().contains("Stale historical goal"));
+        assertFalse(response.intake().currentStage().contains("Stale historical stage"));
+    }
+
+    @Test
     void shouldRejectMissingProjectPath() {
         ProjectIntakeException exception = assertThrows(
                 ProjectIntakeException.class,

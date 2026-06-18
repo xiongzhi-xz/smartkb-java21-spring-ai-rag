@@ -217,7 +217,7 @@ test-docs/advanced-rag-demo.md
 
 当前已验证：
 
-- `mvn test`：105 tests passed。
+- `mvn test`：106 tests passed。
 - Docker Compose 全链路启动：`smartkb-app` healthy。
 - Redis ChatMemory live checklist：6/6 通过。
 - Docker BuildKit 缓存构建：缓存命中后重建约秒级。

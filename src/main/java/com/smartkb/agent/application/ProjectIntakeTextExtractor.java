@@ -78,6 +78,38 @@ class ProjectIntakeTextExtractor {
                 .toList();
     }
 
+    List<String> labeledBullets(String text, String label) {
+        if (text == null || text.isBlank() || label == null || label.isBlank()) {
+            return List.of();
+        }
+        List<String> values = new ArrayList<>();
+        boolean reading = false;
+        for (String rawLine : text.split("\\R", -1)) {
+            String line = rawLine.strip();
+            if (!reading) {
+                reading = line.equalsIgnoreCase(label.strip());
+                continue;
+            }
+            if (line.isBlank()) {
+                if (!values.isEmpty()) {
+                    break;
+                }
+                continue;
+            }
+            if (!line.startsWith("- ") && line.endsWith(":")) {
+                break;
+            }
+            if (line.startsWith("- ")) {
+                values.add(line.substring(2).strip());
+            } else if (values.isEmpty()) {
+                values.add(line);
+            } else {
+                break;
+            }
+        }
+        return values;
+    }
+
     List<String> checkedItems(String text, boolean checked) {
         if (text == null || text.isBlank()) {
             return List.of();

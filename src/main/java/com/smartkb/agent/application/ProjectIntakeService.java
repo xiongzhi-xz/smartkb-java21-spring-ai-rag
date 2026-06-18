@@ -79,24 +79,29 @@ public class ProjectIntakeService {
         String handoff = content(raw, "HANDOFF.md");
         String spec = content(raw, "SPEC.md");
         String readme = content(raw, "README.md");
+        String latestSnapshot = textExtractor.section(handoff, "## Latest Snapshot");
 
         String currentGoal = textExtractor.firstNonBlank(
+                textExtractor.firstItem(textExtractor.labeledBullets(latestSnapshot, "Current goal:")),
                 textExtractor.firstParagraph(textExtractor.section(handoff, "## 当前目标")),
                 textExtractor.firstParagraph(textExtractor.section(spec, "## 当前目标")),
                 textExtractor.firstMeaningfulLine(readme),
                 normalizeGoal(requestedGoal)
         );
         String currentStage = textExtractor.firstNonBlank(
+                textExtractor.firstItem(textExtractor.labeledBullets(latestSnapshot, "Current stage:")),
                 textExtractor.firstParagraph(textExtractor.section(handoff, "## 当前阶段")),
                 textExtractor.firstParagraph(textExtractor.section(spec, "## 当前阶段")),
                 "未在文档中明确记录"
         );
 
         List<String> completed = textExtractor.merge(
+                textExtractor.labeledBullets(latestSnapshot, "Recently completed:"),
                 textExtractor.bullets(textExtractor.section(handoff, "## 已完成")),
                 textExtractor.checkedItems(spec, true)
         );
         List<String> unfinished = textExtractor.merge(
+                textExtractor.labeledBullets(latestSnapshot, "Next step only:"),
                 textExtractor.numberedOrBullets(textExtractor.section(handoff, "## 下一步")),
                 textExtractor.bullets(textExtractor.section(handoff, "## 未验证")),
                 textExtractor.checkedItems(spec, false)
@@ -107,6 +112,7 @@ public class ProjectIntakeService {
                 defaultRisks()
         );
         String nextStepOnly = textExtractor.firstNonBlank(
+                textExtractor.firstItem(textExtractor.labeledBullets(latestSnapshot, "Next step only:")),
                 textExtractor.firstItem(textExtractor.numberedOrBullets(textExtractor.section(handoff, "## 下一步"))),
                 textExtractor.firstItem(unfinished),
                 "先补齐项目接管摘要所需证据"

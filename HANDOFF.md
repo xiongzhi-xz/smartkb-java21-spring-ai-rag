@@ -16,12 +16,12 @@ Recently completed:
 - Added `K8sDraftManifestTest` to guard the draft warning, placeholder secrets, and README deploy entry point.
 
 Workspace status:
-- Latest pushed commit: `641e83a test: guard k8s draft manifest`.
-- Working tree was clean after that push.
+- Check the latest pushed commit with `git log --oneline -5`.
+- Check the current working tree with `git status --short --branch`.
 
 Verified latest:
 - `mvn "-Dtest=K8sDraftManifestTest,K3sDemoManifestTest" test`: 3 tests passed.
-- `mvn test`: 105 tests passed.
+- `mvn test`: 106 tests passed.
 - `git diff --check`: passed with LF/CRLF warnings only.
 
 Next step only:
@@ -1317,6 +1317,29 @@ Modified files:
 
 Verified:
 - Documentation-only change; no application tests required.
+- `git diff --check`: passed with CRLF warnings only.
+
+## 2026-06-18 Work Log - Project Intake Latest Snapshot Parsing
+
+Current goal:
+- Make Project Intake consume the newer English `HANDOFF.md` Latest Snapshot format before older historical sections.
+
+Completed:
+- Added `ProjectIntakeTextExtractor.labeledBullets(...)`.
+- Updated `ProjectIntakeService` to prefer `Latest Snapshot` values for current goal, current stage, recently completed items, and next step only.
+- Added regression coverage for a HANDOFF containing both a fresh Latest Snapshot and stale historical sections.
+- Marked the capability in `SPEC.md`.
+
+Modified files:
+- `src/main/java/com/smartkb/agent/application/ProjectIntakeTextExtractor.java`
+- `src/main/java/com/smartkb/agent/application/ProjectIntakeService.java`
+- `src/test/java/com/smartkb/agent/application/ProjectIntakeServiceTest.java`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- `mvn "-Dtest=ProjectIntakeServiceTest,ProjectIntakeTextExtractorTest" test`: 8 tests passed.
+- `mvn test`: 106 tests passed.
 - `git diff --check`: passed with CRLF warnings only.
 
 ## 2026-06-18 Work Log - Agent Platform Next Step Refresh
