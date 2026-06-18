@@ -44,9 +44,8 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 
 ## 下一步
 
-1. Docker API 恢复后，优先重试 `docker compose up -d --no-deps --build --force-recreate smartkb-app`，确认首页包含 `renderCompactMetric`，再跑 `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-smoke"`。
-2. 按需继续补工作台移动端细节交互 smoke。
-3. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
+1. 按需继续补工作台移动端细节交互 smoke。
+2. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
 
 ## 已修改文件
 
@@ -78,13 +77,13 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - Headless Chrome mobile Agent/Eval CDP smoke passed：AgentTask 创建并流转到 PLAN，Eval 新增记录、运行列表、聚合报告均通过，均无横向溢出。
 - Agent/Eval 移动截图已人工检查：`target/mobile-agent-task.png`、`target/mobile-eval-list.png`、`target/mobile-eval-report.png`。
 - Local mocked browser summary smoke passed：Project Intake / Code Context 摘要指标均渲染成功，无横向溢出。
+- Docker runtime summary smoke passed：`http://localhost:8082` 首页包含 `renderCompactMetric`，`node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-runtime-smoke"` 通过。
 - `mvn -Dtest=StaticWorkbenchHtmlTest test`：5 tests passed。
 - `mvn test`：102 tests passed，0 failures，0 errors。
 
 ## 未验证
 
 - K3s/K3d 真实集群部署。
-- 本轮 Docker runtime 重建验证未完成：`docker compose up -d --no-deps --build --force-recreate smartkb-app` 超时，之后 Docker API 对 `docker version` 也超时；`http://localhost:8082/actuator/health` 仍为 `UP`，但运行中首页还未包含 `renderCompactMetric`。
 - 更细的移动端边界交互，例如长文本输入、错误提示和窄屏按钮换行。
 
 ## 风险和注意事项
@@ -978,3 +977,35 @@ Not verified:
 
 Next step:
 - When Docker API recovers, rebuild only `smartkb-app`, confirm the served homepage includes `renderCompactMetric`, then run `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-smoke"`.
+
+## 2026-06-18 Work Log - Summary Metrics Docker Runtime Verification
+
+Current goal:
+- Retry the previously blocked Docker runtime verification for Project Intake / Code Context summary metrics.
+
+Completed:
+- Started Docker Desktop after confirming the Docker Desktop service was stopped and no Docker API pipe existed.
+- Rebuilt and recreated only `smartkb-app` with `docker compose up -d --no-deps --build --force-recreate smartkb-app`.
+- Started existing PostgreSQL and Redis containers with `docker compose up -d postgres redis` after the app reported DNS failures for `postgres` and `redis`.
+- Restarted `smartkb-app` after PostgreSQL and Redis became healthy.
+- Confirmed the served Docker homepage contains `renderCompactMetric` and `workspaceNavMemory`.
+
+Verified:
+- Docker API recovered: `docker version` returned `29.5.3`.
+- `smartkb-postgres`: healthy.
+- `smartkb-redis`: healthy.
+- `smartkb-app`: healthy.
+- `http://localhost:8082/actuator/health`: `UP`.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=summary-runtime-smoke"`: passed.
+- Runtime smoke output showed Project Intake metrics `3,2,1,0`, Code Context metrics `2,1,1,yes`, and no horizontal overflow at 390px.
+
+Modified files:
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Not verified:
+- K3s/K3d real cluster deployment remains pending.
+
+Next step:
+- Continue SmartKB v2 Agent platform polish or run a focused mobile edge-case smoke if needed.
