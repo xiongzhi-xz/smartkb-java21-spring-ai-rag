@@ -32,7 +32,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - SmartKB v2 首批 Agent eval 模板：`docs/agent-eval-report.md`，包含 TicketRush 10 个 eval case。
 - 静态工作台 HTML 结构回归测试：覆盖工作区导航、AgentTask/Eval 子 Tab、静态 ID 唯一性和核心函数存在性。
 - 移动端工作台布局：小屏下侧栏变为顶部工作区入口，主工作区保持完整宽度，无横向溢出。
-- 移动端表单 smoke：Project Intake 提交和 Code Context 查询在 390px 视口通过。
+- 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 在 390px 视口通过。
 - 工作区隐藏兜底：本页自有 CSS 提供 `.hidden { display: none !important; }`，避免 Tailwind CDN 慢或失败时面板串出。
 - MemoryRecord 前端工作区：支持导入高权威记忆、手工新增记忆、列表查看和冲突检查。
 - MemoryRecord 浏览器点击 smoke：覆盖 6 个工作区切换、页面不跳转、无横向溢出、手工新增记忆后列表可见。
@@ -44,18 +44,16 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 ## 下一步
 
 1. 继续打磨 Project Intake / Code Context 面板的信息密度。
-2. 按需补 AgentTask / Eval 移动端表单交互 smoke。
+2. 按需继续补工作台移动端细节交互 smoke。
 3. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
 
 ## 已修改文件
 
 本轮改动：
 
-- `src/main/resources/static/index.html` — 增加移动端响应式工作台布局
-- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java` — 增加移动布局和 `.hidden` 兜底静态守卫测试
 - `README.md` — 更新验证状态
-- `SPEC.md` — 标记移动端响应式布局、表单 smoke 和 `.hidden` 兜底
-- `HANDOFF.md` — 记录移动端表单 smoke 的验证结果和下一步
+- `SPEC.md` — 标记 AgentTask / Eval 移动端表单 smoke
+- `HANDOFF.md` — 记录 AgentTask / Eval 移动端 smoke 的验证结果和下一步
 
 安全性检查：
 - 本轮不涉及密钥、token、私有路径或账号信息。
@@ -74,11 +72,13 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - 移动截图已人工检查：`target/mobile-workbench-chat.png`、`target/mobile-workbench-memory.png`。
 - Headless Chrome mobile form CDP smoke passed：Project Intake 提交成功，Code Context 查询 `StaticWorkbenchHtmlTest` 成功，均无横向溢出。
 - 移动表单截图已人工检查：`target/mobile-form-project-intake.png`、`target/mobile-form-code-context.png`。
+- Headless Chrome mobile Agent/Eval CDP smoke passed：AgentTask 创建并流转到 PLAN，Eval 新增记录、运行列表、聚合报告均通过，均无横向溢出。
+- Agent/Eval 移动截图已人工检查：`target/mobile-agent-task.png`、`target/mobile-eval-list.png`、`target/mobile-eval-report.png`。
 
 ## 未验证
 
 - K3s/K3d 真实集群部署。
-- AgentTask / Eval 移动端表单交互路径。
+- 更细的移动端边界交互，例如长文本输入、错误提示和窄屏按钮换行。
 
 ## 风险和注意事项
 
@@ -865,3 +865,39 @@ Not verified:
 
 Next step:
 - Continue Project Intake / Code Context display polish, or add AgentTask / Eval mobile form interaction smoke.
+
+## 2026-06-18 Work Log - AgentTask Eval Mobile Smoke
+
+Current goal:
+- Verify mobile form interactions for AgentTask and Eval at 390x844.
+
+Completed:
+- Ran a temporary CDP smoke script against the running Docker app.
+- Created an AgentTask from the mobile workbench.
+- Transitioned the AgentTask from `INTAKE` to `PLAN` with a plan note.
+- Created an Eval run with a unique `E-MOBILE-*` case id.
+- Verified the Eval run appeared in the run list.
+- Verified the Eval report rendered after the new run.
+- Captured and visually checked mobile screenshots under `target/`.
+- Updated README, SPEC, and HANDOFF verification records.
+
+Modified files:
+- `README.md`
+- `SPEC.md`
+- `HANDOFF.md`
+
+Temporary files:
+- `target/mobile-agent-eval-cdp-smoke.js`
+- `target/mobile-agent-task.png`
+- `target/mobile-eval-list.png`
+- `target/mobile-eval-report.png`
+
+Verified:
+- `node .\target\mobile-agent-eval-cdp-smoke.js`: passed.
+- Smoke output confirmed AgentTask create/transition, Eval create/list/report, and no horizontal overflow.
+
+Not verified:
+- Fine-grained mobile edge cases such as long text wrapping and validation errors.
+
+Next step:
+- Continue Project Intake / Code Context display density polish, or add narrow edge-case smoke only if needed.
