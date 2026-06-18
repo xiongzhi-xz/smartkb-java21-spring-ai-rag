@@ -1318,3 +1318,21 @@ Modified files:
 Verified:
 - Documentation-only change; no application tests required.
 - `git diff --check`: passed with CRLF warnings only.
+
+## 2026-06-18 Work Log - Agent Platform Next Step Refresh
+
+Current goal:
+- Remove stale Phase F next-step guidance from the Agent Platform spec.
+
+Completed:
+- Updated `docs/AGENT_PLATFORM_SPEC.md` section 10 to state that Phase F is closed.
+- Redirected the recommended next step to small, verifiable SmartKB v2 Agent platform polish.
+- Kept complex multi-agent orchestration explicitly out of scope.
+
+Modified files:
+- `docs/AGENT_PLATFORM_SPEC.md`
+- `HANDOFF.md`
+
+Verified:
+- Documentation-only change; no application tests required.
+- `git diff --check`: passed with CRLF warnings only.

@@ -486,12 +486,16 @@ SmartKB 最初是一个企业 RAG 知识库，我后来把它升级为面向 Jav
 我做 SmartKB v2 的原因是，普通 RAG 项目只能证明会做知识问答，但 AI 应用工程真正难的是让 Agent 在真实工程里稳定工作。我的方案分成几层：第一层是项目接管，读取 README、SPEC、AGENTS、HANDOFF、pom.xml、Git 状态和代码结构，生成当前目标、阶段、已完成、未完成、风险点和下一步。第二层是任务状态机，所有任务必须经过 Intake、Plan、Execute、Verify、Record，避免 Agent 直接自由发挥。第三层是记忆分层，把 SPEC 和架构决策作为高权威记忆，任务记录作为中权威记忆，聊天摘要作为低权威记忆，冲突时按权威等级处理。第四层是代码上下文检索，代码场景优先用 rg、Git diff、文件树和类名，向量检索只做语义补充。最后我用 TicketRush 做 eval，记录任务成功率、测试通过率、耗时和人工介入次数。这个项目体现的是我把 Java 后端工程经验迁移到 Agent 工程化里的能力。
 ```
 
-## 10. 当前下一步
+## 10. Current Next Step
 
-建议下一步只做：
+Phase F is closed:
+- Eval Run API, report aggregation, import flow, JDBC persistence, local JDBC smoke verification, and the Testcontainers integration-test profile are complete.
+- The local K3d demo manifest has also been verified separately.
+
+Recommended next step only:
 
 ```text
-继续阶段 F，下一步收口 Eval Run 持久化文档和交接状态，然后进入下一个 Agent 平台能力点。
+Continue SmartKB v2 Agent platform polish in a small slice, focused on information density, handoff clarity, or existing workbench ergonomics.
 ```
 
-不要马上写复杂多 Agent 编排。先让既有评测结果和 API 记录口径对齐，再考虑持久化。
+Do not start complex multi-agent orchestration yet. Keep the next step narrow and verifiable.
