@@ -11,7 +11,7 @@
 
 ## 当前阶段
 
-Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、MemoryRecord 前端工作区、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
+Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收口、Agent 工作台、MemoryRecord 前端工作区、Memory 浏览器点击 smoke、Eval Run 持久化、README 展示页和静态工作台结构回归测试均已完成。当前处于 SmartKB v2 Agent 工程平台打磨阶段。
 
 ## 已完成
 
@@ -32,6 +32,7 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - SmartKB v2 首批 Agent eval 模板：`docs/agent-eval-report.md`，包含 TicketRush 10 个 eval case。
 - 静态工作台 HTML 结构回归测试：覆盖工作区导航、AgentTask/Eval 子 Tab、静态 ID 唯一性和核心函数存在性。
 - MemoryRecord 前端工作区：支持导入高权威记忆、手工新增记忆、列表查看和冲突检查。
+- MemoryRecord 浏览器点击 smoke：覆盖 6 个工作区切换、页面不跳转、无横向溢出、手工新增记忆后列表可见。
 
 ## 正在做
 
@@ -40,18 +41,15 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 ## 下一步
 
 1. 继续打磨 Project Intake / Code Context 面板的信息密度。
-2. 按需补工作台移动端或截图 smoke。
+2. 按需补工作台移动端截图 smoke。
 3. 在一次性 K3s/K3d 集群中验证 `k8s/k3s-demo.yaml`。
 
 ## 已修改文件
 
 本轮改动：
 
-- `src/main/resources/static/index.html` — 新增 MemoryRecord 前端工作区
-- `src/test/java/com/smartkb/StaticWorkbenchHtmlTest.java` — 扩展静态工作台结构回归测试覆盖记忆层
-- `SPEC.md` — 标记 MemoryRecord 前端工作区
-- `README.md` — 更新 Agent 能力、演示路径和 Memory API 表
-- `HANDOFF.md` — 更新当前阶段和本轮记录
+- `SPEC.md` — 标记 MemoryRecord 前端工作区浏览器点击 smoke
+- `HANDOFF.md` — 记录 Memory 浏览器 smoke 的验证结果和下一步
 
 安全性检查：
 - 本轮不涉及密钥、token、私有路径或账号信息。
@@ -64,11 +62,13 @@ Docker Compose 全链路启动、Redis ChatMemory live 验证、Docker 构建收
 - `docker compose up -d --no-deps --build --force-recreate smartkb-app`：passed。
 - `smartkb-app` health：healthy，`/actuator/health` 返回 `UP`。
 - 首页 HTML 包含 `workspaceNavMemory`。
+- Headless Chrome CDP smoke passed：覆盖 6 个工作区（智能问答、项目接管、任务状态、记忆层、代码上下文、Eval 评测）切换，`window.scrollY=0`，无横向溢出。
+- Memory 工作区手工新增记忆后，浏览器列表中可见新增内容。
 
 ## 未验证
 
 - K3s/K3d 真实集群部署。
-- 本轮未做浏览器点击截图 smoke。
+- 移动端截图 smoke。
 
 ## 风险和注意事项
 
@@ -729,3 +729,37 @@ Not verified:
 
 Next step:
 - Continue Project Intake / Code Context display polish or add browser click-through smoke for the new memory workspace.
+
+## 2026-06-18 Work Log - Memory Workspace Browser Smoke
+
+Current goal:
+- Verify the new Memory workspace in a real browser against the running Docker app.
+
+Completed:
+- Confirmed `smartkb-app` was already running healthy in Docker.
+- Confirmed `http://localhost:8082/actuator/health` returned `UP`.
+- Attempted Dockerized Playwright smoke with `mcr.microsoft.com/playwright:v1.61.0-noble`; the image was not available locally and the run timed out while pulling/starting before a browser test executed.
+- Added a temporary ignored CDP smoke script under `target/` and drove the installed local Chrome in headless mode.
+- Clicked through all six workspaces: 智能问答, 项目接管, 任务状态, 记忆层, 代码上下文, Eval 评测.
+- Verified the active menu and visible panel for each workspace.
+- Verified workspace switching kept `window.scrollY=0` and did not create horizontal page overflow.
+- Created a manual MemoryRecord through the Memory workspace and verified the new content appeared in the browser list.
+- Updated `SPEC.md` to mark the browser click smoke complete.
+
+Modified files:
+- `SPEC.md`
+- `HANDOFF.md`
+
+Temporary files:
+- `target/memory-workspace-docker-smoke.js`
+- `target/memory-workspace-cdp-smoke.js`
+
+Verified:
+- `node .\target\memory-workspace-cdp-smoke.js`: passed.
+- Smoke output included `ok=true`, all six workspace nav IDs, `memoryFound=true`, `scrollY=0`, and `overflow=false`.
+
+Not verified:
+- Mobile viewport screenshot smoke.
+
+Next step:
+- Continue SmartKB v2 Agent platform polish, likely Project Intake / Code Context display density or mobile screenshot smoke.
