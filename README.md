@@ -275,6 +275,7 @@ SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，第一阶段完
 | --- | --- |
 | [STARTUP.md](STARTUP.md) | 本地启动指南 |
 | [DEMO.md](DEMO.md) | 5 分钟演示脚本 |
+| [docs/interview-runbook.md](docs/interview-runbook.md) | 面试演示 Runbook、追问答案和兜底方案 |
 | [TESTING.md](TESTING.md) | 测试指南 |
 | [SPEC.md](SPEC.md) | 当前规格、进度和面试讲法 |
 | [docs/AGENT_PLATFORM_SPEC.md](docs/AGENT_PLATFORM_SPEC.md) | SmartKB v2 Agent 平台规格 |

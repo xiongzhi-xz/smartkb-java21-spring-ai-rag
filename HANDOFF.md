@@ -1,6 +1,36 @@
 # HANDOFF - SmartKB
 
-## Latest Snapshot - 2026-06-18
+## Latest Snapshot - 2026-06-18 Interview Prep Closeout
+
+Current goal:
+- Keep SmartKB stable as a local demoable Java 21 + Spring AI RAG + Agent engineering platform and prepare the user for interview familiarization.
+
+Current stage:
+- Core development is closed unless the user explicitly opens a new scope.
+- Project Intake frontend takeover-report polish is complete.
+- Interview/demo materials are now prepared for tomorrow's familiarization.
+
+Recently completed:
+- Added `docs/interview-runbook.md` with SmartKB 30-second/2-minute pitches, 5-minute demo path, failure fallback, high-frequency questions, and no-overclaim boundaries.
+- Added the runbook to README documentation navigation.
+- Added workspace-level `INTERVIEW_STUDY_PLAN.md` at `E:\project\work\job\INTERVIEW_STUDY_PLAN.md` to coordinate SmartKB and TicketRush study order.
+
+Workspace status:
+- Check with `git status --short --branch`.
+- Latest intended scope is documentation-only interview preparation.
+
+Verified latest:
+- Markdown links in `README.md` and `docs/interview-runbook.md`: passed.
+- `git diff --check`: passed with LF/CRLF warnings only.
+- With JDK 21: `mvn test`: 106 tests passed.
+- `node --check .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=interview-prep-smoke"`: passed; takeover report rows `6`, Project Intake metrics `3,2,1,0`, AgentTask metrics `4,2,1,1`, Code Context metrics `2,1,1,yes`, Eval metrics `3,1,1,1`, no 390px overflow.
+- Docker runtime health: `http://localhost:8082/actuator/health` returned `UP` for db, redis, diskSpace, and ping.
+
+Next step only:
+- Commit and push this documentation-only interview-prep slice, then stop. Do not expand features.
+
+## Previous Snapshot - 2026-06-18 Project Intake Closeout
 
 Current goal:
 - Keep SmartKB stable as a local demoable Java 21 + Spring AI RAG project and close the final Project Intake frontend takeover-report polish.
