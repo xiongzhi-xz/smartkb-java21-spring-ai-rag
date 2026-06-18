@@ -159,14 +159,16 @@ Content-Type: application/json
 
 | 字段 | 来源优先级 | 说明 |
 | --- | --- | --- |
-| `currentGoal` | `HANDOFF.md` > `SPEC.md` > `README.md` | 当前项目目标 |
-| `currentStage` | `HANDOFF.md` > `SPEC.md` | 当前阶段 |
-| `completed` | `HANDOFF.md` + `SPEC.md` 已完成勾选 | 已完成能力 |
-| `unfinished` | `HANDOFF.md` 未验证/下一步 + `SPEC.md` 未完成勾选 | 待办列表 |
+| `currentGoal` | `HANDOFF.md` `Latest Snapshot` > `HANDOFF.md` > `SPEC.md` > `README.md` | 当前项目目标 |
+| `currentStage` | `HANDOFF.md` `Latest Snapshot` > `HANDOFF.md` > `SPEC.md` | 当前阶段 |
+| `completed` | `HANDOFF.md` `Latest Snapshot` + `HANDOFF.md` + `SPEC.md` 已完成勾选 | 已完成能力 |
+| `unfinished` | `HANDOFF.md` `Latest Snapshot` / 未验证 / 下一步 + `SPEC.md` 未完成勾选 | 待办列表 |
 | `workingTree` | Git 命令 | 工作区和最近提交 |
 | `risks` | `HANDOFF.md` 风险 + 安全规则 + Git 状态 | 接管风险 |
-| `nextStepOnly` | 未完成任务优先级 | 下一步只做一件事 |
+| `nextStepOnly` | `HANDOFF.md` `Latest Snapshot` > 未完成任务优先级 | 下一步只做一件事 |
 | `evidence` | 文件路径/命令 | 每个关键结论必须可追溯 |
+
+`Latest Snapshot` 支持的英文 label：`Current goal:`、`Current stage:`、`Recently completed:`、`Next step only:`。这些字段用于覆盖下方历史 work log 中已经过期的“当前”描述。
 
 ## 6. 读取白名单
 

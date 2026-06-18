@@ -1318,6 +1318,7 @@ Modified files:
 Verified:
 - Documentation-only change; no application tests required.
 - `git diff --check`: passed with CRLF warnings only.
+- `git diff --check`: passed with CRLF warnings only.
 
 ## 2026-06-18 Work Log - Project Intake Latest Snapshot Parsing
 
@@ -1340,6 +1341,23 @@ Modified files:
 Verified:
 - `mvn "-Dtest=ProjectIntakeServiceTest,ProjectIntakeTextExtractorTest" test`: 8 tests passed.
 - `mvn test`: 106 tests passed.
+- `git diff --check`: passed with CRLF warnings only.
+
+## 2026-06-18 Work Log - Project Intake Design Sync
+
+Current goal:
+- Keep Project Intake API design documentation aligned with Latest Snapshot parsing behavior.
+
+Completed:
+- Updated `docs/PROJECT_INTAKE_API_DESIGN.md` output field contract to list `HANDOFF.md` `Latest Snapshot` as the highest-priority source.
+- Documented supported labels: `Current goal:`, `Current stage:`, `Recently completed:`, and `Next step only:`.
+
+Modified files:
+- `docs/PROJECT_INTAKE_API_DESIGN.md`
+- `HANDOFF.md`
+
+Verified:
+- Documentation-only change; no application tests required.
 - `git diff --check`: passed with CRLF warnings only.
 
 ## 2026-06-18 Work Log - Agent Platform Next Step Refresh
