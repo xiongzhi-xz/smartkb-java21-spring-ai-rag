@@ -3,6 +3,8 @@ package com.smartkb.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.PgVectorStore;
+import org.springframework.ai.vectorstore.PgVectorStore.PgDistanceType;
+import org.springframework.ai.vectorstore.PgVectorStore.PgIndexType;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -66,7 +68,15 @@ public class VectorStoreConfig {
         log.info("初始化 PgVectorStore (期望维度: {})...", expectedDimensions);
         checkDimensionCompatibility();
 
-        PgVectorStore vectorStore = new PgVectorStore(jdbcTemplate, embeddingModel);
+        PgVectorStore vectorStore = new PgVectorStore(
+                jdbcTemplate,
+                embeddingModel,
+                expectedDimensions,
+                PgDistanceType.COSINE_DISTANCE,
+                false,
+                PgIndexType.HNSW,
+                true
+        );
 
         log.info("PgVectorStore 初始化完成");
         return vectorStore;
