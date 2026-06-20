@@ -3,8 +3,10 @@ package com.smartkb.service;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -72,5 +74,22 @@ class DocumentLoaderServiceTest {
         assertTrue(chunks.size() > 0, "批量加载应该返回文档块");
 
         System.out.println("测试通过: 批量加载文档块数量 = " + chunks.size());
+    }
+
+    @Test
+    void testLoadAndSplitDocument_LongTextUsesEmbeddingSafeChunks() {
+        String content = "标题\n\n" + "这是一个很长的 PDF 提取段落，没有足够自然断点，容易超过本地 Embedding 模型上下文。".repeat(260);
+        Resource resource = new ByteArrayResource(content.getBytes(StandardCharsets.UTF_8)) {
+            @Override
+            public String getFilename() {
+                return "long-text.md";
+            }
+        };
+
+        List<Document> chunks = documentLoaderService.loadAndSplitDocument(resource, "md");
+
+        assertTrue(chunks.size() > 1, "长文本应该被切成多个安全片段");
+        assertTrue(chunks.stream().allMatch(chunk -> chunk.getContent().length() <= 1500),
+                "每个片段都应该低于 Ollama Embedding 安全字符长度");
     }
 }

@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -37,13 +39,23 @@ import java.util.stream.Collectors;
 @Service
 public class DocumentLoaderService {
 
-    private static final int DEFAULT_CHUNK_SIZE = 800;      // Token数量（约600-800个中文字符）
-    private static final int DEFAULT_CHUNK_OVERLAP = 100;   // 重叠部分，避免语义截断
+    private static final int DEFAULT_CHUNK_SIZE = 500;
+    private static final int MIN_CHUNK_SIZE_CHARS = 200;
+    private static final int MIN_CHUNK_LENGTH_TO_EMBED = 5;
+    private static final int MAX_NUM_CHUNKS = 10000;
+    private static final int MAX_EMBEDDING_CHUNK_CHARS = 1500;
+    private static final int SAFE_CHUNK_OVERLAP_CHARS = 120;
 
     private final TokenTextSplitter textSplitter;
 
     public DocumentLoaderService() {
-        this.textSplitter = new TokenTextSplitter();
+        this.textSplitter = new TokenTextSplitter(
+                DEFAULT_CHUNK_SIZE,
+                MIN_CHUNK_SIZE_CHARS,
+                MIN_CHUNK_LENGTH_TO_EMBED,
+                MAX_NUM_CHUNKS,
+                true
+        );
     }
 
     /**
@@ -69,7 +81,7 @@ public class DocumentLoaderService {
             VirtualThreadInspector.logThreadInfo("文档解析完成", "原始文档数: " + documents.size());
 
             // 2. 智能切片（TokenTextSplitter 会保留 metadata）
-            List<Document> chunks = textSplitter.apply(documents);
+            List<Document> chunks = ensureEmbeddingSafeChunks(textSplitter.apply(documents));
 
             log.info("文档切片完成: {} -> {} chunks", resource.getFilename(), chunks.size());
             VirtualThreadInspector.logThreadInfo("文档切片完成", "chunks: " + chunks.size());
@@ -168,5 +180,72 @@ public class DocumentLoaderService {
     private List<Document> loadGenericDocument(Resource resource) {
         TikaDocumentReader tikaReader = new TikaDocumentReader(resource);
         return tikaReader.get();
+    }
+
+    private List<Document> ensureEmbeddingSafeChunks(List<Document> chunks) {
+        List<Document> safeChunks = new ArrayList<>();
+        for (Document chunk : chunks) {
+            String content = chunk.getContent();
+            if (content == null || content.length() <= MAX_EMBEDDING_CHUNK_CHARS) {
+                safeChunks.add(chunk);
+                continue;
+            }
+
+            List<String> parts = splitByCharacterLimit(content);
+            log.warn("文档片段超过 Embedding 安全长度，执行二次切片: {} chars -> {} parts",
+                    content.length(), parts.size());
+            for (int i = 0; i < parts.size(); i++) {
+                HashMap<String, Object> metadata = new HashMap<>(chunk.getMetadata());
+                metadata.put("parentChunkId", chunk.getId());
+                metadata.put("subChunkIndex", i);
+                metadata.put("subChunkCount", parts.size());
+                safeChunks.add(new Document(parts.get(i), metadata));
+            }
+        }
+        return safeChunks;
+    }
+
+    private List<String> splitByCharacterLimit(String content) {
+        List<String> parts = new ArrayList<>();
+        int start = 0;
+        while (start < content.length()) {
+            int end = Math.min(start + MAX_EMBEDDING_CHUNK_CHARS, content.length());
+            end = moveBeforeLowSurrogate(content, end);
+            int boundary = findNaturalBoundary(content, start, end);
+            String part = content.substring(start, boundary).trim();
+            if (!part.isEmpty()) {
+                parts.add(part);
+            }
+
+            if (boundary >= content.length()) {
+                break;
+            }
+
+            start = Math.max(boundary - SAFE_CHUNK_OVERLAP_CHARS, start + 1);
+            start = moveBeforeLowSurrogate(content, start);
+        }
+        return parts;
+    }
+
+    private int findNaturalBoundary(String content, int start, int end) {
+        if (end >= content.length()) {
+            return content.length();
+        }
+
+        int minBoundary = start + Math.min(MIN_CHUNK_SIZE_CHARS, Math.max(1, end - start));
+        for (int i = end; i > minBoundary; i--) {
+            char c = content.charAt(i - 1);
+            if (c == '\n' || c == '。' || c == '！' || c == '？' || c == '.' || c == '!' || c == '?') {
+                return i;
+            }
+        }
+        return end;
+    }
+
+    private int moveBeforeLowSurrogate(String content, int index) {
+        if (index > 0 && index < content.length() && Character.isLowSurrogate(content.charAt(index))) {
+            return index - 1;
+        }
+        return index;
     }
 }

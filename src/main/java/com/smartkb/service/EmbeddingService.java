@@ -44,7 +44,7 @@ public class EmbeddingService {
         this.embeddingModel = embeddingModel;
     }
 
-    private static final int BATCH_SIZE = 10;  // 每批次处理的文档数量（避免单个请求过大）
+    private static final int BATCH_SIZE = 1;  // Ollama Embedding 对批次总输入长度敏感，单条请求最稳
 
     /**
      * 为单个文本生成 Embedding 向量
@@ -74,7 +74,7 @@ public class EmbeddingService {
      * <p>
      * 性能对比：
      * - 串行处理 100 个文档（每个 500ms）：50 秒
-     * - Virtual Threads 并发 10 批（每批 10 个）：约 5 秒
+     * - Virtual Threads 并发多个单条请求，避免本地 Ollama 批次总输入超过上下文窗口
      *
      * @param documents 文档列表（Document 包含 content + metadata）
      * @return 文档列表（已填充 embedding 字段）
