@@ -166,7 +166,7 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);
-        response.put("error", "文件大小超过限制（最大 10MB）");
+        response.put("error", "文件大小超过限制（最大 50MB）");
         response.put("code", "FILE_TOO_LARGE");
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);

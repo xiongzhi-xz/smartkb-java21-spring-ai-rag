@@ -64,6 +64,11 @@ spring:
         remove-existing-vector-store-table: false
         initialize-schema: true
 
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
 # 服务器配置
 server:
   port: 8080
