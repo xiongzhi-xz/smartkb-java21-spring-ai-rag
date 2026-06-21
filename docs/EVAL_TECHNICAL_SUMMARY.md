@@ -1,6 +1,6 @@
 # Eval Technical Summary
 
-## 30-second Version
+## Quick Version
 
 SmartKB v2 uses TicketRush as a real Java project sample to evaluate whether the Agent can work in an engineering context, not just answer knowledge-base questions. Each eval run records the case id, status, score, verification commands, evidence paths, duration, tool calls, and human interventions. The report API then aggregates success rate, score rate, failure reasons, and latest case status, so I can explain both what worked and what failed without beautifying the result.
 

@@ -219,7 +219,7 @@ String answer = chatClient.prompt()
 
 ---
 
-## 技术交流时如何引用
+## 项目说明引用方式
 
 **常见问题：你做过什么项目？**
 

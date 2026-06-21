@@ -15,7 +15,7 @@
 - ✅ `feat: 支持 advanced rag 分阶段反馈`：Advanced 模式现在通过 SSE 展示查询改写、混合检索、过滤、重排序和生成阶段。
 - ✅ `feat: 增加 advanced rag 耗时观测`：Advanced RAG 返回改写、召回、过滤、重排序、生成和总耗时，页面可直接看到慢在哪个阶段。
 
-### 明天继续前必须做
+### 继续前必须做
 - [ ] 在 IDEA 中重启 Spring Boot，让最新代码生效。
 - [ ] 删除修复前上传过的旧 `advanced-rag-demo.md`。
 - [ ] 重新上传 `test-docs/advanced-rag-demo.md`。
@@ -60,7 +60,7 @@
 - ✅ 文档详情窗口宽度调整
 - ✅ 对话界面（问答交互）
 - ✅ 对话模式流式输出（SSE 增量显示）
-- ✅ 前端会话 ID 持久化（支持连续技术问题和新会话）
+- ✅ 前端会话 ID 持久化（支持连续设计问题和新会话）
 - ✅ Advanced RAG 模式切换与按文档过滤
 - ✅ Advanced RAG 改写查询、命中片段数、来源文档与引用片段展示
 - ✅ 引用片段点击后定位到文档详情中的对应 chunk
@@ -244,7 +244,7 @@ DELETE FROM vector_store;
 2. **测试多轮对话功能**：
    - 浏览器访问：http://localhost:8080
    - 提问："Java 21 Virtual Threads 适合解决什么问题？"
-   - 继续技术问题："它和传统线程池相比有什么优势？"
+   - 继续设计问题："它和传统线程池相比有什么优势？"
    - 观察右上角会话 ID 是否保持不变
 
 3. **验证 Advanced RAG 引用片段**：

@@ -33,7 +33,7 @@ Current stage:
 - GitHub presentation has been tightened with a top README showcase entry and a dedicated showcase note.
 
 Recently completed:
-- Added `docs/github-showcase.md` with 30-second highlights, recommended browsing order, local demo entry points, verification evidence, project summary wording, and no-overclaim boundaries.
+- Added `docs/github-showcase.md` with quick highlights, recommended browsing order, local demo entry points, verification evidence, project summary wording, and no-overclaim boundaries.
 - Added a `GitHub 展示入口` section near the top of `README.md`.
 - Linked the showcase note from README documentation navigation.
 - Marked the showcase note complete in `SPEC.md`.
@@ -61,7 +61,7 @@ Current stage:
 - Demo materials are now prepared for tomorrow's familiarization.
 
 Recently completed:
-- Added `docs/demo-runbook.md` with SmartKB 30-second/2-minute pitches, 5-minute demo path, fallback demo path, high-frequency questions, and no-overclaim boundaries.
+- Added `docs/demo-runbook.md` with SmartKB project overview notes, 5-minute demo path, fallback demo path, high-frequency questions, and no-overclaim boundaries.
 - Added the runbook to README documentation navigation.
 - Added workspace-level `INTERVIEW_STUDY_PLAN.md` at `E:\project\work\job\INTERVIEW_STUDY_PLAN.md` to coordinate SmartKB and TicketRush study order.
 
@@ -147,7 +147,7 @@ Next step:
 
 ## 当前目标
 
-把 SmartKB 收口为可本地运行、可演示、可技术讲解的 Java 21 + Spring AI RAG 项目，并作为后续 AI 工程化转型主项目继续升级。
+把 SmartKB 收口为可本地运行、可演示、可设计说明的 Java 21 + Spring AI RAG 项目，并作为后续 AI 工程化转型主项目继续升级。
 
 新的求职叙事方向：
 

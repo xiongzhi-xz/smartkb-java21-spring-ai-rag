@@ -1,8 +1,8 @@
 # SmartKB GitHub 展示说明
 
-这份说明用于技术读者或技术评审者快速判断 SmartKB 的展示重点。它不是新功能清单，也不替代 README。
+这份说明用于技术读者快速判断 SmartKB 的展示重点。它不是新功能清单，也不替代 README。
 
-## 30 秒看点
+## 快速看点
 
 - Java 21 + Spring Boot + Spring AI 的 Advanced RAG 工程闭环。
 - PostgreSQL + pgvector 做向量存储，Ollama 提供本地 Embedding。
@@ -14,7 +14,7 @@
 
 1. [README.md](../README.md)：先看项目定位、架构图、启动方式、验证状态。
 2. [DEMO.md](../DEMO.md)：按 5 分钟路径走完整演示。
-3. [docs/demo-runbook.md](demo-runbook.md)：看技术讲解、技术问题和替代路径。
+3. [docs/demo-runbook.md](demo-runbook.md)：看设计说明、设计取舍和替代路径。
 4. [SPEC.md](../SPEC.md)：看已完成范围、验收记录和不继续扩展的边界。
 5. [docs/AGENT_PLATFORM_SPEC.md](AGENT_PLATFORM_SPEC.md)：看 SmartKB v2 Agent 平台设计。
 
@@ -54,7 +54,7 @@ test-docs/advanced-rag-demo.md
 - Project Intake、AgentTask、Memory、Code Context、Eval 的摘要指标和移动端交互 smoke 已覆盖。
 - K3s demo manifest 已在一次性 K3d 集群验证 Pod、PVC、health 和 Eval report API。
 
-## 项目摘要表达
+## 项目摘要
 
 ```text
 SmartKB：基于 Java 21 + Spring AI 的企业知识库与 Agent 工程平台，完成文档上传、pgvector 检索、Advanced RAG、Redis 会话记忆、流式问答、Prometheus/Grafana 监控，并扩展项目接管、任务状态、记忆分层、代码上下文和 Eval 评测工作台。

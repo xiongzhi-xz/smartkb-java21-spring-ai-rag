@@ -9,9 +9,9 @@ SmartKB 的第一阶段是一个可运行、可演示、可监控的 Advanced RA
 如果你是第一次打开这个仓库，建议先按这个顺序看：
 
 1. 本页的“项目亮点”“架构图”“快速启动”“演示路径”和“验证状态”。
-2. [docs/github-showcase.md](docs/github-showcase.md)：30 秒展示摘要、推荐浏览顺序、项目摘要表达和边界说明。
+2. [docs/github-showcase.md](docs/github-showcase.md)：快速展示摘要、推荐浏览顺序、项目摘要和边界说明。
 3. [DEMO.md](DEMO.md)：本地 5 分钟演示路径。
-4. [docs/demo-runbook.md](docs/demo-runbook.md)：技术讲解、技术问题和替代路径。
+4. [docs/demo-runbook.md](docs/demo-runbook.md)：设计说明、设计取舍和替代路径。
 
 展示边界：SmartKB 是本地可运行、可演示、可解释的 Java 21 + Spring AI RAG / Agent 工程项目，不声称已经生产商用；生产级 HA、TLS、托管 Secret 和完整多 Agent OS 不在当前范围。
 ## 项目亮点
@@ -261,15 +261,15 @@ src/main/java/com/smartkb
 └── util                  # Virtual Thread 诊断工具
 ```
 
-## 技术讲解
+## 设计说明
 
-30 秒版：
+项目概览：
 
 ```text
 SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，第一阶段完成了 Advanced RAG 工程闭环：文档上传、Ollama Embedding、pgvector 检索、Redis 会话记忆、流式问答和 Prometheus/Grafana 监控。第二阶段我把它升级成 Java 项目的 Agent 工程平台，能接管真实项目目录，做任务状态流转、记忆分层、代码上下文检索和 Eval 评测。我用 TicketRush 这个高并发票务项目作为真实样本来验证它。
 ```
 
-常见技术问题：
+设计取舍：
 
 - 为什么 Redis ChatMemory 比 InMemoryChatMemory 更适合演示分布式和重启恢复？
 - Advanced RAG 中查询改写、过滤和重排序分别解决什么问题？
@@ -277,7 +277,7 @@ SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，第一阶段完
 - 如何用 Eval Run 证明 Agent 能稳定接管真实 Java 项目？
 - Java 21 Virtual Threads 在文档解析、Embedding、数据库访问和模型调用这类 IO 密集场景中的价值是什么？
 
-更完整讲法见 [docs/EVAL_TECHNICAL_SUMMARY.md](docs/EVAL_TECHNICAL_SUMMARY.md) 和 [SPEC.md](SPEC.md)。
+更完整说明方式见 [docs/EVAL_TECHNICAL_SUMMARY.md](docs/EVAL_TECHNICAL_SUMMARY.md) 和 [SPEC.md](SPEC.md)。
 
 ## 文档导航
 
@@ -285,10 +285,10 @@ SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，第一阶段完
 | --- | --- |
 | [STARTUP.md](STARTUP.md) | 本地启动指南 |
 | [DEMO.md](DEMO.md) | 5 分钟演示脚本 |
-| [docs/github-showcase.md](docs/github-showcase.md) | GitHub 展示摘要、浏览顺序和项目摘要表达 |
-| [docs/demo-runbook.md](docs/demo-runbook.md) | 演示 Runbook、常见技术问题和替代路径 |
+| [docs/github-showcase.md](docs/github-showcase.md) | GitHub 展示摘要、浏览顺序和项目摘要 |
+| [docs/demo-runbook.md](docs/demo-runbook.md) | 演示 Runbook、设计取舍和替代路径 |
 | [TESTING.md](TESTING.md) | 测试指南 |
-| [SPEC.md](SPEC.md) | 当前规格、进度和技术讲解 |
+| [SPEC.md](SPEC.md) | 当前规格、进度和设计说明 |
 | [docs/AGENT_PLATFORM_SPEC.md](docs/AGENT_PLATFORM_SPEC.md) | SmartKB v2 Agent 平台规格 |
 | [docs/REDIS_CHAT_MEMORY_VERIFICATION.md](docs/REDIS_CHAT_MEMORY_VERIFICATION.md) | Redis 会话记忆验证记录 |
 | [docs/PROJECT_INTAKE_API_DESIGN.md](docs/PROJECT_INTAKE_API_DESIGN.md) | Project Intake 设计 |
