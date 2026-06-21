@@ -73,11 +73,17 @@ flowchart LR
 
 ## 界面截图
 
-| 智能问答工作台 | Project Intake 接管报告 | Eval 评测报告 |
-| --- | --- | --- |
-| ![SmartKB 智能问答工作台](docs/screenshots/smartkb-workbench-chat.png) | ![SmartKB Project Intake 接管报告](docs/screenshots/smartkb-project-intake.png) | ![SmartKB Eval 评测报告](docs/screenshots/smartkb-eval-report.png) |
+| 步骤 | 桌面横屏截图 |
+| --- | --- |
+| 1. 工作台总览 | ![SmartKB 工作台总览](docs/screenshots/desktop/smartkb-01-workbench-overview.png) |
+| 2. Advanced RAG 问答 | ![SmartKB Advanced RAG 问答](docs/screenshots/desktop/smartkb-02-advanced-rag.png) |
+| 3. Project Intake 接管报告 | ![SmartKB Project Intake 接管报告](docs/screenshots/desktop/smartkb-03-project-intake.png) |
+| 4. Agent Task 状态流转 | ![SmartKB Agent Task 状态流转](docs/screenshots/desktop/smartkb-04-agent-task.png) |
+| 5. Memory 分层记忆 | ![SmartKB Memory 分层记忆](docs/screenshots/desktop/smartkb-05-memory.png) |
+| 6. Code Context 检索 | ![SmartKB Code Context 检索](docs/screenshots/desktop/smartkb-06-code-context.png) |
+| 7. Eval 评测报告 | ![SmartKB Eval 评测报告](docs/screenshots/desktop/smartkb-07-eval-report.png) |
 
-截图来自本地浏览器 smoke 过程，覆盖移动视口下的 RAG 工作台、项目接管和 Eval 评测页面。
+截图为 `1440x900` 桌面横屏视口，覆盖本地演示路径中的 RAG 工作台、项目接管、任务状态、记忆层、代码上下文和 Eval 评测步骤。
 
 ## 功能清单
 

@@ -1,25 +1,30 @@
 # HANDOFF - SmartKB
 
-## Latest Snapshot - 2026-06-21 Screenshot Showcase
+## Latest Snapshot - 2026-06-21 Desktop Screenshot Showcase
 
 Current goal:
-- Add lightweight GitHub screenshot assets for SmartKB without changing product behavior.
+- Replace the GitHub README screenshots with desktop landscape screenshots that cover each local demo step.
 
 Current stage:
 - No feature work.
-- README now includes screenshots for the RAG workbench, Project Intake, and Eval pages.
+- README now references a 7-step `1440x900` desktop screenshot sequence.
 
 Recently completed:
-- Added `docs/screenshots/smartkb-workbench-chat.png`.
-- Added `docs/screenshots/smartkb-project-intake.png`.
-- Added `docs/screenshots/smartkb-eval-report.png`.
-- Added a README `界面截图` section and marked the screenshot slice in `SPEC.md`.
+- Added `docs/screenshots/desktop/smartkb-01-workbench-overview.png`.
+- Added `docs/screenshots/desktop/smartkb-02-advanced-rag.png`.
+- Added `docs/screenshots/desktop/smartkb-03-project-intake.png`.
+- Added `docs/screenshots/desktop/smartkb-04-agent-task.png`.
+- Added `docs/screenshots/desktop/smartkb-05-memory.png`.
+- Added `docs/screenshots/desktop/smartkb-06-code-context.png`.
+- Added `docs/screenshots/desktop/smartkb-07-eval-report.png`.
+- Updated README `界面截图` to show the desktop step sequence.
+- Updated `SPEC.md` screenshot progress wording.
 
 Verified latest:
-- Image dimension check for `docs/screenshots/*.png`: passed.
+- Image dimension check for `docs/screenshots/desktop/*.png`: all screenshots are `1440x900`.
 - Public wording scan across `README.md`, `SPEC.md`, `HANDOFF.md`, `DEMO.md`, and `docs`: no matches for private-prep phrasing.
 - All Markdown links across the repository: passed.
-- `git diff --check`: passed with LF/CRLF warnings only.
+- `git diff --check`: passed with line-ending warnings only.
 
 Next step only:
 - Run docs checks, commit, push, then stop. Do not expand features.
