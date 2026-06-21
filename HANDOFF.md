@@ -1,5 +1,28 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-21 Root Demo Expansion
+
+Current goal:
+- Keep SmartKB GitHub demo materials aligned with the actual product surface: RAG knowledge base plus Agent engineering platform.
+
+Current stage:
+- No feature work.
+- Root `DEMO.md` has been expanded from a RAG-only walkthrough to a two-layer demo path.
+
+Recently completed:
+- Rewrote `DEMO.md` to cover the full workbench: intelligent Q&A, Project Intake, AgentTask, Memory, Code Context, and Eval.
+- Added the recommended TicketRush project path for Project Intake.
+- Added API verification entries for both RAG and Agent platform endpoints.
+- Kept wording public and technical, without private prep phrasing.
+
+Verified latest:
+- Public wording scan across `README.md`, `SPEC.md`, `HANDOFF.md`, `DEMO.md`, and `docs`: no matches for private-prep phrasing.
+- All Markdown links across the repository: passed.
+- `git diff --check`: passed with LF/CRLF warnings only.
+
+Next step only:
+- Run docs checks, commit, push, then stop. Do not expand features.
+
 ## Latest Snapshot - 2026-06-21 Public Wording Cleanup
 
 Current goal:

@@ -1,64 +1,82 @@
 # SmartKB 5 分钟演示脚本
 
-这份脚本用于项目说明、项目展示或自测。目标是稳定展示 SmartKB 的核心价值：企业知识库文档上传、向量化、RAG 问答、文档片段查看，以及 Java 21 Virtual Threads 的工程亮点。
+这份脚本用于项目展示或自测。SmartKB 不只是“上传文档后提问”的知识库 demo，而是分成两层：
+
+```text
+RAG 知识库：文档上传 -> 切片 -> Embedding -> pgvector -> Advanced RAG -> 引用片段
+Agent 工程平台：项目接管 -> 任务状态 -> 记忆分层 -> 代码上下文 -> Eval 评测
+```
 
 ## 演示前检查
 
-按 [STARTUP.md](STARTUP.md) 启动项目后，确认：
+Docker Compose 模式推荐：
 
 ```powershell
-Invoke-RestMethod http://localhost:8080/actuator/health
+docker compose up -d
+Invoke-RestMethod http://localhost:8082/actuator/health
 ```
 
-浏览器打开：
+打开页面：
 
 ```text
-http://localhost:8080
+http://localhost:8082
 ```
 
-建议准备测试文档：
+Hybrid 本地开发模式：
+
+```powershell
+docker compose -f docker-compose-minimal.yml up -d
+ollama list
+```
+
+IDEA 启动：
+
+```text
+Active profiles: hybrid
+Main class: com.smartkb.SmartKbApplication
+Page: http://localhost:8080
+```
+
+注意：Active profiles 只填 `hybrid`，不要把 API key 写到 profiles 里。
+
+## 演示材料
+
+RAG 推荐文档：
 
 ```text
 test-docs/advanced-rag-demo.md
 ```
 
-轻量烟测可用 `test-docs/virtual-threads-guide.md`，但它通常只有 1 个片段，不适合展示 Advanced RAG 的引用片段效果。
-
-## 讲解开场
-
-建议说明：
+Agent 推荐接管项目，Docker 模式路径：
 
 ```text
-SmartKB 是一个企业级智能知识库预研项目，核心目标是把 RAG 从概念落到可运行的 Java 工程里。
-它使用 Java 21 Virtual Threads 提升 IO 密集型任务并发能力，使用 Spring AI 组织 RAG 链路，
-用 PostgreSQL + pgvector 存储向量，Embedding 走本地 Ollama，Chat 走 OpenAI 兼容中转站。
+/workspace/projects/ticketrush-java21-high-concurrency
 ```
 
-重点说明清楚当前架构：
+本机开发路径按实际仓库位置填写，例如：
 
 ```text
-文档上传 -> 文档解析/切片 -> Ollama Embedding -> pgvector 存储 -> 相似度检索 -> LLM 生成答案
+E:\project\work\job\ticketrush-java21-high-concurrency
 ```
 
-## 演示步骤
+## 5 分钟主路径
 
-### 1. 展示首页
+### 1. 打开工作台
 
-打开：
+打开 SmartKB 页面后，先确认工作台有多组入口：
 
-```text
-http://localhost:8080
-```
+- 智能问答
+- 项目接管
+- 任务状态
+- 记忆层
+- 代码上下文
+- Eval 评测
 
-说明：
+说明重点：SmartKB 第一层是 RAG 知识库，第二层是面向 Java 存量项目的 Agent 工程平台。
 
-- 左侧是文档管理
-- 右侧是知识库问答
-- 底部显示 Virtual Threads 已启用
+### 2. RAG 知识库：上传和切片
 
-### 2. 上传文档
-
-点击 `上传文档`，选择：
+在“智能问答”区域上传：
 
 ```text
 test-docs/advanced-rag-demo.md
@@ -66,221 +84,131 @@ test-docs/advanced-rag-demo.md
 
 观察：
 
-- 左侧出现上传中状态
-- 上传成功后显示生成的向量块数量
-- 文档列表自动刷新
+- 文档上传成功
+- 文档列表刷新
+- 详情里可以看到 chunk 文本
+- chunk 可用于后续引用片段追溯
 
-建议说明：
+设计说明：上传后，后端会完成文档解析、切片、Embedding 生成和 pgvector 入库。文档处理、数据库访问、Embedding 调用和模型调用都偏 IO 密集，适合 Java 21 Virtual Threads。
 
-```text
-上传后，后端会完成文档解析、切片、Embedding 生成和 pgvector 入库。
-这里的文档处理和请求线程都可以受益于 Java 21 Virtual Threads，因为它们主要是 IO 密集任务。
-```
+### 3. RAG 知识库：普通问答和 Advanced RAG
 
-### 3. 查看文档片段
-
-点击左侧已上传文档。
-
-展示：
-
-- 右侧详情抽屉
-- chunk 数量
-- 每个 chunk 的文本内容
-- 拖动详情窗口左边缘调整宽度
-
-建议说明：
-
-```text
-这里展示的是进入向量库的实际片段。RAG 系统的效果很依赖切片质量，所以我把 chunk 详情做成可视化，
-方便调试检索质量，而不是只把文档上传当成黑盒。
-```
-
-### 4. 知识库问答
-
-在输入框提问：
+普通问答示例：
 
 ```text
 Java 21 Virtual Threads 适合解决什么问题？
 ```
 
-预期答案应围绕：
-
-- 高并发
-- IO 密集场景
-- 同步代码风格
-- 文档解析、Embedding、数据库访问等 AI 工程场景
-
-建议设计问题：
-
-```text
-它在 AI 应用中有什么实际价值？
-```
-
-```text
-Virtual Threads 和传统线程池相比有什么优势？
-```
-
-继续设计问题时，页面会复用当前会话 ID 调用 `/api/chat/conversation`，用于展示多轮上下文能力。点击右上角 `新会话` 会清空当前 conversationId。
-
-对话模式会调用 `/api/chat/conversation/stream`，回答会以流式方式逐段显示；如果模型响应慢，页面也会先展示“正在结合会话上下文检索并生成回答...”。
-
-建议说明：
-
-```text
-这个回答不是普通聊天，而是先从 pgvector 检索相关文档片段，再把上下文注入给模型生成答案。
-```
-
-### 5. Advanced RAG 文档过滤
-
-在页面右上角切到 `Advanced`，下拉选择已上传文档，继续提问：
-
-```text
-这份文档里提到 Virtual Threads 的核心价值是什么？
-```
-
-建议继续验证两个 Advanced RAG 专用问题：
+Advanced RAG 示例：切换 Advanced 模式，选择刚上传的文档，依次提问：
 
 ```text
 查询改写在 Advanced RAG 中解决什么问题？
-```
-
-预期引用片段应命中第 7 节附近，片段中能看到：
-
-```text
-查询改写是 Advanced RAG 的第一步
-```
-
-```text
 为什么引用片段能提升 RAG 系统可信度？
 ```
 
-预期引用片段应命中第 11 节附近，片段中能看到：
+观察：
+
+- 普通问答支持流式输出
+- Advanced RAG 展示查询改写、检索、过滤、重排序、生成等阶段
+- 回答下方可以展开引用片段
+- 引用片段可以定位到具体 chunk
+
+设计说明：Advanced RAG 不只是把问题丢给模型，而是通过查询改写、双路召回、文档过滤、重排序和引用片段增强回答的可追溯性。
+
+### 4. Agent 工程平台：项目接管
+
+切到“项目接管”，输入 TicketRush 项目路径。
+
+Docker 模式：
 
 ```text
-SmartKB 在 Advanced 模式中返回引用片段
+/workspace/projects/ticketrush-java21-high-concurrency
 ```
 
-观察后端日志：
+运行 Project Intake 后观察：
 
-- `步骤 1: 查询改写`
-- `步骤 2: 向量检索`
-- `步骤 3: 元数据过滤校验`
-- `步骤 4: 结果重排序`
+- 当前目标
+- 当前阶段
+- 已完成
+- 未完成
+- 工作区状态
+- 下一步只做
+- 技术栈、可运行命令、验证缺口和风险提示
 
-页面回答下方会显示命中片段数、改写后的查询、参考来源，并提供 `查看引用片段` 折叠区。
+设计说明：项目接管优先读取 README、SPEC、AGENTS、HANDOFF、pom.xml、Git 状态和目录结构，用确定性上下文生成接管报告，不只依赖向量检索。
 
-建议说明：
+### 5. Agent 工程平台：任务、记忆、代码上下文、Eval
+
+继续切换工作区：
+
+- “任务状态”：展示 AgentTask 从 `INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD` 的状态流转。
+- “记忆层”：展示高权威记忆来自 SPEC/HANDOFF，低权威记忆不能覆盖高权威约束。
+- “代码上下文”：展示文件树、关键词检索、Git diff 和代码 chunk；语义检索只做补充。
+- “Eval 评测”：展示 TicketRush E01-E10 样本和聚合报告，用于记录接管能力、失败原因、得分和人工介入次数。
+
+设计说明：这一层把 SmartKB 从“知识库问答”扩展到“可接管真实 Java 项目的工程辅助平台”。
+
+## API 验证入口
+
+文档与问答：
 
 ```text
-Advanced RAG 不是只把改写后的问题拿去检索，而是同时召回原始问题和改写问题，再限定检索范围，最后对结果重排序。
-这个入口方便演示指定文档范围内的高精度问答，而且答案能展开追溯到具体 chunk 片段。
+POST /api/documents/upload
+GET  /api/documents
+POST /api/chat/conversation/stream
+POST /api/chat/advanced/stream
+DELETE /api/chat/memory/{conversationId}
 ```
 
-### 6. 展示后端验证接口
+Agent 平台：
 
-可选，用于证明 RAG 链路不是只靠前端：
+```text
+POST /api/agent/projects/intake
+POST /api/agent/tasks
+POST /api/agent/tasks/{id}/transition
+GET  /api/agent/memories
+POST /api/agent/code/search
+POST /api/agent/code/diff
+POST /api/agent/code/semantic
+POST /api/agent/eval/runs
+GET  /api/agent/eval/report
+```
+
+## 环境不完整时的替代路径
+
+- Chat API key 不可用：跳过 RAG 生成，演示 Project Intake、AgentTask、Memory、Code Context、Eval。
+- Ollama Embedding 不可用：不现场上传新文档，改看已有文档和 Agent 工作台。
+- Docker 端口冲突：Docker 默认 `8082`，Hybrid 本地默认 `8080`。
+- 数据库里旧文档乱码：删除旧文档后重新上传 `test-docs/advanced-rag-demo.md`。
+
+## 设计取舍
+
+### 为什么不是纯聊天页面？
+
+企业知识库的关键不是让模型自由回答，而是把文档解析、切片、检索、引用片段、会话记忆和质量验证做成可解释的工程闭环。
+
+### 为什么 Agent 接管不只用向量检索？
+
+代码项目接管需要确定性证据。README、SPEC、AGENTS、HANDOFF、Git diff、文件树和 `rg` 结果更容易解释来源，向量检索适合作为语义补充。
+
+### Eval Run 的价值是什么？
+
+Eval Run 把“接管能力”记录成可比较的数据：每个 case 有状态、得分、失败原因、人工介入次数和聚合报告，后续改动可以回归验证。
+
+## 验证命令
 
 ```powershell
-Invoke-RestMethod `
-  -Uri http://localhost:8080/api/test/rag `
-  -Method Post `
-  -ContentType "application/json; charset=utf-8" `
-  -Body '{"question":"Java 21 Virtual Threads 适合解决什么问题？"}'
+mvn test
+node --check .\scripts\smoke\workbench-summary-smoke.mjs
+node .\scripts\smoke\workbench-summary-smoke.mjs
+git diff --check
 ```
 
-重点看：
-
-- `retrievedDocsCount`
-- `retrievedDocs`
-- `isVirtualThread`
-- `answer`
-
-## 技术亮点说明方式
-
-### Java 21 Virtual Threads
+完整设计和更多演示细节见：
 
 ```text
-项目里文档解析、Embedding、数据库查询和模型调用都是典型 IO 密集场景。
-Virtual Threads 让我可以保留同步代码风格，同时提升并发处理能力，避免传统线程池在阻塞 IO 下浪费平台线程。
-```
-
-### Spring AI Advisor
-
-```text
-Spring AI 的 Advisor 适合把检索、上下文注入、Prompt 组织这些横切逻辑工程化，
-避免所有 RAG 逻辑都散落在 Controller 或 Service 里。
-```
-
-### 混合模型架构
-
-```text
-Embedding 放本地 Ollama，降低成本并保护文档数据；Chat 走中转站模型，保证回答质量。
-这是一种适合个人预研和企业 PoC 的折中架构。
-```
-
-### pgvector
-
-```text
-PostgreSQL + pgvector 的好处是向量数据和业务元数据可以在同一个数据库里管理，
-对 Java 后端项目来说部署和运维成本比单独引入专用向量数据库更低。
-```
-
-## 常见演示问题
-
-### 回答慢
-
-说明：
-
-```text
-当前 Chat 走外部中转站，响应时间受模型和网络影响。RAG 检索本身一般较快，主要耗时在模型生成。
-```
-
-可以让问题更短：
-
-```text
-用 100 字说明 Virtual Threads 的优势。
-```
-
-### 文档列表为空
-
-先确认上传是否成功，或调用：
-
-```powershell
-Invoke-RestMethod http://localhost:8080/api/documents
-```
-
-### 详情窗口没有更新
-
-浏览器强刷：
-
-```text
-Ctrl + F5
-```
-
-### 文档详情或引用片段乱码
-
-说明数据库里仍是修复前上传的旧数据。先删除该文档，再重新上传：
-
-```powershell
-Invoke-RestMethod -Uri 'http://localhost:8080/api/documents/advanced-rag-demo.md' -Method Delete
-```
-
-然后重新上传：
-
-```text
-test-docs/advanced-rag-demo.md
-```
-
-### 端口冲突
-
-见 [STARTUP.md](STARTUP.md) 的 `8080 端口被占用` 章节。
-
-## 结束总结
-
-建议说明：
-
-```text
-这个项目目前已经完成基础 RAG 闭环和可演示前端。
-下一步会继续打磨 Hybrid Search、来源片段定位和性能压测数据，
-并补充更完整的可观测性和性能数据，让它从可运行项目进一步变成作品级工程案例。
+README.md
+docs/demo-runbook.md
+docs/AGENT_PLATFORM_SPEC.md
+docs/EVAL_TECHNICAL_SUMMARY.md
 ```
