@@ -4,6 +4,16 @@ Java 21 + Spring AI 企业智能知识库系统，已升级为面向 Java 存量
 
 SmartKB 的第一阶段是一个可运行、可演示、可监控的 Advanced RAG 知识库：文档上传、解析、切片、Embedding、pgvector 检索、多轮流式问答、引用片段和 Redis 会话记忆。第二阶段在此基础上扩展为 Agent 工程平台：项目接管、任务状态机、分层记忆、代码上下文检索和 Eval 评测。
 
+## GitHub 展示入口
+
+如果你是第一次打开这个仓库，建议先按这个顺序看：
+
+1. 本页的“项目亮点”“架构图”“快速启动”“演示路径”和“验证状态”。
+2. [docs/github-showcase.md](docs/github-showcase.md)：30 秒展示摘要、推荐浏览顺序、简历表达和边界说明。
+3. [DEMO.md](DEMO.md)：本地 5 分钟演示路径。
+4. [docs/interview-runbook.md](docs/interview-runbook.md)：面试讲法、追问点和兜底方案。
+
+展示边界：SmartKB 是本地可运行、可演示、可解释的 Java 21 + Spring AI RAG / Agent 工程项目，不声称已经生产商用；生产级 HA、TLS、托管 Secret 和完整多 Agent OS 不在当前范围。
 ## 项目亮点
 
 - **Advanced RAG 闭环**：文档上传、UTF-8 解析、切片、Ollama Embedding、pgvector 入库、Hybrid Search、查询改写、过滤、重排序和引用片段定位。
@@ -275,6 +285,7 @@ SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，第一阶段完
 | --- | --- |
 | [STARTUP.md](STARTUP.md) | 本地启动指南 |
 | [DEMO.md](DEMO.md) | 5 分钟演示脚本 |
+| [docs/github-showcase.md](docs/github-showcase.md) | GitHub 展示摘要、浏览顺序和简历表达 |
 | [docs/interview-runbook.md](docs/interview-runbook.md) | 面试演示 Runbook、追问答案和兜底方案 |
 | [TESTING.md](TESTING.md) | 测试指南 |
 | [SPEC.md](SPEC.md) | 当前规格、进度和面试讲法 |
