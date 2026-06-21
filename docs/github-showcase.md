@@ -7,6 +7,7 @@
 - Java 21 + Spring Boot + Spring AI 的 Advanced RAG 工程闭环。
 - PostgreSQL + pgvector 做向量存储，Ollama 提供本地 Embedding。
 - Redis ChatMemory 支持多轮会话持久化、TTL 和服务重启后的上下文恢复。
+- RAG 质量评测对比普通向量召回与 Advanced RAG 的命中率和引用片段覆盖。
 - README 展示聚焦 RAG 主链路；Agent 工程工作台保留为可选实验代码，首页默认隐藏入口，不作为主演示卖点。
 - Docker Compose、Prometheus/Grafana、K3s demo manifest 和测试记录都已落地。
 
@@ -47,9 +48,10 @@ test-docs/advanced-rag-demo.md
 
 ## 已验证证据
 
-- `mvn test`：106 tests passed。
+- `mvn test`：115 tests passed。
 - Docker Compose 运行态 health 已验证为 `UP`。
 - Redis ChatMemory live checklist：6/6 通过。
+- RAG Eval 默认中文用例、服务层统计和 Web API 结构已覆盖测试。
 - 工作台 browser smoke 覆盖桌面端和 390px 移动视口。
 - Project Intake、AgentTask、Memory、Code Context、Eval 的摘要指标和移动端交互 smoke 已覆盖，但这些属于可选工程工作台实验。
 - K3s demo manifest 已在一次性 K3d 集群验证 Pod、PVC、health 和 Eval report API。
@@ -57,7 +59,7 @@ test-docs/advanced-rag-demo.md
 ## 项目摘要
 
 ```text
-SmartKB：基于 Java 21 + Spring AI 的企业知识库项目，完成文档上传、pgvector 检索、Advanced RAG、Redis 会话记忆、流式问答、引用片段定位和 Prometheus/Grafana 监控；项目接管、任务状态、记忆分层、代码上下文和 Eval 作为可选工程工作台实验代码保留，但不占用首页演示入口。
+SmartKB：基于 Java 21 + Spring AI 的企业知识库项目，完成文档上传、pgvector 检索、Advanced RAG、Redis 会话记忆、流式问答、引用片段定位、RAG 质量评测和 Prometheus/Grafana 监控；项目接管、任务状态、记忆分层、代码上下文和 Eval 作为可选工程工作台实验代码保留，但不占用首页演示入口。
 ```
 
 ## 边界说明

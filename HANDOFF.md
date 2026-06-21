@@ -1,5 +1,42 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-21 RAG Quality Eval
+
+Current goal:
+- Deepen SmartKB around RAG quality proof instead of expanding optional Agent/workbench features.
+
+Current stage:
+- First RAG quality evaluation slice implemented.
+- Agent/workbench homepage entries remain hidden.
+- Hermes `run_demo_no_docker.sh` and `demo_flow.sh` remain untracked, not run, not committed.
+
+Recently completed:
+- Added `src/main/resources/rag-eval-cases.json` with 8 Chinese evaluation questions for `advanced-rag-demo.md`.
+- Added RAG Eval domain records: `RagEvalCase`, `RagEvalRequest`, `RagEvalCaseResult`, and `RagEvalReport`.
+- Added `AdvancedRagService.retrieveForEvaluation(...)` to run query rewrite, hybrid retrieval, filtering, and reranking without LLM answer generation.
+- Added `RagEvaluationService` to compare baseline vector retrieval with Advanced RAG retrieval and report hit rate, citation hit rate, and improvement count.
+- Added API endpoints:
+  - `GET /api/rag/eval/cases`
+  - `POST /api/rag/eval/run`
+  - `GET /api/rag/eval/report`
+- Added a visible RAG-page "质量评测" button that renders the report inside the chat workspace, without bringing back Agent navigation.
+- Updated README, DEMO, demo runbook, GitHub showcase, and SPEC to present this as RAG effect verification.
+
+Verified latest:
+- `mvn test`: passed, 115 tests.
+- `node --check .\scripts\smoke\workbench-desktop-screenshots.mjs`: passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `node .\scripts\smoke\workbench-desktop-screenshots.mjs`: passed and regenerated 8 desktop RAG screenshots, including the RAG quality evaluation report.
+- Visual inspection of `smartkb-08-rag-quality-eval.png`: the report shows baseline, Advanced RAG, citation hit rate, and improvement cases in the RAG chat workspace.
+- `git diff --check`: passed with CRLF conversion warnings only.
+
+Workspace status:
+- Working tree has uncommitted RAG Eval changes.
+- Untracked Hermes/demo files still exist: `demo_assets/`, `demo_flow.sh`, `run_demo_no_docker.sh`.
+
+Next step only:
+- Commit/push the RAG Eval slice, excluding Hermes scripts and `demo_assets/`.
+
 ## Latest Snapshot - 2026-06-21 RAG-First Demo Closeout
 
 Current goal:

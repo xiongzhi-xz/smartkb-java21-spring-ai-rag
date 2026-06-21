@@ -3,9 +3,13 @@ package com.smartkb.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartkb.domain.AdvancedRagMetrics;
 import com.smartkb.domain.AdvancedRagResult;
+import com.smartkb.domain.RagEvalCase;
+import com.smartkb.domain.RagEvalReport;
+import com.smartkb.domain.RagEvalRequest;
 import com.smartkb.domain.ReferenceChunk;
 import com.smartkb.service.AdvancedRagService;
 import com.smartkb.service.DocumentManagementService;
+import com.smartkb.service.RagEvaluationService;
 import com.smartkb.service.RagService;
 import com.smartkb.service.SmartKbMetricsService;
 import lombok.Data;
@@ -52,6 +56,7 @@ public class SmartKbController {
 
     private final RagService ragService;
     private final AdvancedRagService advancedRagService;
+    private final RagEvaluationService ragEvaluationService;
     private final DocumentManagementService documentManagementService;
     private final ChatMemory chatMemory;
     private final SmartKbMetricsService metricsService;
@@ -565,6 +570,42 @@ public class SmartKbController {
         payload.put("metrics", result.metrics());
         payload.put("success", true);
         return payload;
+    }
+
+    // ========== RAG 质量评测接口 ==========
+
+    /**
+     * 查询内置中文 RAG 评测集。
+     *
+     * @return 默认评测用例
+     */
+    @GetMapping("/rag/eval/cases")
+    public ResponseEntity<List<RagEvalCase>> listRagEvalCases() {
+        return ResponseEntity.ok(ragEvaluationService.defaultCases());
+    }
+
+    /**
+     * 运行 RAG 检索质量评测。
+     * <p>
+     * 默认用内置中文评测集，对比普通向量召回与 Advanced RAG 的命中情况。
+     * 该接口只评估检索和引用片段，不调用 ChatModel 生成最终答案。
+     *
+     * @param request 可选自定义评测请求
+     * @return RAG 评测报告
+     */
+    @PostMapping("/rag/eval/run")
+    public ResponseEntity<RagEvalReport> runRagEval(@RequestBody(required = false) RagEvalRequest request) {
+        return ResponseEntity.ok(ragEvaluationService.runEvaluation(request));
+    }
+
+    /**
+     * 使用默认中文评测集生成 RAG 评测报告。
+     *
+     * @return RAG 评测报告
+     */
+    @GetMapping("/rag/eval/report")
+    public ResponseEntity<RagEvalReport> getRagEvalReport() {
+        return ResponseEntity.ok(ragEvaluationService.runDefaultEvaluation());
     }
 
     /**

@@ -254,6 +254,10 @@
                         class="hidden max-w-52 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500">
                 </select>
                 <span id="conversationStatus" class="max-w-52 truncate text-xs text-gray-400"></span>
+                <button id="ragEvalButton" onclick="runRagEval()"
+                        class="text-gray-500 hover:text-blue-600 text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-chart-line"></i> 质量评测
+                </button>
                 <button id="clearChatButton" onclick="clearChat()"
                         class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1">
                     <i class="fa-solid fa-trash"></i> 新会话
@@ -778,6 +782,7 @@ git diff --check</textarea>
     let agentTaskBusy = false;
     let memoryBusy = false;
     let evalCaseBusy = false;
+    let ragEvalBusy = false;
     let codeContextBusy = false;
     let activeAgentTask = null;
     const documentDetailWidthKey = 'smartkb.documentDetailWidth';
@@ -1016,6 +1021,116 @@ git diff --check</textarea>
 
     function toggleProjectIntakePanel() {
         openWorkspacePanel('projectIntake');
+    }
+
+    function setRagEvalLoading(isLoading) {
+        ragEvalBusy = isLoading;
+        const button = document.getElementById('ragEvalButton');
+        button.disabled = isLoading;
+        button.classList.toggle('opacity-70', isLoading);
+        button.classList.toggle('cursor-not-allowed', isLoading);
+        button.innerHTML = isLoading
+            ? '<i class="fa-solid fa-spinner fa-spin"></i> 评测中'
+            : '<i class="fa-solid fa-chart-line"></i> 质量评测';
+    }
+
+    function formatRagEvalRate(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) {
+            return '0%';
+        }
+        return `${Math.round(number * 100)}%`;
+    }
+
+    function renderRagEvalHitBadge(hit, label) {
+        const classes = hit
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            : 'border-gray-200 bg-gray-50 text-gray-500';
+        const icon = hit ? 'fa-check' : 'fa-minus';
+        return `
+            <span class="inline-flex items-center gap-1 rounded-full border ${classes} px-2 py-0.5 text-[11px] font-medium">
+                <i class="fa-solid ${icon}"></i>${escapeHtml(label)}
+            </span>
+        `;
+    }
+
+    function renderRagEvalReport(report) {
+        const container = document.getElementById('chatContainer');
+        const existing = document.getElementById('ragEvalReportCard');
+        if (existing) {
+            existing.remove();
+        }
+
+        const total = Number(report.totalCases || 0);
+        const cases = Array.isArray(report.cases) ? report.cases : [];
+        const card = document.createElement('div');
+        card.id = 'ragEvalReportCard';
+        card.className = 'rounded-lg border border-blue-100 bg-white p-4 shadow-sm';
+        card.innerHTML = `
+            <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">RAG 质量评测</p>
+                    <p class="mt-1 text-xs text-gray-500">普通向量召回 vs Advanced RAG 检索链路</p>
+                </div>
+                <span class="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                    ${escapeHtml(total)} 个中文用例
+                </span>
+            </div>
+            <div class="grid gap-2 md:grid-cols-4">
+                ${renderCompactMetric('普通命中', `${report.baselineHitCount || 0}/${total}`, report.baselineHitCount > 0 ? 'blue' : 'gray')}
+                ${renderCompactMetric('Advanced', `${report.advancedHitCount || 0}/${total}`, report.advancedHitCount > 0 ? 'green' : 'gray')}
+                ${renderCompactMetric('引用命中', formatRagEvalRate(report.citationHitRate), report.citationHitCount > 0 ? 'green' : 'gray')}
+                ${renderCompactMetric('提升用例', report.advancedImprovementCount || 0, report.advancedImprovementCount > 0 ? 'amber' : 'gray')}
+            </div>
+            <div class="mt-3 space-y-2">
+                ${cases.map(item => `
+                    <div class="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-sm font-medium text-gray-800">${escapeHtml(item.caseId || '')} · ${escapeHtml(item.question || '')}</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${renderRagEvalHitBadge(item.baselineHit, '普通')}
+                                ${renderRagEvalHitBadge(item.advancedHit, 'Advanced')}
+                                ${renderRagEvalHitBadge(item.citationHit, '引用')}
+                            </div>
+                        </div>
+                        <div class="mt-2 grid gap-2 text-xs text-gray-500 md:grid-cols-2">
+                            <p>期望：${escapeHtml((item.expectedKeywords || []).join(' / ') || '未配置')}</p>
+                            <p>改写：${escapeHtml(item.rewrittenQuery || '未改写')}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        container.prepend(card);
+        container.scrollTop = 0;
+    }
+
+    async function runRagEval() {
+        if (ragEvalBusy) {
+            return;
+        }
+
+        setRagEvalLoading(true);
+        try {
+            const res = await fetch('/api/rag/eval/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topK: 5 })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || data.message || `RAG 评测失败（HTTP ${res.status}）`);
+            }
+            renderRagEvalReport(data);
+        } catch (e) {
+            const container = document.getElementById('chatContainer');
+            const card = document.createElement('div');
+            card.className = 'rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700';
+            card.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${renderText(e.message || 'RAG 评测失败')}`;
+            container.prepend(card);
+        } finally {
+            setRagEvalLoading(false);
+        }
     }
 
     function setProjectIntakeLoading(isLoading) {

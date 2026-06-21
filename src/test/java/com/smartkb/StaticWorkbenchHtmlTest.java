@@ -53,6 +53,7 @@ class StaticWorkbenchHtmlTest {
         assertThat(html).contains(
                 "<p class=\"text-sm text-gray-500 mt-1\">企业智能知识库</p>",
                 "<div class=\"mb-2 text-xs font-semibold uppercase text-gray-400\">知识库</div>",
+                "id=\"ragEvalButton\" onclick=\"runRagEval()\"",
                 "id=\"workspaceNavProjectIntake\" type=\"button\" onclick=\"openWorkspacePanel('projectIntake')\" class=\"workspace-nav-button hidden\"",
                 "id=\"workspaceNavAgentTask\" type=\"button\" onclick=\"openWorkspacePanel('agentTask')\" class=\"workspace-nav-button hidden\"",
                 "id=\"workspaceNavMemory\" type=\"button\" onclick=\"openWorkspacePanel('memory')\" class=\"workspace-nav-button hidden\"",
@@ -94,6 +95,9 @@ class StaticWorkbenchHtmlTest {
                 "function openWorkspacePanel(name)",
                 "function openWorkspaceSubTab(scope, targetId)",
                 "function renderCompactMetric(label, value, tone = 'gray')",
+                "function runRagEval()",
+                "function renderRagEvalReport(report)",
+                "function formatRagEvalRate(value)",
                 "function renderProjectIntakeTakeoverReport(intake, statusText)",
                 "function renderProjectIntakeReportRow(label, bodyHtml, tone = 'gray')",
                 "function runProjectIntake()",

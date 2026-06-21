@@ -275,6 +275,32 @@ public class AdvancedRagService {
         return queryAdvancedWithDetails(question, null, null).answer();
     }
 
+    /**
+     * 只执行 Advanced RAG 的改写、混合召回、过滤和重排序，不调用 ChatModel 生成答案。
+     * <p>
+     * 该方法用于 RAG Eval，稳定评估检索和引用片段命中情况，避免把 LLM 文本生成波动混入召回质量指标。
+     */
+    public RetrievalPreview retrieveForEvaluation(
+            String question,
+            Map<String, Object> metadataFilter,
+            String history) {
+        String rewrittenQuery = queryRewritingService.rewriteQuery(question, history);
+        List<Document> retrievedDocs = retrieveCandidates(question, rewrittenQuery, metadataFilter);
+        if (metadataFilter != null && !metadataFilter.isEmpty()) {
+            retrievedDocs = filterByMetadata(retrievedDocs, metadataFilter);
+        }
+        retrievedDocs = rerank(retrievedDocs, question, rewrittenQuery).stream()
+                .limit(FINAL_TOP_K)
+                .collect(Collectors.toList());
+        return new RetrievalPreview(rewrittenQuery, retrievedDocs, extractReferences(retrievedDocs));
+    }
+
+    public record RetrievalPreview(
+            String rewrittenQuery,
+            List<Document> documents,
+            List<ReferenceChunk> references) {
+    }
+
     private void emitStage(
             Consumer<AdvancedRagStage> stageConsumer,
             String stage,

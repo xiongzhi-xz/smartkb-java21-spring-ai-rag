@@ -21,6 +21,7 @@ const screenshots = {
   followup: 'smartkb-05-memory.png',
   advanced: 'smartkb-06-code-context.png',
   citation: 'smartkb-07-eval-report.png',
+  ragEval: 'smartkb-08-rag-quality-eval.png',
 };
 
 function ragMockExpression() {
@@ -60,8 +61,63 @@ function ragMockExpression() {
       ]
     };
 
+    const ragEvalReport = {
+      totalCases: 8,
+      baselineHitCount: 5,
+      advancedHitCount: 7,
+      citationHitCount: 6,
+      advancedImprovementCount: 2,
+      baselineHitRate: 0.625,
+      advancedHitRate: 0.875,
+      citationHitRate: 0.75,
+      cases: [
+        {
+          caseId: 'RAG-01',
+          question: '查询改写在 Advanced RAG 中解决什么问题？',
+          expectedKeywords: ['查询改写', '模糊提问', '检索表达'],
+          rewrittenQuery: 'Advanced RAG 查询改写 模糊提问 检索表达',
+          baselineHit: false,
+          advancedHit: true,
+          citationHit: true
+        },
+        {
+          caseId: 'RAG-02',
+          question: '为什么引用片段能提升 RAG 系统可信度？',
+          expectedKeywords: ['引用片段', '可追溯', '原文 chunk'],
+          rewrittenQuery: 'RAG 引用片段 可追溯 原文 chunk 可信度',
+          baselineHit: true,
+          advancedHit: true,
+          citationHit: true
+        },
+        {
+          caseId: 'RAG-03',
+          question: 'Hybrid Search 在这里结合了哪两类证据？',
+          expectedKeywords: ['pgvector', '关键词', '重排序'],
+          rewrittenQuery: 'Hybrid Search pgvector 关键词 重排序',
+          baselineHit: true,
+          advancedHit: true,
+          citationHit: true
+        },
+        {
+          caseId: 'RAG-04',
+          question: 'Redis ChatMemory 解决了什么演示问题？',
+          expectedKeywords: ['conversationId', 'Redis ChatMemory', '追问'],
+          rewrittenQuery: 'Redis ChatMemory conversationId 多轮追问 上下文',
+          baselineHit: true,
+          advancedHit: true,
+          citationHit: false
+        }
+      ]
+    };
+
     window.fetch = async (input) => {
       const url = String(input);
+      if (url.includes('/api/rag/eval/run')) {
+        return new Response(JSON.stringify(ragEvalReport), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
       if (url.includes('/api/documents/') && !url.endsWith('/api/documents')) {
         return new Response(JSON.stringify({ success: true, document: documentDetail }), {
           status: 200,
@@ -112,6 +168,7 @@ async function capture(cdp, key) {
 
 async function initPage(cdp) {
   await waitFor(cdp, `Boolean(document.getElementById('workspaceNavChat'))`);
+  await waitFor(cdp, `typeof openWorkspacePanel === 'function' && typeof setRagMode === 'function'`, 30000);
   await waitFor(cdp, `getComputedStyle(document.querySelector('.app-shell')).display === 'flex'`, 30000);
   await evaluate(cdp, ragMockExpression());
   await evaluate(cdp, `(() => {
@@ -258,6 +315,23 @@ async function showCitationJumpStep(cdp) {
   await delay(500);
 }
 
+async function showRagEvalStep(cdp) {
+  await evaluate(cdp, `(() => {
+    closeDocumentDetail();
+    openWorkspacePanel('chat');
+    setRagMode('advanced');
+    runRagEval();
+  })()`);
+  await waitFor(cdp, `(() => {
+    const report = document.getElementById('ragEvalReportCard');
+    return Boolean(report)
+      && report.textContent.includes('RAG 质量评测')
+      && report.textContent.includes('Advanced')
+      && report.textContent.includes('提升用例');
+  })()`);
+  await delay(500);
+}
+
 async function run(cdp) {
   await initPage(cdp);
   const outputs = [];
@@ -282,6 +356,9 @@ async function run(cdp) {
 
   await showCitationJumpStep(cdp);
   outputs.push(await capture(cdp, 'citation'));
+
+  await showRagEvalStep(cdp);
+  outputs.push(await capture(cdp, 'ragEval'));
 
   return outputs;
 }

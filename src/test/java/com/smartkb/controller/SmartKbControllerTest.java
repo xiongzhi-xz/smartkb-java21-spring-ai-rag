@@ -3,8 +3,12 @@ package com.smartkb.controller;
 import com.smartkb.config.GlobalExceptionHandler;
 import com.smartkb.domain.AdvancedRagMetrics;
 import com.smartkb.domain.AdvancedRagResult;
+import com.smartkb.domain.RagEvalCase;
+import com.smartkb.domain.RagEvalCaseResult;
+import com.smartkb.domain.RagEvalReport;
 import com.smartkb.service.AdvancedRagService;
 import com.smartkb.service.DocumentManagementService;
+import com.smartkb.service.RagEvaluationService;
 import com.smartkb.service.RagService;
 import com.smartkb.service.SmartKbMetricsService;
 import org.junit.jupiter.api.Test;
@@ -43,6 +47,9 @@ class SmartKbControllerTest {
 
     @MockBean
     private AdvancedRagService advancedRagService;
+
+    @MockBean
+    private RagEvaluationService ragEvaluationService;
 
     @MockBean
     private DocumentManagementService documentManagementService;
@@ -148,5 +155,76 @@ class SmartKbControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error").value("redis unavailable"));
+    }
+
+    @Test
+    void shouldListRagEvalCases() throws Exception {
+        when(ragEvaluationService.defaultCases()).thenReturn(List.of(new RagEvalCase(
+                "RAG-E03",
+                "查询改写在 Advanced RAG 中解决什么问题？",
+                "advanced-rag-demo.md",
+                List.of("查询改写")
+        )));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/rag/eval/cases"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("RAG-E03"))
+                .andExpect(jsonPath("$[0].expectedKeywords[0]").value("查询改写"));
+    }
+
+    @Test
+    void shouldRunRagEvalReport() throws Exception {
+        when(ragEvaluationService.runEvaluation(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(ragEvalReport());
+
+        mockMvc.perform(post("/api/rag/eval/run")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "topK": 5
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalCases").value(1))
+                .andExpect(jsonPath("$.advancedHitRate").value(1.0))
+                .andExpect(jsonPath("$.cases[0].advancedHit").value(true));
+    }
+
+    @Test
+    void shouldGetDefaultRagEvalReport() throws Exception {
+        when(ragEvaluationService.runDefaultEvaluation()).thenReturn(ragEvalReport());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/rag/eval/report"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalCases").value(1))
+                .andExpect(jsonPath("$.citationHitCount").value(1));
+    }
+
+    private RagEvalReport ragEvalReport() {
+        return new RagEvalReport(
+                1,
+                0,
+                1,
+                1,
+                1,
+                0.0,
+                1.0,
+                1.0,
+                List.of(new RagEvalCaseResult(
+                        "RAG-E03",
+                        "查询改写在 Advanced RAG 中解决什么问题？",
+                        "advanced-rag-demo.md",
+                        List.of("查询改写"),
+                        false,
+                        true,
+                        true,
+                        1,
+                        1,
+                        "Advanced RAG 查询改写用于提升检索质量",
+                        List.of(),
+                        List.of("查询改写"),
+                        List.of()
+                ))
+        );
     }
 }
