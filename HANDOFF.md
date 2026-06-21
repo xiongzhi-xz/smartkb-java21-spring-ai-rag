@@ -1,5 +1,31 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-22 Interview Talk Track
+
+Current goal:
+- Turn the completed SmartKB RAG work into interview-ready explanation and local acceptance material.
+
+Current stage:
+- RAG quality evaluation has already been committed and pushed as `86e4f28 feat: add rag quality evaluation`.
+- No new Agent/workbench expansion is planned.
+- Hermes `run_demo_no_docker.sh`, `demo_flow.sh`, and `demo_assets/` remain untracked and should not be committed as-is.
+
+Recently completed:
+- Added `docs/INTERVIEW_TALK_TRACK.md` with a 30-second project intro, 5-minute demo order, RAG design narrative, interview Q&A, local acceptance checklist, and no-overclaim boundaries.
+- Linked the talk track from README, GitHub showcase, DEMO, and demo runbook.
+- Marked the talk track complete in SPEC.
+
+Verified latest:
+- Markdown links in README, DEMO, GitHub showcase, and demo runbook: passed.
+- `git diff --check`: passed with CRLF conversion warnings only.
+
+Workspace status:
+- Working tree has uncommitted documentation changes for the interview talk track.
+- Untracked Hermes/demo files still exist: `demo_assets/`, `demo_flow.sh`, `run_demo_no_docker.sh`.
+
+Next step only:
+- Run docs verification, commit/push the talk-track slice, excluding Hermes scripts and `demo_assets/`.
+
 ## Latest Snapshot - 2026-06-21 RAG Quality Eval
 
 Current goal:

@@ -120,6 +120,7 @@ RAG 质量评测把“Advanced RAG 更好”从主观演示变成可比较指标
 README.md
 DEMO.md
 docs/demo-runbook.md
+docs/INTERVIEW_TALK_TRACK.md
 SPEC.md
 HANDOFF.md
 docs/AGENT_PLATFORM_SPEC.md
