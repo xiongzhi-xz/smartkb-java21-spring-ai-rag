@@ -76,7 +76,7 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 | E07 | 评审一次小改动风险 | 通过 | 2 | 0 | Review 风格先列风险、影响范围和验证方式，未越权改代码 |
 | E08 | 补充一条文档验证记录 | 通过 | 2 | 0 | 验证记录已存在，避免重复修改 TicketRush |
 | E09 | 判断运行数据是否应提交 | 通过 | 2 | 0 | 准确判断 RocketMQ store 为运行数据，不删除且不提交 |
-| E10 | 生成面试讲法 | 通过 | 2 | 0 | 能讲清项目链路、技术取舍和 SmartKB eval 关系 |
+| E10 | 生成技术讲解 | 通过 | 2 | 0 | 能讲清项目链路、技术取舍和 SmartKB eval 关系 |
 
 ## 6. Eval Case 详情
 
@@ -375,19 +375,19 @@ TicketRush 工作区出现 docker/rocketmq/store/ 未跟踪目录。
 | 实际产出摘要 | `docker/rocketmq/store/` 不应提交。证据是 `docker-compose.yml` 将 `./docker/rocketmq/store` bind mount 到 `/home/rocketmq/store`，`broker-entrypoint.sh` 和 `broker.conf` 都把 commitlog、consumequeue、index、checkpoint 等 store path 指向该目录；本地目录实际包含 `commitlog`、`consumequeue`、`index`、`checkpoint`、`timerwheel` 等运行数据文件。`.gitignore` 已包含 `docker/rocketmq/store/`，`git status --short --ignored` 显示该目录为 ignored。处理建议是保持忽略，不提交、不删除；如需清理，先确认容器已停止且不再依赖该数据。运行数据进入 Git 会造成仓库膨胀、环境污染、不可复现状态和潜在敏感/业务数据泄露风险。 |
 | 失败原因 | 无 |
 
-### E10 生成面试讲法
+### E10 生成技术讲解
 
 输入：
 
 ```text
-基于 TicketRush 项目生成一段 2 分钟面试讲法。
+基于 TicketRush 项目生成一段 2 分钟技术讲解。
 重点讲高并发抢票链路、Redis Lua 防超卖、RocketMQ 异步削峰、Sentinel 限流、Docker Compose 验证和它为什么能作为 SmartKB v2 的 Agent eval 样本。
 ```
 
 预期产出：
 
 - 有 2 分钟版回答。
-- 有 3-5 个面试追问点。
+- 有 3-5 个技术交流技术问题。
 - 能把 TicketRush 和 SmartKB v2 的 eval 关系讲清楚。
 
 通过标准：
@@ -404,7 +404,7 @@ TicketRush 工作区出现 docker/rocketmq/store/ 未跟踪目录。
 | 耗时 | 未单独计时 |
 | 工具调用次数 | 3（读取架构文档、README/SPEC/HANDOFF 主链路与求职定位证据，并确认 TicketRush 工作区状态） |
 | 人工介入次数 | 0 |
-| 实际产出摘要 | 2 分钟讲法可以这样组织：TicketRush 是一个 Java 21 高并发票务秒杀项目，目标不是做简单 CRUD，而是把抢票入口、防超卖、异步削峰、限流、补偿、监控和本地部署串成可运行、可压测、可面试讲解的链路。请求进入 `/api/rush/tickets` 后，先经过 Sentinel 全局和热点票档限流，再进入 Redis 准入令牌，随后应用服务把库存预占提交到 Virtual Threads 执行。库存层提供三种策略对比，主方案是 Redis Lua，在单脚本里完成幂等检查、库存检查、available 到 locked 的原子移动和 version 递增，避免热点票档超卖；Redis Lock 和 MySQL 乐观锁用于性能与复杂度对比。抢票成功后不在入口同步落订单，而是发布 `OrderCreateMessage` 到 RocketMQ，消费者按 `idempotentKey` 幂等创建 `PENDING` 订单；消息发送失败会释放预占库存，订单超时关闭任务会关闭过期订单并释放锁定库存。项目已经通过 Docker Compose 拉起 app 和 9 个中间件，并接入 Prometheus/Grafana，下一步重点是补真实 k6 压测数据。它适合作为 SmartKB v2 的 Agent eval 样本，因为文件、配置、测试、文档和运行数据边界都足够真实，能检验 Agent 是否真的会接管 Java 项目，而不只是泛泛解释代码。追问点包括：Redis Lua 如何保证不超卖和幂等、RocketMQ 失败/重复消费如何处理、Sentinel 与 Redis 准入门的边界、Docker Compose 全链路如何验证、为什么它能验证 SmartKB 的项目接管能力。 |
+| 实际产出摘要 | 2 分钟讲法可以这样组织：TicketRush 是一个 Java 21 高并发票务秒杀项目，目标不是做简单 CRUD，而是把抢票入口、防超卖、异步削峰、限流、补偿、监控和本地部署串成可运行、可压测、可技术讲解的链路。请求进入 `/api/rush/tickets` 后，先经过 Sentinel 全局和热点票档限流，再进入 Redis 准入令牌，随后应用服务把库存预占提交到 Virtual Threads 执行。库存层提供三种策略对比，主方案是 Redis Lua，在单脚本里完成幂等检查、库存检查、available 到 locked 的原子移动和 version 递增，避免热点票档超卖；Redis Lock 和 MySQL 乐观锁用于性能与复杂度对比。抢票成功后不在入口同步落订单，而是发布 `OrderCreateMessage` 到 RocketMQ，消费者按 `idempotentKey` 幂等创建 `PENDING` 订单；消息发送失败会释放预占库存，订单超时关闭任务会关闭过期订单并释放锁定库存。项目已经通过 Docker Compose 拉起 app 和 9 个中间件，并接入 Prometheus/Grafana，下一步重点是补真实 k6 压测数据。它适合作为 SmartKB v2 的 Agent eval 样本，因为文件、配置、测试、文档和运行数据边界都足够真实，能检验 Agent 是否真的会接管 Java 项目，而不只是泛泛解释代码。技术问题包括：Redis Lua 如何保证不超卖和幂等、RocketMQ 失败/重复消费如何处理、Sentinel 与 Redis 准入门的边界、Docker Compose 全链路如何验证、为什么它能验证 SmartKB 的项目接管能力。 |
 | 失败原因 | 无 |
 
 ## 7. 汇总
@@ -436,12 +436,12 @@ E01-E10 已全部通过，说明当前接管提示词可以稳定产出项目目
 - E07 验证了受控评审能力，能把 Docker profile 健康检查改动的风险、影响范围和验证路径讲清楚，同时不越权修改代码。
 - E08 验证了受控文档修改能力：当目标验证记录已存在时，能够避免重复写入和无意义未提交改动。
 - E09 验证了运行数据判断能力，能识别 RocketMQ bind mount store 为本地运行数据，并给出不提交、不删除的处理建议。
-- E10 验证了面试表达能力，能把高并发抢票链路、Redis Lua、RocketMQ、Sentinel、Docker Compose 和 SmartKB eval 样本价值串成可讲述内容。
+- E10 验证了技术表达能力，能把高并发抢票链路、Redis Lua、RocketMQ、Sentinel、Docker Compose 和 SmartKB eval 样本价值串成可讲述内容。
 - E01 的下一步建议聚焦真实 k6 压测，符合 TicketRush 当前最缺真实数据报告的状态。
 - 首批 eval 结果显示，TicketRush 可以继续作为 SmartKB v2 的项目接管、代码检索、任务规划、风险评审和表达生成基准样本。
 
 ## 9. 下一步
 
-1. 根据 E01-E10 结果固化项目接管、链路解释、压测步骤、待办汇总、风险评审、受控文档修改、运行数据判断和面试表达输出格式。
+1. 根据 E01-E10 结果固化项目接管、链路解释、压测步骤、待办汇总、风险评审、受控文档修改、运行数据判断和技术表达输出格式。
 2. 形成第一版 `Project Intake` 后端接口设计。
 3. 设计下一批 eval：真实 k6 压测记录解析、跨仓库交接、代码变更前风险门禁。

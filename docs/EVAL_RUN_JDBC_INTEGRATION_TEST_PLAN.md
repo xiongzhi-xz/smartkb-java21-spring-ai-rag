@@ -66,7 +66,7 @@ Test cases:
 ## Why Not Add It To Default Tests
 
 - Testcontainers requires Docker.
-- CI or interview machines may not have Docker running.
+- CI or review machines may not have Docker running.
 - The current default test suite is fast and deterministic.
 - JDBC persistence is optional; memory remains the default store.
 

@@ -140,9 +140,9 @@ ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
 ---
 
-## 面试话术
+## 技术说明
 
-**面试官问：Virtual Threads 在你的项目中带来了什么实际收益？**
+**常见问题：Virtual Threads 在你的项目中带来了什么实际收益？**
 
 **回答要点**：
 1. **量化数据**：文档批量上传性能提升 4 倍（100 个文档从 68 秒降到 16 秒）

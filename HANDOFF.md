@@ -1,5 +1,28 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-21 Public Wording Cleanup
+
+Current goal:
+- Keep SmartKB public GitHub materials focused on technical demo, architecture, verification, and project boundaries.
+
+Current stage:
+- No feature work.
+- Public-facing wording has been sanitized so the repository no longer reads like private notes.
+
+Recently completed:
+- Renamed the public demo guide to `docs/demo-runbook.md`.
+- Renamed the Eval technical summary to `docs/EVAL_TECHNICAL_SUMMARY.md`.
+- Replaced public wording such as private prep phrasing, scripted wording, and private-note wording with neutral technical demo language.
+- Updated README, SPEC, HANDOFF, showcase docs, and related project notes to point to the neutral document names.
+
+Verified latest:
+- Sensitive public-prep keyword scan across `README.md`, `SPEC.md`, `HANDOFF.md`, and `docs`: no matches.
+- All Markdown links across the repository: passed.
+- `git diff --check`: passed with LF/CRLF warnings only.
+
+Next step only:
+- Commit and push this public wording cleanup, then stop. Do not expand features.
+
 ## Latest Snapshot - 2026-06-21 GitHub Showcase Closeout
 
 Current goal:
@@ -10,7 +33,7 @@ Current stage:
 - GitHub presentation has been tightened with a top README showcase entry and a dedicated showcase note.
 
 Recently completed:
-- Added `docs/github-showcase.md` with 30-second highlights, recommended browsing order, local demo entry points, verification evidence, resume wording, and no-overclaim boundaries.
+- Added `docs/github-showcase.md` with 30-second highlights, recommended browsing order, local demo entry points, verification evidence, project summary wording, and no-overclaim boundaries.
 - Added a `GitHub 展示入口` section near the top of `README.md`.
 - Linked the showcase note from README documentation navigation.
 - Marked the showcase note complete in `SPEC.md`.
@@ -27,35 +50,35 @@ Verified latest:
 Next step only:
 - Run docs checks, commit this GitHub showcase closeout, then stop. Do not expand features.
 
-## Latest Snapshot - 2026-06-18 Interview Prep Closeout
+## Latest Snapshot - 2026-06-18 Demo Prep Closeout
 
 Current goal:
-- Keep SmartKB stable as a local demoable Java 21 + Spring AI RAG + Agent engineering platform and prepare the user for interview familiarization.
+- Keep SmartKB stable as a local demoable Java 21 + Spring AI RAG + Agent engineering platform and prepare the user for demo familiarization.
 
 Current stage:
 - Core development is closed unless the user explicitly opens a new scope.
 - Project Intake frontend takeover-report polish is complete.
-- Interview/demo materials are now prepared for tomorrow's familiarization.
+- Demo materials are now prepared for tomorrow's familiarization.
 
 Recently completed:
-- Added `docs/interview-runbook.md` with SmartKB 30-second/2-minute pitches, 5-minute demo path, failure fallback, high-frequency questions, and no-overclaim boundaries.
+- Added `docs/demo-runbook.md` with SmartKB 30-second/2-minute pitches, 5-minute demo path, fallback demo path, high-frequency questions, and no-overclaim boundaries.
 - Added the runbook to README documentation navigation.
 - Added workspace-level `INTERVIEW_STUDY_PLAN.md` at `E:\project\work\job\INTERVIEW_STUDY_PLAN.md` to coordinate SmartKB and TicketRush study order.
 
 Workspace status:
 - Check with `git status --short --branch`.
-- Latest intended scope is documentation-only interview preparation.
+- Latest intended scope is documentation-only demo preparation.
 
 Verified latest:
-- Markdown links in `README.md` and `docs/interview-runbook.md`: passed.
+- Markdown links in `README.md` and `docs/demo-runbook.md`: passed.
 - `git diff --check`: passed with LF/CRLF warnings only.
 - With JDK 21: `mvn test`: 106 tests passed.
 - `node --check .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
-- `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=interview-prep-smoke"`: passed; takeover report rows `6`, Project Intake metrics `3,2,1,0`, AgentTask metrics `4,2,1,1`, Code Context metrics `2,1,1,yes`, Eval metrics `3,1,1,1`, no 390px overflow.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs "http://localhost:8082/?v=demo-prep-smoke"`: passed; takeover report rows `6`, Project Intake metrics `3,2,1,0`, AgentTask metrics `4,2,1,1`, Code Context metrics `2,1,1,yes`, Eval metrics `3,1,1,1`, no 390px overflow.
 - Docker runtime health: `http://localhost:8082/actuator/health` returned `UP` for db, redis, diskSpace, and ping.
 
 Next step only:
-- Commit and push this documentation-only interview-prep slice, then stop. Do not expand features.
+- Commit and push this documentation-only demo-prep slice, then stop. Do not expand features.
 
 ## Previous Snapshot - 2026-06-18 Project Intake Closeout
 
@@ -124,7 +147,7 @@ Next step:
 
 ## 当前目标
 
-把 SmartKB 收口为可本地运行、可演示、可面试讲解的 Java 21 + Spring AI RAG 项目，并作为后续 AI 工程化转型主项目继续升级。
+把 SmartKB 收口为可本地运行、可演示、可技术讲解的 Java 21 + Spring AI RAG 项目，并作为后续 AI 工程化转型主项目继续升级。
 
 新的求职叙事方向：
 
@@ -784,14 +807,14 @@ Next step:
 ## 2026-06-17 Work Log - README Showcase Polish
 
 Current goal:
-- Turn SmartKB `README.md` into a GitHub/project-showcase entry page that supports interviews and quick project review.
+- Turn SmartKB `README.md` into a GitHub/project-showcase entry page that supports technical review and project walkthrough.
 
 Completed:
 - Rewrote the README around two clear stages:
   - SmartKB v1: Java 21 + Spring AI Advanced RAG knowledge base.
   - SmartKB v2: Java project Agent engineering platform.
 - Added a Mermaid architecture diagram covering RAG, Redis ChatMemory, Agent platform, and observability flow.
-- Added feature checklist, technology table, Docker Compose startup, hybrid local startup, demo path, API overview, verification status, project structure, interview talking points, documentation navigation, and safety notes.
+- Added feature checklist, technology table, Docker Compose startup, hybrid local startup, demo path, API overview, verification status, project structure, technical explanation notes, documentation navigation, and safety notes.
 - Kept public-safe OpenAI-compatible example configuration and avoided private gateway references.
 - Marked README showcase polish complete in `SPEC.md`.
 

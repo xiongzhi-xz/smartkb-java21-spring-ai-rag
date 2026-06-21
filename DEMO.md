@@ -1,6 +1,6 @@
 # SmartKB 5 分钟演示脚本
 
-这份脚本用于面试、项目展示或自测。目标是稳定展示 SmartKB 的核心价值：企业知识库文档上传、向量化、RAG 问答、文档片段查看，以及 Java 21 Virtual Threads 的工程亮点。
+这份脚本用于技术交流、项目展示或自测。目标是稳定展示 SmartKB 的核心价值：企业知识库文档上传、向量化、RAG 问答、文档片段查看，以及 Java 21 Virtual Threads 的工程亮点。
 
 ## 演示前检查
 
@@ -26,7 +26,7 @@ test-docs/advanced-rag-demo.md
 
 ## 讲解开场
 
-建议话术：
+建议说明：
 
 ```text
 SmartKB 是一个企业级智能知识库预研项目，核心目标是把 RAG 从概念落到可运行的 Java 工程里。
@@ -70,7 +70,7 @@ test-docs/advanced-rag-demo.md
 - 上传成功后显示生成的向量块数量
 - 文档列表自动刷新
 
-建议话术：
+建议说明：
 
 ```text
 上传后，后端会完成文档解析、切片、Embedding 生成和 pgvector 入库。
@@ -88,7 +88,7 @@ test-docs/advanced-rag-demo.md
 - 每个 chunk 的文本内容
 - 拖动详情窗口左边缘调整宽度
 
-建议话术：
+建议说明：
 
 ```text
 这里展示的是进入向量库的实际片段。RAG 系统的效果很依赖切片质量，所以我把 chunk 详情做成可视化，
@@ -110,7 +110,7 @@ Java 21 Virtual Threads 适合解决什么问题？
 - 同步代码风格
 - 文档解析、Embedding、数据库访问等 AI 工程场景
 
-建议追问：
+建议技术问题：
 
 ```text
 它在 AI 应用中有什么实际价值？
@@ -120,11 +120,11 @@ Java 21 Virtual Threads 适合解决什么问题？
 Virtual Threads 和传统线程池相比有什么优势？
 ```
 
-继续追问时，页面会复用当前会话 ID 调用 `/api/chat/conversation`，用于展示多轮上下文能力。点击右上角 `新会话` 会清空当前 conversationId。
+继续技术问题时，页面会复用当前会话 ID 调用 `/api/chat/conversation`，用于展示多轮上下文能力。点击右上角 `新会话` 会清空当前 conversationId。
 
 对话模式会调用 `/api/chat/conversation/stream`，回答会以流式方式逐段显示；如果模型响应慢，页面也会先展示“正在结合会话上下文检索并生成回答...”。
 
-建议话术：
+建议说明：
 
 ```text
 这个回答不是普通聊天，而是先从 pgvector 检索相关文档片段，再把上下文注入给模型生成答案。
@@ -169,7 +169,7 @@ SmartKB 在 Advanced 模式中返回引用片段
 
 页面回答下方会显示命中片段数、改写后的查询、参考来源，并提供 `查看引用片段` 折叠区。
 
-建议话术：
+建议说明：
 
 ```text
 Advanced RAG 不是只把改写后的问题拿去检索，而是同时召回原始问题和改写问题，再限定检索范围，最后对结果重排序。
@@ -277,7 +277,7 @@ test-docs/advanced-rag-demo.md
 
 ## 结束总结
 
-建议话术：
+建议说明：
 
 ```text
 这个项目目前已经完成基础 RAG 闭环和可演示前端。
