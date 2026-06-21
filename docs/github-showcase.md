@@ -12,7 +12,7 @@
 
 ## 推荐浏览顺序
 
-1. [README.md](../README.md)：先看项目定位、架构图、启动方式、验证状态。
+1. [README.md](../README.md)：先看项目定位、架构图、界面截图、启动方式、验证状态。
 2. [DEMO.md](../DEMO.md)：按 5 分钟路径走完整演示。
 3. [docs/demo-runbook.md](demo-runbook.md)：看设计说明、设计取舍和替代路径。
 4. [SPEC.md](../SPEC.md)：看已完成范围、验收记录和不继续扩展的边界。

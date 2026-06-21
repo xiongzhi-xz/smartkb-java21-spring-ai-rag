@@ -1,5 +1,29 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-21 Screenshot Showcase
+
+Current goal:
+- Add lightweight GitHub screenshot assets for SmartKB without changing product behavior.
+
+Current stage:
+- No feature work.
+- README now includes screenshots for the RAG workbench, Project Intake, and Eval pages.
+
+Recently completed:
+- Added `docs/screenshots/smartkb-workbench-chat.png`.
+- Added `docs/screenshots/smartkb-project-intake.png`.
+- Added `docs/screenshots/smartkb-eval-report.png`.
+- Added a README `界面截图` section and marked the screenshot slice in `SPEC.md`.
+
+Verified latest:
+- Image dimension check for `docs/screenshots/*.png`: passed.
+- Public wording scan across `README.md`, `SPEC.md`, `HANDOFF.md`, `DEMO.md`, and `docs`: no matches for private-prep phrasing.
+- All Markdown links across the repository: passed.
+- `git diff --check`: passed with LF/CRLF warnings only.
+
+Next step only:
+- Run docs checks, commit, push, then stop. Do not expand features.
+
 ## Latest Snapshot - 2026-06-21 Root Demo Expansion
 
 Current goal:

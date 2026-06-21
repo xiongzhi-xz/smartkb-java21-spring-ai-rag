@@ -71,6 +71,14 @@ flowchart LR
     Prom --> Grafana[Grafana]
 ```
 
+## 界面截图
+
+| 智能问答工作台 | Project Intake 接管报告 | Eval 评测报告 |
+| --- | --- | --- |
+| ![SmartKB 智能问答工作台](docs/screenshots/smartkb-workbench-chat.png) | ![SmartKB Project Intake 接管报告](docs/screenshots/smartkb-project-intake.png) | ![SmartKB Eval 评测报告](docs/screenshots/smartkb-eval-report.png) |
+
+截图来自本地浏览器 smoke 过程，覆盖移动视口下的 RAG 工作台、项目接管和 Eval 评测页面。
+
 ## 功能清单
 
 ### RAG 知识库
