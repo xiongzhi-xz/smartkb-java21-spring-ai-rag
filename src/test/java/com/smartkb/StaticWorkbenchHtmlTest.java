@@ -18,7 +18,7 @@ class StaticWorkbenchHtmlTest {
     private static final Pattern ID_PATTERN = Pattern.compile("\\bid=\"([^\"]+)\"");
 
     @Test
-    void shouldKeepWorkspaceNavigationAndPanels() throws IOException {
+    void shouldKeepRagNavigationAndOptionalWorkbenchPanels() throws IOException {
         String html = readIndexHtml();
 
         assertThat(html).contains(
@@ -44,6 +44,22 @@ class StaticWorkbenchHtmlTest {
                 "onclick=\"openWorkspacePanel('codeContext')\"",
                 "onclick=\"openWorkspacePanel('eval')\""
         );
+    }
+
+    @Test
+    void shouldHideOptionalWorkbenchNavigationFromMainDemo() throws IOException {
+        String html = readIndexHtml();
+
+        assertThat(html).contains(
+                "<p class=\"text-sm text-gray-500 mt-1\">企业智能知识库</p>",
+                "<div class=\"mb-2 text-xs font-semibold uppercase text-gray-400\">知识库</div>",
+                "id=\"workspaceNavProjectIntake\" type=\"button\" onclick=\"openWorkspacePanel('projectIntake')\" class=\"workspace-nav-button hidden\"",
+                "id=\"workspaceNavAgentTask\" type=\"button\" onclick=\"openWorkspacePanel('agentTask')\" class=\"workspace-nav-button hidden\"",
+                "id=\"workspaceNavMemory\" type=\"button\" onclick=\"openWorkspacePanel('memory')\" class=\"workspace-nav-button hidden\"",
+                "id=\"workspaceNavCodeContext\" type=\"button\" onclick=\"openWorkspacePanel('codeContext')\" class=\"workspace-nav-button hidden\"",
+                "id=\"workspaceNavEval\" type=\"button\" onclick=\"openWorkspacePanel('eval')\" class=\"workspace-nav-button hidden\""
+        );
+        assertThat(html).doesNotContain("RAG + Agent 工作台");
     }
 
     @Test
@@ -111,7 +127,7 @@ class StaticWorkbenchHtmlTest {
                 ".app-shell",
                 ".app-sidebar",
                 ".app-main",
-                "grid-template-columns: repeat(3, minmax(0, 1fr))",
+                "grid-template-columns: minmax(0, 1fr)",
                 "width: 100% !important",
                 ".document-list",
                 ".sidebar-status",

@@ -1,8 +1,8 @@
 # SmartKB
 
-Java 21 + Spring AI 企业智能知识库系统，已升级为面向 Java 存量项目的 Agent 工程平台。
+Java 21 + Spring AI 企业智能知识库系统，核心展示目标是一个可本地运行、可演示、可解释的 Advanced RAG 闭环。
 
-SmartKB 的第一阶段是一个可运行、可演示、可监控的 Advanced RAG 知识库：文档上传、解析、切片、Embedding、pgvector 检索、多轮流式问答、引用片段和 Redis 会话记忆。第二阶段在此基础上扩展为 Agent 工程平台：项目接管、任务状态机、分层记忆、代码上下文检索和 Eval 评测。
+SmartKB 的主线能力是：文档上传、解析、切片、Embedding、pgvector 检索、多轮流式问答、Advanced RAG、引用片段定位和 Redis 会话记忆。仓库中也保留了一组面向 Java 项目接管的 Agent 工作台实验代码，但首页默认隐藏这些入口，当前展示主线只围绕 RAG。
 
 ## GitHub 展示入口
 
@@ -13,7 +13,7 @@ SmartKB 的第一阶段是一个可运行、可演示、可监控的 Advanced RA
 3. [DEMO.md](DEMO.md)：本地 5 分钟演示路径。
 4. [docs/demo-runbook.md](docs/demo-runbook.md)：设计说明、设计取舍和替代路径。
 
-展示边界：SmartKB 是本地可运行、可演示、可解释的 Java 21 + Spring AI RAG / Agent 工程项目，不声称已经生产商用；生产级 HA、TLS、托管 Secret 和完整多 Agent OS 不在当前范围。
+展示边界：SmartKB 是本地可运行、可演示、可解释的 Java 21 + Spring AI RAG 项目，不声称已经生产商用；生产级 HA、TLS、托管 Secret 和完整多 Agent OS 不在当前范围。
 ## 项目亮点
 
 - **Advanced RAG 闭环**：文档上传、UTF-8 解析、切片、Ollama Embedding、pgvector 入库、Hybrid Search、查询改写、过滤、重排序和引用片段定位。
@@ -21,7 +21,7 @@ SmartKB 的第一阶段是一个可运行、可演示、可监控的 Advanced RA
 - **流式对话体验**：普通对话和 Advanced RAG 都支持 SSE 流式返回；Advanced 模式展示查询改写、检索、过滤、重排、生成等阶段反馈。
 - **可观测性**：Micrometer 自定义 Counter/Timer，Prometheus 指标采集，Grafana Dashboard 预配置。
 - **Docker Compose 一键运行**：PostgreSQL + pgvector、Redis、Spring Boot、Prometheus、Grafana 一套 Compose 启动。
-- **Agent 工程平台**：面向 Java 项目目录做接管摘要、任务状态流转、记忆分层、代码检索和 Eval 报告，使用 TicketRush 作为真实评测样本。
+- **可选工程工作台实验**：项目接管、任务状态、记忆层、代码上下文和 Eval API 已实现，但首页入口默认隐藏，当前 README 和演示只展示 RAG 主链路。
 
 ## 技术栈
 
@@ -57,7 +57,7 @@ flowchart LR
         API --> Redis[(Redis ChatMemory)]
     end
 
-    subgraph Agent["SmartKB v2 Agent Platform"]
+    subgraph Agent["Optional Engineering Workbench"]
         API --> Intake[Project Intake]
         API --> Task[Agent Task State Machine]
         API --> Code[Code Context Search]
@@ -75,15 +75,15 @@ flowchart LR
 
 | 步骤 | 桌面横屏截图 |
 | --- | --- |
-| 1. 工作台总览 | ![SmartKB 工作台总览](docs/screenshots/desktop/smartkb-01-workbench-overview.png) |
-| 2. Advanced RAG 问答 | ![SmartKB Advanced RAG 问答](docs/screenshots/desktop/smartkb-02-advanced-rag.png) |
-| 3. Project Intake 接管报告 | ![SmartKB Project Intake 接管报告](docs/screenshots/desktop/smartkb-03-project-intake.png) |
-| 4. Agent Task 状态流转 | ![SmartKB Agent Task 状态流转](docs/screenshots/desktop/smartkb-04-agent-task.png) |
-| 5. Memory 分层记忆 | ![SmartKB Memory 分层记忆](docs/screenshots/desktop/smartkb-05-memory.png) |
-| 6. Code Context 检索 | ![SmartKB Code Context 检索](docs/screenshots/desktop/smartkb-06-code-context.png) |
-| 7. Eval 评测报告 | ![SmartKB Eval 评测报告](docs/screenshots/desktop/smartkb-07-eval-report.png) |
+| 1. 上传知识文档 | ![SmartKB 上传知识文档](docs/screenshots/desktop/smartkb-01-workbench-overview.png) |
+| 2. 上传后进入知识库 | ![SmartKB 文档入库](docs/screenshots/desktop/smartkb-02-advanced-rag.png) |
+| 3. 查看文档切片详情 | ![SmartKB 文档切片详情](docs/screenshots/desktop/smartkb-03-project-intake.png) |
+| 4. 普通 RAG 问答 | ![SmartKB 普通 RAG 问答](docs/screenshots/desktop/smartkb-04-agent-task.png) |
+| 5. 多轮追问 | ![SmartKB 多轮追问](docs/screenshots/desktop/smartkb-05-memory.png) |
+| 6. Advanced RAG 分阶段回答 | ![SmartKB Advanced RAG 分阶段回答](docs/screenshots/desktop/smartkb-06-code-context.png) |
+| 7. 点击引用片段定位原文 | ![SmartKB 引用片段定位原文](docs/screenshots/desktop/smartkb-07-eval-report.png) |
 
-截图为 `1440x900` 桌面横屏视口，覆盖本地演示路径中的 RAG 工作台、项目接管、任务状态、记忆层、代码上下文和 Eval 评测步骤。
+截图为 `1440x900` 桌面横屏视口，按 RAG 演示主链路依次覆盖：上传中文测试文档、查看入库结果、打开文档 chunk 详情、普通问答、多轮追问、Advanced RAG 分阶段回答、点击引用片段定位到原文 chunk。
 
 ## 功能清单
 
@@ -96,7 +96,9 @@ flowchart LR
 - Advanced RAG：查询改写、双路召回、文档过滤、关键词/锚点重排、阶段耗时指标。
 - Redis 会话记忆：刷新或重启应用后，同一 `conversationId` 可恢复上下文。
 
-### Agent 工程平台
+### 可选工程工作台实验
+
+这些能力用于探索“AI 如何接管 Java 项目”，不作为当前 5 分钟主演示路径。它们的前端代码和 API 保留，但首页导航默认隐藏，展示重点只放在上面的 RAG 闭环。
 
 - 项目接管：读取 `README/SPEC/AGENTS/HANDOFF/pom.xml/docker-compose.yml/Git` 信息，生成接管摘要和指标速览。
 - 任务状态机：`INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD`，记录状态流转和验证结果，任务列表提供摘要指标。
@@ -201,8 +203,7 @@ test-docs/advanced-rag-demo.md
 ```
 
 6. 展开引用片段并定位到文档详情 chunk。
-7. 切到“项目接管”，输入 Docker 容器内项目路径，运行 Project Intake。
-8. 查看“任务状态”“记忆层”“代码上下文”“Eval 评测”工作区。
+7. 停在引用片段定位结果，说明 SmartKB 的核心价值是“回答可追溯到原文 chunk”。
 
 详细脚本见 [DEMO.md](DEMO.md)。
 
@@ -220,7 +221,7 @@ test-docs/advanced-rag-demo.md
 | `POST` | `/api/chat/advanced/stream` | Advanced RAG 分阶段流式回答 |
 | `DELETE` | `/api/chat/memory/{conversationId}` | 清理 Redis 会话记忆 |
 
-### Agent 平台
+### 可选工程工作台实验
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
@@ -245,8 +246,7 @@ test-docs/advanced-rag-demo.md
 - Docker Compose 全链路启动：`smartkb-app` healthy。
 - Redis ChatMemory live checklist：6/6 通过。
 - Docker BuildKit 缓存构建：缓存命中后重建约秒级。
-- Project Intake Docker 宿主机只读挂载：通过容器路径读取项目。
-- Eval Run：内存存储、JDBC 持久化和 Testcontainers profile 已覆盖。
+- 可选工程工作台实验：Project Intake 只读挂载、Eval Run 存储和工作台交互已有测试覆盖，但不作为主演示重点。
 - 工作台浏览器 smoke：桌面端和 390px 移动视口均覆盖 6 个工作区切换，移动端无横向溢出。
 - 移动端表单 smoke：Project Intake、Code Context、AgentTask 和 Eval 均已在 390px 视口通过。
 - 移动端边界 smoke：长文本输入、必填错误提示、窄屏按钮/导航宽度已在本地静态页和 Docker 运行态首页通过。
@@ -280,15 +280,15 @@ src/main/java/com/smartkb
 项目概览：
 
 ```text
-SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，第一阶段完成了 Advanced RAG 工程闭环：文档上传、Ollama Embedding、pgvector 检索、Redis 会话记忆、流式问答和 Prometheus/Grafana 监控。第二阶段我把它升级成 Java 项目的 Agent 工程平台，能接管真实项目目录，做任务状态流转、记忆分层、代码上下文检索和 Eval 评测。我用 TicketRush 这个高并发票务项目作为真实样本来验证它。
+SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，主演示是一条完整的 Advanced RAG 工程闭环：上传中文知识文档、切片入库、pgvector 检索、多轮流式问答、Advanced RAG 分阶段回答、引用片段定位到原文 chunk，并用 Redis ChatMemory 保留会话上下文。仓库里还保留了面向 Java 项目接管的工程工作台实验代码，但首页不展示这些入口，它们只作为扩展方向和自测材料。
 ```
 
 设计取舍：
 
 - 为什么 Redis ChatMemory 比 InMemoryChatMemory 更适合演示分布式和重启恢复？
 - Advanced RAG 中查询改写、过滤和重排序分别解决什么问题？
-- 为什么代码上下文检索不能只靠向量检索，而要优先 `rg`、Git diff 和文件树？
-- 如何用 Eval Run 证明 Agent 能稳定接管真实 Java 项目？
+- 为什么引用片段定位比纯聊天回答更适合企业知识库？
+- 可选工程工作台为什么需要真实项目和更长操作路径，不能只靠按钮说明价值？
 - Java 21 Virtual Threads 在文档解析、Embedding、数据库访问和模型调用这类 IO 密集场景中的价值是什么？
 
 更完整说明方式见 [docs/EVAL_TECHNICAL_SUMMARY.md](docs/EVAL_TECHNICAL_SUMMARY.md) 和 [SPEC.md](SPEC.md)。

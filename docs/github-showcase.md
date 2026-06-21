@@ -7,7 +7,7 @@
 - Java 21 + Spring Boot + Spring AI 的 Advanced RAG 工程闭环。
 - PostgreSQL + pgvector 做向量存储，Ollama 提供本地 Embedding。
 - Redis ChatMemory 支持多轮会话持久化、TTL 和服务重启后的上下文恢复。
-- 工作台从 RAG 扩展到 Agent 工程能力：项目接管、任务状态、记忆分层、代码上下文和 Eval。
+- README 展示聚焦 RAG 主链路；Agent 工程工作台保留为可选实验代码，首页默认隐藏入口，不作为主演示卖点。
 - Docker Compose、Prometheus/Grafana、K3s demo manifest 和测试记录都已落地。
 
 ## 推荐浏览顺序
@@ -16,7 +16,7 @@
 2. [DEMO.md](../DEMO.md)：按 5 分钟路径走完整演示。
 3. [docs/demo-runbook.md](demo-runbook.md)：看设计说明、设计取舍和替代路径。
 4. [SPEC.md](../SPEC.md)：看已完成范围、验收记录和不继续扩展的边界。
-5. [docs/AGENT_PLATFORM_SPEC.md](AGENT_PLATFORM_SPEC.md)：看 SmartKB v2 Agent 平台设计。
+5. [docs/AGENT_PLATFORM_SPEC.md](AGENT_PLATFORM_SPEC.md)：可选阅读，了解 SmartKB v2 Agent 平台实验设计。
 
 ## 本地演示入口
 
@@ -51,18 +51,18 @@ test-docs/advanced-rag-demo.md
 - Docker Compose 运行态 health 已验证为 `UP`。
 - Redis ChatMemory live checklist：6/6 通过。
 - 工作台 browser smoke 覆盖桌面端和 390px 移动视口。
-- Project Intake、AgentTask、Memory、Code Context、Eval 的摘要指标和移动端交互 smoke 已覆盖。
+- Project Intake、AgentTask、Memory、Code Context、Eval 的摘要指标和移动端交互 smoke 已覆盖，但这些属于可选工程工作台实验。
 - K3s demo manifest 已在一次性 K3d 集群验证 Pod、PVC、health 和 Eval report API。
 
 ## 项目摘要
 
 ```text
-SmartKB：基于 Java 21 + Spring AI 的企业知识库与 Agent 工程平台，完成文档上传、pgvector 检索、Advanced RAG、Redis 会话记忆、流式问答、Prometheus/Grafana 监控，并扩展项目接管、任务状态、记忆分层、代码上下文和 Eval 评测工作台。
+SmartKB：基于 Java 21 + Spring AI 的企业知识库项目，完成文档上传、pgvector 检索、Advanced RAG、Redis 会话记忆、流式问答、引用片段定位和 Prometheus/Grafana 监控；项目接管、任务状态、记忆分层、代码上下文和 Eval 作为可选工程工作台实验代码保留，但不占用首页演示入口。
 ```
 
 ## 边界说明
 
 - 这是可本地运行、可演示、可解释的工程项目，不声称已经生产商用。
 - K3s manifest 是本地 demo 形态，生产级 HA、TLS、镜像仓库、监控和托管 Secret 不在当前范围。
-- Agent 平台聚焦可验证的项目接管和工程辅助，不包装成完整多 Agent OS。
+- Agent 工作台属于扩展实验，不包装成完整多 Agent OS，不作为 README 主展示链路，首页默认隐藏入口。
 - 仓库不应提交真实 API key、token、cookie、私钥或 `.env` 内容。

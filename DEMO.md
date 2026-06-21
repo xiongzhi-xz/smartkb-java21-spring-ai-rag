@@ -1,11 +1,12 @@
 # SmartKB 5 分钟演示脚本
 
-这份脚本用于项目展示或自测。SmartKB 不只是“上传文档后提问”的知识库 demo，而是分成两层：
+这份脚本用于项目展示或自测。默认 5 分钟演示只展示 SmartKB 的 RAG 主链路，确保观众能看到一个完整、可解释的知识库闭环：
 
 ```text
 RAG 知识库：文档上传 -> 切片 -> Embedding -> pgvector -> Advanced RAG -> 引用片段
-Agent 工程平台：项目接管 -> 任务状态 -> 记忆分层 -> 代码上下文 -> Eval 评测
 ```
+
+仓库中保留的项目接管、任务状态、记忆层、代码上下文和 Eval 属于可选工程工作台实验，首页默认隐藏这些入口，不放进默认主演示。
 
 ## 演示前检查
 
@@ -47,7 +48,7 @@ RAG 推荐文档：
 test-docs/advanced-rag-demo.md
 ```
 
-Agent 推荐接管项目，Docker 模式路径：
+可选工程工作台实验样本，Docker 模式路径：
 
 ```text
 /workspace/projects/ticketrush-java21-high-concurrency
@@ -63,16 +64,7 @@ E:\project\work\job\ticketrush-java21-high-concurrency
 
 ### 1. 打开工作台
 
-打开 SmartKB 页面后，先确认工作台有多组入口：
-
-- 智能问答
-- 项目接管
-- 任务状态
-- 记忆层
-- 代码上下文
-- Eval 评测
-
-说明重点：SmartKB 第一层是 RAG 知识库，第二层是面向 Java 存量项目的 Agent 工程平台。
+打开 SmartKB 页面后，默认停留在“智能问答”。本次演示只围绕这个入口展开，工程工作台实验入口已从首页导航隐藏。
 
 ### 2. RAG 知识库：上传和切片
 
@@ -115,38 +107,29 @@ Advanced RAG 示例：切换 Advanced 模式，选择刚上传的文档，依次
 
 设计说明：Advanced RAG 不只是把问题丢给模型，而是通过查询改写、双路召回、文档过滤、重排序和引用片段增强回答的可追溯性。
 
-### 4. Agent 工程平台：项目接管
+### 4. 引用片段定位
 
-切到“项目接管”，输入 TicketRush 项目路径。
+在 Advanced RAG 回答下方展开引用片段，点击其中一条引用。
 
-Docker 模式：
+观察：
 
-```text
-/workspace/projects/ticketrush-java21-high-concurrency
-```
+- 右侧打开文档详情
+- 页面自动定位到对应 chunk
+- 目标 chunk 有高亮边框
 
-运行 Project Intake 后观察：
+设计说明：这是 SmartKB 区别于普通聊天页的关键闭环：回答不是孤立文本，而是可以追溯到入库文档的具体片段。
 
-- 当前目标
-- 当前阶段
-- 已完成
-- 未完成
-- 工作区状态
-- 下一步只做
-- 技术栈、可运行命令、验证缺口和风险提示
+## 可选工程工作台实验
 
-设计说明：项目接管优先读取 README、SPEC、AGENTS、HANDOFF、pom.xml、Git 状态和目录结构，用确定性上下文生成接管报告，不只依赖向量检索。
+以下功能的代码和 API 保留用于自测或后续研究，但首页默认不展示入口，也不建议放进 5 分钟主演示：
 
-### 5. Agent 工程平台：任务、记忆、代码上下文、Eval
+- “项目接管”：读取 README、SPEC、AGENTS、HANDOFF、pom.xml 和 Git 状态，生成接管摘要。
+- “任务状态”：记录 `INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD` 的任务状态流转。
+- “记忆层”：导入或手工维护项目级记忆，并做简单冲突提示。
+- “代码上下文”：做文件树、关键词、Git diff、代码 chunk 和语义补充检索。
+- “Eval 评测”：记录接管样本的状态、得分、失败原因和人工介入次数。
 
-继续切换工作区：
-
-- “任务状态”：展示 AgentTask 从 `INTAKE -> PLAN -> EXECUTE -> VERIFY -> RECORD` 的状态流转。
-- “记忆层”：展示高权威记忆来自 SPEC/HANDOFF，低权威记忆不能覆盖高权威约束。
-- “代码上下文”：展示文件树、关键词检索、Git diff 和代码 chunk；语义检索只做补充。
-- “Eval 评测”：展示 TicketRush E01-E10 样本和聚合报告，用于记录接管能力、失败原因、得分和人工介入次数。
-
-设计说明：这一层把 SmartKB 从“知识库问答”扩展到“可接管真实 Java 项目的工程辅助平台”。
+这些功能的价值更偏工程实验，目前页面按钮和单次操作不容易让观众快速理解，因此默认不作为展示重点。
 
 ## API 验证入口
 
@@ -160,7 +143,7 @@ POST /api/chat/advanced/stream
 DELETE /api/chat/memory/{conversationId}
 ```
 
-Agent 平台：
+可选工程工作台实验：
 
 ```text
 POST /api/agent/projects/intake
@@ -176,8 +159,8 @@ GET  /api/agent/eval/report
 
 ## 环境不完整时的替代路径
 
-- Chat API key 不可用：跳过 RAG 生成，演示 Project Intake、AgentTask、Memory、Code Context、Eval。
-- Ollama Embedding 不可用：不现场上传新文档，改看已有文档和 Agent 工作台。
+- Chat API key 不可用：不现场生成新回答，改看已准备好的 RAG 截图和已有文档详情。
+- Ollama Embedding 不可用：不现场上传新文档，改看已入库文档、chunk 详情和引用定位。
 - Docker 端口冲突：Docker 默认 `8082`，Hybrid 本地默认 `8080`。
 - 数据库里旧文档乱码：删除旧文档后重新上传 `test-docs/advanced-rag-demo.md`。
 
@@ -187,13 +170,13 @@ GET  /api/agent/eval/report
 
 企业知识库的关键不是让模型自由回答，而是把文档解析、切片、检索、引用片段、会话记忆和质量验证做成可解释的工程闭环。
 
-### 为什么 Agent 接管不只用向量检索？
+### 可选工程工作台为什么不放进主演示？
 
-代码项目接管需要确定性证据。README、SPEC、AGENTS、HANDOFF、Git diff、文件树和 `rg` 结果更容易解释来源，向量检索适合作为语义补充。
+它更像一个后续方向验证：项目接管、任务状态、记忆层、代码上下文和 Eval 都需要真实项目和更长操作路径才能看出价值。5 分钟展示里强行切换这些页面，观众只能看到按钮和表单，反而会削弱 RAG 主线。
 
 ### Eval Run 的价值是什么？
 
-Eval Run 把“接管能力”记录成可比较的数据：每个 case 有状态、得分、失败原因、人工介入次数和聚合报告，后续改动可以回归验证。
+Eval Run 的定位是后续工程实验的回归记录，不是知识库用户的核心功能。它把接管任务记录成可比较的数据：每个 case 有状态、得分、失败原因、人工介入次数和聚合报告。
 
 ## 验证命令
 

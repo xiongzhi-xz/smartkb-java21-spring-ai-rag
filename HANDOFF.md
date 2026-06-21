@@ -1,5 +1,88 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-21 RAG-First Demo Closeout
+
+Current goal:
+- Keep SmartKB public/demo materials centered on the RAG knowledge-base flow, not on optional engineering workbench buttons.
+
+Current stage:
+- RAG-first README/DEMO/showcase/runbook wording is aligned.
+- Agent/workbench features remain in code and docs as optional experiments only, and their homepage navigation entries are hidden.
+- Hermes `run_demo_no_docker.sh` and `demo_flow.sh` were reviewed statically, not run, not committed.
+
+Recently completed:
+- README design narrative now describes the actual step-by-step RAG flow: upload Chinese knowledge document, inspect chunks, normal Q&A, follow-up, Advanced RAG staged answer, and citation click-through.
+- README and SPEC demoted Project Intake, task state, memory layer, code context, and Eval to optional engineering workbench experiments.
+- Updated `src/main/resources/static/index.html` so the visible homepage navigation only shows the RAG chat/knowledge-base path. The optional Project Intake, task state, memory, code context, and Eval nav buttons remain in the DOM for compatibility but are hidden and removed from tab order.
+- Updated `StaticWorkbenchHtmlTest` to guard that optional workbench navigation stays hidden from the main demo.
+- Confirmed `DEMO.md`, `docs/demo-runbook.md`, and `docs/github-showcase.md` already present RAG as the default 5-minute demo path.
+- Confirmed Hermes scripts still do not match the current project: they use stale `/api/v1/...` endpoints, mention ChromaDB/LangGraph instead of pgvector/Spring AI, and write demo outputs into ad hoc locations such as `demo_assets/`, `rag_response.json`, and `eval_report.csv`.
+
+Verified latest:
+- `mvn -Dtest=StaticWorkbenchHtmlTest test`: passed, 6 tests.
+- `node --check .\scripts\smoke\workbench-desktop-screenshots.mjs`: passed.
+- `node .\scripts\smoke\workbench-desktop-screenshots.mjs`: passed and regenerated 7 desktop RAG screenshots.
+- Visual inspection of `smartkb-01-workbench-overview.png` and `smartkb-07-eval-report.png`: screenshots are styled SmartKB pages, use Chinese RAG content, the visible sidebar no longer shows Agent/workbench entries, and the final screenshot highlights the cited `chunk-11`.
+- `node --check .\scripts\smoke\workbench-summary-smoke.mjs`: passed.
+- `node .\scripts\smoke\workbench-summary-smoke.mjs`: passed; hidden optional workbench panels remain script-testable, and 390px overflow check passed.
+- `git diff --check`: passed with CRLF conversion warnings only.
+
+Workspace status:
+- Dirty files include README/DEMO/SPEC/HANDOFF/showcase/runbook docs and regenerated desktop screenshots.
+- Untracked files include `scripts/smoke/workbench-desktop-screenshots.mjs`, `demo_assets/`, `run_demo_no_docker.sh`, and `demo_flow.sh`.
+- No commit has been made.
+
+Next step only:
+- If continuing, either leave Hermes scripts untracked or rewrite them into a small RAG-only script using the real SmartKB endpoints. Do not run or commit the current Hermes scripts as-is.
+
+## Latest Snapshot - 2026-06-21 RAG Demo Screenshot Refresh
+
+Current goal:
+- Make README screenshots demonstrate the complete SmartKB RAG flow with Chinese test-document content.
+
+Current stage:
+- RAG screenshot asset repair completed.
+- Hermes shell scripts are still unreviewed for execution and were not run.
+- No commit has been made.
+
+Recently completed:
+- Added `scripts/smoke/workbench-desktop-screenshots.mjs`.
+- Regenerated the 7 README desktop screenshots under `docs/screenshots/desktop/`.
+- The new screenshots load the actual `src/main/resources/static/index.html`, wait for Tailwind layout, use mocked API data, and show the RAG main path: upload Chinese `advanced-rag-demo.md`, indexed document list, document chunk detail, normal RAG question, follow-up question through ChatMemory, Advanced RAG staged answer, and citation click-through to highlighted source chunk.
+- Synced the same corrected PNGs into untracked `demo_assets/` so the copied assets no longer show the old bare HTML screenshots.
+- Updated README screenshot labels to describe the RAG operation sequence instead of Agent platform panels.
+- Updated `SPEC.md` screenshot progress wording.
+
+Verified latest:
+- `node --check .\scripts\smoke\workbench-desktop-screenshots.mjs`: passed.
+- `node .\scripts\smoke\workbench-desktop-screenshots.mjs`: passed.
+- Visual inspection confirmed screenshots are styled SmartKB workbench pages, use Chinese RAG questions/answers, and the final screenshot highlights the cited `chunk-11` in document detail.
+
+Next step only:
+- Continue static review/fix decision for Hermes `run_demo_no_docker.sh` and `demo_flow.sh`; do not run or commit them before endpoint and output-directory cleanup.
+
+## Latest Snapshot - 2026-06-21 Hermes Demo Script Handoff
+
+Current goal:
+- Decide whether and how to use Hermes-generated demo scripts for SmartKB local demonstration.
+
+Current stage:
+- New script-review phase, separate from the completed screenshot showcase phase.
+- Do not run or commit the Hermes scripts before review.
+
+Recently observed:
+- Hermes added untracked `run_demo_no_docker.sh`.
+- Hermes added untracked `demo_flow.sh`.
+- Hermes added untracked `demo_assets/` containing copies of the 7 SmartKB desktop screenshots.
+- Current Git status before this handoff update showed `main...origin/main` plus those untracked files.
+
+Initial risk notes:
+- `run_demo_no_docker.sh` uses endpoint paths like `/api/v1/doc/upload`, `/api/v1/rag/query`, and `/api/v1/agent/task`, which do not match the current SmartKB README/API paths.
+- The script text mentions ChromaDB and LangGraph, while current SmartKB is Java 21 + Spring AI + pgvector plus Agent platform APIs.
+- The script hard-codes a WSL path and generated output files; review portability and repository hygiene before committing anything.
+
+Next step only:
+- In the next window, follow AGENTS/HANDOFF takeover, inspect `run_demo_no_docker.sh` and `demo_flow.sh`, compare endpoints with current controllers/README, then either fix into a minimal accurate demo script or leave the scripts untracked.
 ## Latest Snapshot - 2026-06-21 Desktop Screenshot Showcase
 
 Current goal:

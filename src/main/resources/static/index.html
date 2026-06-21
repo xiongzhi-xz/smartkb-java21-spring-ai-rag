@@ -84,7 +84,7 @@
             .workspace-nav .space-y-1 {
                 display: grid;
                 gap: 6px;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns: minmax(0, 1fr);
             }
             .workspace-nav .space-y-1 > :not([hidden]) ~ :not([hidden]) {
                 margin-top: 0;
@@ -173,33 +173,33 @@
             <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                 <i class="fa-solid fa-brain text-blue-600"></i> SmartKB
             </h1>
-            <p class="text-sm text-gray-500 mt-1">RAG + Agent 工作台</p>
+            <p class="text-sm text-gray-500 mt-1">企业智能知识库</p>
         </div>
 
         <nav class="workspace-nav border-b p-4">
-            <div class="mb-2 text-xs font-semibold uppercase text-gray-400">工作区</div>
+            <div class="mb-2 text-xs font-semibold uppercase text-gray-400">知识库</div>
             <div class="space-y-1">
                 <button id="workspaceNavChat" type="button" onclick="openWorkspacePanel('chat')" class="workspace-nav-button active">
                     <i class="fa-solid fa-comments"></i>
                     <span>智能问答</span>
                 </button>
-                <button id="workspaceNavProjectIntake" type="button" onclick="openWorkspacePanel('projectIntake')" class="workspace-nav-button">
+                <button id="workspaceNavProjectIntake" type="button" onclick="openWorkspacePanel('projectIntake')" class="workspace-nav-button hidden" aria-hidden="true" tabindex="-1">
                     <i class="fa-solid fa-folder-tree"></i>
                     <span>项目接管</span>
                 </button>
-                <button id="workspaceNavAgentTask" type="button" onclick="openWorkspacePanel('agentTask')" class="workspace-nav-button">
+                <button id="workspaceNavAgentTask" type="button" onclick="openWorkspacePanel('agentTask')" class="workspace-nav-button hidden" aria-hidden="true" tabindex="-1">
                     <i class="fa-solid fa-list-check"></i>
                     <span>任务状态</span>
                 </button>
-                <button id="workspaceNavMemory" type="button" onclick="openWorkspacePanel('memory')" class="workspace-nav-button">
+                <button id="workspaceNavMemory" type="button" onclick="openWorkspacePanel('memory')" class="workspace-nav-button hidden" aria-hidden="true" tabindex="-1">
                     <i class="fa-solid fa-layer-group"></i>
                     <span>记忆层</span>
                 </button>
-                <button id="workspaceNavCodeContext" type="button" onclick="openWorkspacePanel('codeContext')" class="workspace-nav-button">
+                <button id="workspaceNavCodeContext" type="button" onclick="openWorkspacePanel('codeContext')" class="workspace-nav-button hidden" aria-hidden="true" tabindex="-1">
                     <i class="fa-solid fa-code"></i>
                     <span>代码上下文</span>
                 </button>
-                <button id="workspaceNavEval" type="button" onclick="openWorkspacePanel('eval')" class="workspace-nav-button">
+                <button id="workspaceNavEval" type="button" onclick="openWorkspacePanel('eval')" class="workspace-nav-button hidden" aria-hidden="true" tabindex="-1">
                     <i class="fa-solid fa-chart-simple"></i>
                     <span>Eval 评测</span>
                 </button>
