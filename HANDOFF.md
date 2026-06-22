@@ -422,7 +422,7 @@ Next step:
 
 把 SmartKB 收口为可本地运行、可演示、可设计说明的 Java 21 + Spring AI RAG 项目，并作为后续 AI 工程化转型主项目继续升级。
 
-新的求职叙事方向：
+新的项目定位方向：
 
 - 第一阶段：企业智能知识库，展示 Spring AI、Advanced RAG、pgvector、Redis ChatMemory、Docker Compose、Prometheus/Grafana。
 - 第二阶段：升级为面向 Java 存量项目的 Agent 工程平台，增加项目接管、任务状态机、长期记忆、上下文检索和 eval 能力。

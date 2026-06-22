@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * - Value：List<String>，每个元素是消息的 JSON 序列化
  * - TTL：默认 24 小时，可配置
  * <p>
- * 面试讲法要点：
+ * 设计说明要点：
  * - 为什么不用 Spring AI 官方 RedisChatMemory？1.0.0-M1 版本没有提供，
  *   自研实现 ChatMemory 接口只需 add/get/clear 三个方法，非常轻量。
  * - Redis List + TTL 的设计权衡：

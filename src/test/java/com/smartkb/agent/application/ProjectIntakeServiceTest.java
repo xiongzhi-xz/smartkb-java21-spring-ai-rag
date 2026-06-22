@@ -27,7 +27,7 @@ class ProjectIntakeServiceTest {
 
                 ## 当前目标
 
-                把 Demo 项目收口为可本地运行、可压测、可面试讲解的 Java 项目。
+                把 Demo 项目收口为可本地运行、可压测、可技术讲解的 Java 项目。
 
                 ## 当前阶段
 

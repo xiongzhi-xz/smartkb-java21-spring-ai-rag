@@ -257,7 +257,7 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 预期产出：
 
 - 找出 k6 真实压测、Seata 示例、稳定性压测记录等未完成项。
-- 区分“求职必须做”和“可选增强”。
+- 区分“当前收口必须做”和“可选增强”。
 - 给出下一步只做一个任务。
 
 通过标准：
@@ -274,7 +274,7 @@ E:/project/work/job/ticketrush-java21-high-concurrency
 | 耗时 | 未单独计时 |
 | 工具调用次数 | 4（检索 `SPEC.md`、`HANDOFF.md`、`README.md` 的下一步/未验证/TODO，并确认 TicketRush 工作区状态） |
 | 人工介入次数 | 0 |
-| 实际产出摘要 | 当前未完成任务应按求职收口优先级排序：1）用 k6 对 `REDIS_LUA`、`REDIS_LOCK`、`MYSQL_OPTIMISTIC_LOCK` 三种库存策略跑第一轮本地压测并产出对比报告，这是 HANDOFF 明确的下一步，也是当前最缺的真实数据；2）用 `scripts/k6/stability-governance.js` 跑限流/准入前后稳定性压测，补 `docs/stability-benchmark.md` 记录；3）跑 Virtual Threads vs 传统线程池基准测试，补线程模型对比报告；4）补 Seata 分布式事务示例，用于解释强一致和最终一致性取舍；5）ES/Elasticsearch 集成优先级最低；6）`/api/system/validation-check` 参数错误响应可作为小型手动验证补齐。README 的“补充 RocketMQ 集成测试”与最新 SPEC/HANDOFF 冲突，SPEC 已标记 RocketMQ 集成测试完成，因此不应列为待办。下一步只做第一项：k6 对三种库存策略跑第一轮本地压测。 |
+| 实际产出摘要 | 当前未完成任务应按项目收口优先级排序：1）用 k6 对 `REDIS_LUA`、`REDIS_LOCK`、`MYSQL_OPTIMISTIC_LOCK` 三种库存策略跑第一轮本地压测并产出对比报告，这是 HANDOFF 明确的下一步，也是当前最缺的真实数据；2）用 `scripts/k6/stability-governance.js` 跑限流/准入前后稳定性压测，补 `docs/stability-benchmark.md` 记录；3）跑 Virtual Threads vs 传统线程池基准测试，补线程模型对比报告；4）补 Seata 分布式事务示例，用于解释强一致和最终一致性取舍；5）ES/Elasticsearch 集成优先级最低；6）`/api/system/validation-check` 参数错误响应可作为小型手动验证补齐。README 的“补充 RocketMQ 集成测试”与最新 SPEC/HANDOFF 冲突，SPEC 已标记 RocketMQ 集成测试完成，因此不应列为待办。下一步只做第一项：k6 对三种库存策略跑第一轮本地压测。 |
 | 失败原因 | 无 |
 
 ### E07 评审一次小改动风险
@@ -402,7 +402,7 @@ TicketRush 工作区出现 docker/rocketmq/store/ 未跟踪目录。
 | 状态 | 通过 |
 | 得分 | 2 |
 | 耗时 | 未单独计时 |
-| 工具调用次数 | 3（读取架构文档、README/SPEC/HANDOFF 主链路与求职定位证据，并确认 TicketRush 工作区状态） |
+| 工具调用次数 | 3（读取架构文档、README/SPEC/HANDOFF 主链路与项目定位材料，并确认 TicketRush 工作区状态） |
 | 人工介入次数 | 0 |
 | 实际产出摘要 | 2 分钟说明方式可以这样组织：TicketRush 是一个 Java 21 高并发票务秒杀项目，目标不是做简单 CRUD，而是把抢票入口、防超卖、异步削峰、限流、补偿、监控和本地部署串成可运行、可压测、可设计说明的链路。请求进入 `/api/rush/tickets` 后，先经过 Sentinel 全局和热点票档限流，再进入 Redis 准入令牌，随后应用服务把库存预占提交到 Virtual Threads 执行。库存层提供三种策略对比，主方案是 Redis Lua，在单脚本里完成幂等检查、库存检查、available 到 locked 的原子移动和 version 递增，避免热点票档超卖；Redis Lock 和 MySQL 乐观锁用于性能与复杂度对比。抢票成功后不在入口同步落订单，而是发布 `OrderCreateMessage` 到 RocketMQ，消费者按 `idempotentKey` 幂等创建 `PENDING` 订单；消息发送失败会释放预占库存，订单超时关闭任务会关闭过期订单并释放锁定库存。项目已经通过 Docker Compose 拉起 app 和 9 个中间件，并接入 Prometheus/Grafana，下一步重点是补真实 k6 压测数据。它适合作为 SmartKB v2 的 Agent eval 样本，因为文件、配置、测试、文档和运行数据边界都足够真实，能检验 Agent 是否真的会接管 Java 项目，而不只是泛泛解释代码。设计问题包括：Redis Lua 如何保证不超卖和幂等、RocketMQ 失败/重复消费如何处理、Sentinel 与 Redis 准入门的边界、Docker Compose 全链路如何验证、为什么它能验证 SmartKB 的项目接管能力。 |
 | 失败原因 | 无 |

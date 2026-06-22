@@ -32,7 +32,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
  * - Redis：服务重启后会话不丢失、支持分布式共享、TTL 自动过期
  * - InMemory：仅开发调试用，JVM 重启即丢失
  * <p>
- * 面试讲法要点：
+ * 设计说明要点：
  * - Advisor 链的执行顺序：MessageChatMemoryAdvisor 在 QuestionAnswerAdvisor 之前，
  *   确保历史消息先注入 Prompt，再叠加 RAG 检索结果，让 LLM 同时拥有对话上下文和文档知识。
  * - ChatMemory 接口只有 add/get/clear 三个方法，非常轻量；

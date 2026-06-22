@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # ========== 多阶段构建 — 容器内完成 Maven 编译 ==========
-# 面试讲法：多阶段构建是云原生标准做法，Dockerfile 自身就是完整构建方案，
+# 设计说明：多阶段构建是云原生标准做法，Dockerfile 自身就是完整构建方案，
 # CI/CD 只需 docker build，不依赖宿主机环境。
 # 国内网络问题：通过 .mvn/settings.xml 配置阿里云镜像解决。
 

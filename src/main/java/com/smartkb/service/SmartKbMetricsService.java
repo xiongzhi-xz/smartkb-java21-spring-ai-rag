@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
  * - smartkb_chat_ai_calls_total：AI 模型调用总数
  * - smartkb_chat_ai_call_duration_seconds：AI 模型调用耗时
  * <p>
- * 面试讲法要点：
+ * 设计说明要点：
  * - 为什么用 Micrometer 而不是手动打点？
  *   Micrometer 是 Spring Boot 可观测性的标准抽象层，写一套代码就能输出到
  *   Prometheus/Datadog/CloudWatch 等多个后端，不绑定具体监控方案。

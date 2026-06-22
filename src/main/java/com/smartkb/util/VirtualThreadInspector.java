@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
  * Virtual Threads 监控工具类
  * <p>
  * 用于记录和验证 Virtual Threads 的使用情况
- * 面试时可展示 Virtual Threads 的实际效果
+ * 用于记录 Virtual Threads 的实际使用效果
  *
  * @author SmartKB Team
  * @since 1.0.0
