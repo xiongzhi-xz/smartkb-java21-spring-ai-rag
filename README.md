@@ -4,14 +4,23 @@ Java 21 + Spring AI 企业智能知识库系统，核心展示目标是一个可
 
 SmartKB 的主线能力是：文档上传、解析、切片、Embedding、pgvector 检索、多轮流式问答、Advanced RAG、引用片段定位和 Redis 会话记忆。仓库中也保留了一组面向 Java 项目接管的 Agent 工作台实验代码，但首页默认隐藏这些入口，当前展示主线只围绕 RAG。
 
+## 先看这个：完整演示动图
+
+下面是自动播放 GIF，覆盖上传、入库、文档详情、普通问答、多轮追问、Advanced RAG、引用跳转和检索质量评测。
+
+![SmartKB RAG 完整演示动图](docs/screenshots/smartkb-rag-demo.gif)
+
+GitHub README 内嵌展示使用 GIF；高清 MP4 可通过链接播放或下载：[smartkb-rag-demo.mp4](docs/screenshots/smartkb-rag-demo.mp4)
+
 ## GitHub 展示入口
 
 如果你是第一次打开这个仓库，建议先按这个顺序看：
 
-1. 本页的“项目亮点”“架构图”“快速启动”“演示路径”和“验证状态”。
-2. [docs/github-showcase.md](docs/github-showcase.md)：快速展示摘要、推荐浏览顺序、项目摘要和边界说明。
-3. [DEMO.md](DEMO.md)：本地 5 分钟演示路径。
-4. [docs/demo-runbook.md](docs/demo-runbook.md)：设计说明、设计取舍和替代路径。
+1. 本页顶部的完整演示动图。
+2. 本页的“项目亮点”“架构图”“快速启动”“演示路径”和“验证状态”。
+3. [docs/github-showcase.md](docs/github-showcase.md)：快速展示摘要、推荐浏览顺序、项目摘要和边界说明。
+4. [DEMO.md](DEMO.md)：本地 5 分钟演示路径。
+5. [docs/demo-runbook.md](docs/demo-runbook.md)：设计说明、设计取舍和替代路径。
 
 展示边界：SmartKB 是本地可运行、可演示、可解释的 Java 21 + Spring AI RAG 项目，不声称已经生产商用；生产级 HA、TLS、托管 Secret 和完整多 Agent OS 不在当前范围。
 ## 项目亮点
@@ -73,12 +82,6 @@ flowchart LR
 ```
 
 ## 界面截图
-
-完整演示动图：
-
-![SmartKB RAG 完整演示动图](docs/screenshots/smartkb-rag-demo.gif)
-
-GitHub README 内嵌展示使用 GIF；高清 MP4 可通过链接播放或下载：[smartkb-rag-demo.mp4](docs/screenshots/smartkb-rag-demo.mp4)
 
 | 步骤 | 桌面横屏截图 |
 | --- | --- |

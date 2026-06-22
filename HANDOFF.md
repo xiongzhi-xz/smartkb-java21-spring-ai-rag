@@ -10,6 +10,7 @@ Current stage:
 - README embeds the GIF and links the MP4 before the static screenshot table.
 
 Recently completed:
+- Moved the demo GIF from the lower screenshot section to the top of README under "先看这个：完整演示动图" so first-time readers notice it immediately.
 - Fixed the multi-turn follow-up screenshot so it shows both the first upload-flow question and the follow-up using `conversationId=rag-demo` / Redis ChatMemory context.
 - Regenerated all 8 screenshots and rebuilt the GIF/MP4 from the corrected screenshot set.
 - Added `docs/screenshots/smartkb-rag-demo.mp4` (22.47s, 1280x800, about 410KB).
