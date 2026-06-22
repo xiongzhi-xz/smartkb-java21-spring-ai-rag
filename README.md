@@ -74,6 +74,12 @@ flowchart LR
 
 ## 界面截图
 
+完整演示动图：
+
+![SmartKB RAG 完整演示动图](docs/screenshots/smartkb-rag-demo.gif)
+
+高清 MP4 版本：[smartkb-rag-demo.mp4](docs/screenshots/smartkb-rag-demo.mp4)
+
 | 步骤 | 桌面横屏截图 |
 | --- | --- |
 | 1. 上传知识文档 | ![SmartKB 上传知识文档](docs/screenshots/desktop/smartkb-01-upload-document.png) |

@@ -1,5 +1,29 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-22 RAG Demo Media
+
+Current goal:
+- Add compact GitHub demo media for the complete Chinese RAG flow.
+
+Current stage:
+- MP4 and GIF demo media were generated from the 8 RAG screenshots.
+- README embeds the GIF and links the MP4 before the static screenshot table.
+
+Recently completed:
+- Added `docs/screenshots/smartkb-rag-demo.mp4` (22.47s, 1280x800, about 410KB).
+- Added `docs/screenshots/smartkb-rag-demo.gif` (960x600, about 569KB).
+- Updated README with the demo GIF and MP4 link.
+
+Verified latest:
+- `ffprobe` confirms the MP4 is H.264, 1280x800, 22.47s.
+- Visual check of the GIF first frame passed.
+
+Workspace status:
+- Working tree has uncommitted demo media, README, and HANDOFF changes.
+
+Next step only:
+- Check README media links, commit, and push.
+
 ## Latest Snapshot - 2026-06-22 RAG Demo Screenshots
 
 Current goal:
