@@ -6,7 +6,7 @@ SmartKB 的主线能力是：文档上传、解析、切片、Embedding、pgvect
 
 ## 先看这个：完整演示动图
 
-下面是自动播放 GIF，覆盖上传、入库、文档详情、普通问答、多轮追问、Advanced RAG、引用跳转和检索质量评测。
+下面是带字幕的高清自动播放 GIF，覆盖上传、入库、文档详情、普通问答、多轮追问、Advanced RAG、引用跳转和检索质量评测。
 
 ![SmartKB RAG 完整演示动图](docs/screenshots/smartkb-rag-demo.gif)
 

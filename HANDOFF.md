@@ -10,17 +10,22 @@ Current stage:
 - README embeds the GIF and links the MP4 before the static screenshot table.
 
 Recently completed:
+- Added `scripts/smoke/build-rag-demo-media.mjs` so captioned GIF/MP4 generation is reproducible.
+- Regenerated the demo GIF at 1280px width with step captions; new GIF is about 906KB.
+- Regenerated the MP4 from the same captioned frames; MP4 remains 1280x800 and about 462KB.
 - Moved the demo GIF from the lower screenshot section to the top of README under "先看这个：完整演示动图" so first-time readers notice it immediately.
 - Fixed the multi-turn follow-up screenshot so it shows both the first upload-flow question and the follow-up using `conversationId=rag-demo` / Redis ChatMemory context.
 - Regenerated all 8 screenshots and rebuilt the GIF/MP4 from the corrected screenshot set.
-- Added `docs/screenshots/smartkb-rag-demo.mp4` (22.47s, 1280x800, about 410KB).
-- Added `docs/screenshots/smartkb-rag-demo.gif` (960x600, about 569KB).
+- Added `docs/screenshots/smartkb-rag-demo.mp4` (22.47s, 1280x800, about 462KB).
+- Added `docs/screenshots/smartkb-rag-demo.gif` (1280x800, about 906KB).
 - Updated README with the demo GIF and clarified that the MP4 is linked for playback/download because GitHub README inline preview uses GIF.
 
 Verified latest:
+- `node --check .\scripts\smoke\build-rag-demo-media.mjs`: passed.
+- `node .\scripts\smoke\build-rag-demo-media.mjs`: passed.
 - `ffprobe` confirms the MP4 is H.264, 1280x800, 22.47s.
+- Visual check of the GIF first frame passed: 1280px-wide image with visible bottom caption.
 - Visual check of `smartkb-05-follow-up-chat.png` passed: it now shows the prior question, the follow-up, and the multi-turn context evidence.
-- Visual check of the GIF first frame passed.
 
 Workspace status:
 - Working tree has uncommitted demo media, README, and HANDOFF changes.
