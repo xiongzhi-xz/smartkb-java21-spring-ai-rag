@@ -256,7 +256,7 @@
                 <span id="conversationStatus" class="max-w-52 truncate text-xs text-gray-400"></span>
                 <button id="ragEvalButton" onclick="runRagEval()"
                         class="text-gray-500 hover:text-blue-600 text-sm flex items-center gap-1">
-                    <i class="fa-solid fa-chart-line"></i> 质量评测
+                    <i class="fa-solid fa-chart-line"></i> 评测检索质量
                 </button>
                 <button id="clearChatButton" onclick="clearChat()"
                         class="text-gray-500 hover:text-red-600 text-sm flex items-center gap-1">
@@ -1031,7 +1031,7 @@ git diff --check</textarea>
         button.classList.toggle('cursor-not-allowed', isLoading);
         button.innerHTML = isLoading
             ? '<i class="fa-solid fa-spinner fa-spin"></i> 评测中'
-            : '<i class="fa-solid fa-chart-line"></i> 质量评测';
+            : '<i class="fa-solid fa-chart-line"></i> 评测检索质量';
     }
 
     function formatRagEvalRate(value) {
@@ -1054,6 +1054,19 @@ git diff --check</textarea>
         `;
     }
 
+    function formatRagEvalRank(rank) {
+        const number = Number(rank);
+        return Number.isFinite(number) && number > 0 ? `#${number}` : '未命中';
+    }
+
+    function formatRagEvalDecimal(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) {
+            return '0.00';
+        }
+        return number.toFixed(2);
+    }
+
     function renderRagEvalReport(report) {
         const container = document.getElementById('chatContainer');
         const existing = document.getElementById('ragEvalReportCard');
@@ -1069,18 +1082,18 @@ git diff --check</textarea>
         card.innerHTML = `
             <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">RAG 质量评测</p>
-                    <p class="mt-1 text-xs text-gray-500">普通向量召回 vs Advanced RAG 检索链路</p>
+                    <p class="text-sm font-semibold text-gray-800">内置问题集 RAG 检索评测</p>
+                    <p class="mt-1 text-xs text-gray-500">固定中文问题集，对比普通召回与 Advanced RAG；不评估当前聊天或历史对话</p>
                 </div>
                 <span class="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                     ${escapeHtml(total)} 个中文用例
                 </span>
             </div>
             <div class="grid gap-2 md:grid-cols-4">
-                ${renderCompactMetric('普通命中', `${report.baselineHitCount || 0}/${total}`, report.baselineHitCount > 0 ? 'blue' : 'gray')}
-                ${renderCompactMetric('Advanced', `${report.advancedHitCount || 0}/${total}`, report.advancedHitCount > 0 ? 'green' : 'gray')}
-                ${renderCompactMetric('引用命中', formatRagEvalRate(report.citationHitRate), report.citationHitCount > 0 ? 'green' : 'gray')}
-                ${renderCompactMetric('提升用例', report.advancedImprovementCount || 0, report.advancedImprovementCount > 0 ? 'amber' : 'gray')}
+                ${renderCompactMetric('Advanced Recall@K', formatRagEvalRate(report.advancedRecallAtK ?? report.advancedHitRate), report.advancedHitCount > 0 ? 'green' : 'gray')}
+                ${renderCompactMetric('Advanced Top1', `${report.advancedTop1HitCount || 0}/${total}`, report.advancedTop1HitCount > 0 ? 'green' : 'gray')}
+                ${renderCompactMetric('Advanced MRR', formatRagEvalDecimal(report.advancedMrr), report.advancedMrr > 0 ? 'blue' : 'gray')}
+                ${renderCompactMetric('引用覆盖', formatRagEvalRate(report.citationHitRate), report.citationHitCount > 0 ? 'green' : 'gray')}
             </div>
             <div class="mt-3 space-y-2">
                 ${cases.map(item => `
@@ -1094,8 +1107,11 @@ git diff --check</textarea>
                             </div>
                         </div>
                         <div class="mt-2 grid gap-2 text-xs text-gray-500 md:grid-cols-2">
-                            <p>期望：${escapeHtml((item.expectedKeywords || []).join(' / ') || '未配置')}</p>
-                            <p>改写：${escapeHtml(item.rewrittenQuery || '未改写')}</p>
+                            <p>期望片段：${escapeHtml((item.expectedChunkIds || []).join(' / ') || '未配置')}</p>
+                            <p>Advanced 命中：${escapeHtml((item.advancedMatchedChunkIds || []).join(' / ') || '未命中')}，排名 ${escapeHtml(formatRagEvalRank(item.advancedFirstHitRank))}，MRR ${escapeHtml(formatRagEvalDecimal(item.advancedMrr))}</p>
+                            <p>普通召回：${escapeHtml((item.baselineMatchedChunkIds || []).join(' / ') || '未命中')}，排名 ${escapeHtml(formatRagEvalRank(item.baselineFirstHitRank))}</p>
+                            <p>失败原因：${escapeHtml(item.failureReason || '通过')}</p>
+                            <p class="md:col-span-2">关键词辅助：${escapeHtml((item.expectedKeywords || []).join(' / ') || '未配置')}；改写：${escapeHtml(item.rewrittenQuery || '未改写')}</p>
                         </div>
                     </div>
                 `).join('')}

@@ -96,10 +96,13 @@ public class RagService {
             if (metadata != null) {
                 chunks.forEach(chunk -> chunk.getMetadata().putAll(metadata));
             }
-            chunks.forEach(chunk -> {
+            for (int i = 0; i < chunks.size(); i++) {
+                Document chunk = chunks.get(i);
                 chunk.getMetadata().put("fileName", resource.getFilename());
                 chunk.getMetadata().put("fileType", fileType);
-            });
+                chunk.getMetadata().put("chunkIndex", i + 1);
+                chunk.getMetadata().put("evalChunkId", String.format("chunk-%02d", i + 1));
+            }
 
             // 3. 批量生成 Embedding（Virtual Threads 并发）
             VirtualThreadInspector.logThreadInfo("Embedding生成阶段");

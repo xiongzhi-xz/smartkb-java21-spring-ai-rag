@@ -668,10 +668,18 @@ public class AdvancedRagService {
                 .limit(5)
                 .map(doc -> new ReferenceChunk(
                         String.valueOf(doc.getMetadata().getOrDefault("fileName", "未知文档")),
-                        String.valueOf(doc.getId()),
+                        referenceChunkId(doc),
                         buildPreview(doc.getContent())
                 ))
                 .collect(Collectors.toList());
+    }
+
+    private String referenceChunkId(Document document) {
+        Object evalChunkId = document.getMetadata().get("evalChunkId");
+        if (evalChunkId != null && !String.valueOf(evalChunkId).isBlank()) {
+            return String.valueOf(evalChunkId);
+        }
+        return String.valueOf(document.getId());
     }
 
     private String buildPreview(String content) {

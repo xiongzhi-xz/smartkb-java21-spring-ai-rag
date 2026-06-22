@@ -3,48 +3,56 @@
     "id": "RAG-E01",
     "question": "Virtual Threads 为什么适合 RAG 系统？",
     "expectedFileName": "advanced-rag-demo.md",
+    "expectedChunkIds": ["chunk-02"],
     "expectedKeywords": ["Virtual Threads", "IO 密集"]
   },
   {
     "id": "RAG-E02",
     "question": "SmartKB 为什么选择 PostgreSQL pgvector？",
     "expectedFileName": "advanced-rag-demo.md",
+    "expectedChunkIds": ["chunk-05"],
     "expectedKeywords": ["pgvector", "PostgreSQL"]
   },
   {
     "id": "RAG-E03",
     "question": "查询改写在 Advanced RAG 中解决什么问题？",
     "expectedFileName": "advanced-rag-demo.md",
+    "expectedChunkIds": ["chunk-07"],
     "expectedKeywords": ["查询改写"]
   },
   {
     "id": "RAG-E04",
     "question": "元数据过滤适合哪些企业知识库场景？",
     "expectedFileName": "advanced-rag-demo.md",
+    "expectedChunkIds": ["chunk-08"],
     "expectedKeywords": ["元数据过滤"]
   },
   {
     "id": "RAG-E05",
     "question": "当前重排序为什么只是轻量规则版，生产环境应该怎么改？",
     "expectedFileName": "advanced-rag-demo.md",
+    "expectedChunkIds": ["chunk-09"],
     "expectedKeywords": ["重排序", "rerank"]
   },
   {
     "id": "RAG-E06",
     "question": "流式输出解决的是性能问题还是体验问题？",
     "expectedFileName": "advanced-rag-demo.md",
+    "expectedChunkIds": ["chunk-10"],
     "expectedKeywords": ["流式输出"]
   },
   {
     "id": "RAG-E07",
     "question": "为什么引用片段能提升 RAG 系统可信度？",
     "expectedFileName": "advanced-rag-demo.md",
+    "expectedChunkIds": ["chunk-11"],
     "expectedKeywords": ["引用片段", "可解释性"]
   },
   {
     "id": "RAG-E08",
     "question": "SmartKB 本地启动流程是什么？",
     "expectedFileName": "advanced-rag-demo.md",
+    "expectedChunkIds": ["chunk-03"],
     "expectedKeywords": ["hybrid", "localhost:8080"]
   }
 ]

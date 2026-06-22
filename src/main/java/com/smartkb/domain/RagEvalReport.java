@@ -21,8 +21,14 @@ public record RagEvalReport(
         int advancedHitCount,
         int citationHitCount,
         int advancedImprovementCount,
+        int baselineTop1HitCount,
+        int advancedTop1HitCount,
         double baselineHitRate,
         double advancedHitRate,
         double citationHitRate,
+        double baselineRecallAtK,
+        double advancedRecallAtK,
+        double baselineMrr,
+        double advancedMrr,
         List<RagEvalCaseResult> cases) {
 }

@@ -1,33 +1,33 @@
 # HANDOFF - SmartKB
 
-## Latest Snapshot - 2026-06-22 Public Docs Cleanup
+## Latest Snapshot - 2026-06-22 RAG Eval v2
 
 Current goal:
-- Keep GitHub-facing SmartKB materials public-project oriented and remove private-prep wording.
+- Make SmartKB RAG evaluation credible and clear by measuring fixed Chinese eval cases against expected chunks, not current chat/history.
 
 Current stage:
-- RAG quality evaluation is committed and pushed.
-- A private-prep document is being removed from the public repository.
-- Hermes generated demo files have been deleted locally.
+- RAG Eval v2 is implemented and verified locally.
+- Video/PDF generation remains paused until the user confirms the new eval semantics and UI are acceptable.
+- Agent/workbench features remain hidden/de-emphasized from the main RAG demo.
 
 Recently completed:
-- Copied the private-prep document to a workspace note outside the repo.
-- Removed the private-prep document from the public repo.
-- Removed README, DEMO, demo runbook, GitHub showcase, and SPEC references to that document.
-- Deleted untracked Hermes files: `demo_assets/`, `demo_flow.sh`, and `run_demo_no_docker.sh`.
+- Added stable upload metadata: `chunkIndex` and `evalChunkId` (`chunk-01`, `chunk-02`, ...).
+- Updated Advanced RAG references to prefer stable `evalChunkId` over internal document IDs.
+- Added `expectedChunkIds` to the default 8 Chinese RAG eval cases.
+- Extended RAG eval reports with matched chunks, first-hit rank, Top1, Recall@K, MRR, and failure reason.
+- Updated the RAG page button/report wording to "评测检索质量" and "内置问题集 RAG 检索评测", explicitly saying it does not evaluate current chat/history.
+- Updated README, DEMO, demo runbook, GitHub showcase, SPEC, and tests for the new retrieval metrics.
 
 Verified latest:
-- Public-doc scan for private-prep talk-track names: no matches.
-- Markdown links in README, DEMO, GitHub showcase, and demo runbook: passed.
-- `git diff --check`: passed with CRLF conversion warnings only.
-- Hermes generated files are absent from the worktree.
+- `mvn "-Dtest=RagEvaluationServiceTest,SmartKbControllerTest,StaticWorkbenchHtmlTest" test`: 16 tests passed.
+- `mvn test`: 115 tests passed.
 
 Workspace status:
-- Working tree has uncommitted public-doc cleanup changes.
-- Hermes generated files are no longer present.
+- Working tree has uncommitted RAG Eval v2 changes.
+- Do not commit temporary demo outputs under `E:\project\work\job\smartkb-demo-output`.
 
 Next step only:
-- Verify, commit, and push the public-doc cleanup.
+- Run `git diff --check`, review the final diff, then commit the RAG Eval v2 slice.
 
 ## Latest Snapshot - 2026-06-21 RAG Quality Eval
 

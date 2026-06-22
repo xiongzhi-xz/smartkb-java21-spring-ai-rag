@@ -33,6 +33,7 @@ class RagEvaluationServiceTest {
 
         assertThat(cases).hasSize(8);
         assertThat(cases.getFirst().question()).contains("Virtual Threads");
+        assertThat(cases).allSatisfy(evalCase -> assertThat(evalCase.expectedChunkIds()).isNotEmpty());
         assertThat(cases).extracting(RagEvalCase::expectedFileName)
                 .containsOnly("advanced-rag-demo.md");
     }
@@ -43,12 +44,14 @@ class RagEvaluationServiceTest {
                 "RAG-E03",
                 "查询改写在 Advanced RAG 中解决什么问题？",
                 "advanced-rag-demo.md",
+                List.of("chunk-07"),
                 List.of("查询改写")
         );
         RagEvalCase vectorCase = new RagEvalCase(
                 "RAG-E02",
                 "SmartKB 为什么选择 PostgreSQL pgvector？",
                 "advanced-rag-demo.md",
+                List.of("chunk-05"),
                 List.of("pgvector")
         );
         Map<String, Object> filter = Map.of("fileName", "advanced-rag-demo.md");
@@ -77,8 +80,18 @@ class RagEvaluationServiceTest {
         assertThat(report.advancedHitCount()).isEqualTo(2);
         assertThat(report.citationHitCount()).isEqualTo(2);
         assertThat(report.advancedImprovementCount()).isEqualTo(1);
+        assertThat(report.baselineTop1HitCount()).isEqualTo(1);
+        assertThat(report.advancedTop1HitCount()).isEqualTo(2);
         assertThat(report.baselineHitRate()).isEqualTo(0.5);
         assertThat(report.advancedHitRate()).isEqualTo(1.0);
+        assertThat(report.baselineRecallAtK()).isEqualTo(0.5);
+        assertThat(report.advancedRecallAtK()).isEqualTo(1.0);
+        assertThat(report.baselineMrr()).isEqualTo(0.5);
+        assertThat(report.advancedMrr()).isEqualTo(1.0);
+        assertThat(report.cases().getFirst().expectedChunkIds()).containsExactly("chunk-07");
+        assertThat(report.cases().getFirst().advancedMatchedChunkIds()).containsExactly("chunk-07");
+        assertThat(report.cases().getFirst().advancedFirstHitRank()).isEqualTo(1);
+        assertThat(report.cases().getFirst().failureReason()).isEqualTo("通过");
         assertThat(report.cases().getFirst().rewrittenQuery()).contains("查询改写");
     }
 

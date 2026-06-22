@@ -74,6 +74,8 @@ public class RagEvaluationService {
         int advancedHits = count(results, RagEvalCaseResult::advancedHit);
         int citationHits = count(results, RagEvalCaseResult::citationHit);
         int improvements = count(results, result -> result.advancedHit() && !result.baselineHit());
+        int baselineTop1Hits = count(results, RagEvalCaseResult::baselineTop1Hit);
+        int advancedTop1Hits = count(results, RagEvalCaseResult::advancedTop1Hit);
 
         return new RagEvalReport(
                 total,
@@ -81,9 +83,15 @@ public class RagEvaluationService {
                 advancedHits,
                 citationHits,
                 improvements,
+                baselineTop1Hits,
+                advancedTop1Hits,
                 rate(baselineHits, total),
                 rate(advancedHits, total),
                 rate(citationHits, total),
+                rate(baselineHits, total),
+                rate(advancedHits, total),
+                averageMrr(results, true),
+                averageMrr(results, false),
                 results
         );
     }
@@ -102,23 +110,42 @@ public class RagEvaluationService {
                 ""
         );
 
+        List<String> expectedChunkIds = safeChunkIds(evalCase.expectedChunkIds());
+        boolean hasExpectedChunks = !expectedChunkIds.isEmpty();
+        List<String> baselineMatchedChunks = matchedDocumentChunkIds(baselineDocs, expectedChunkIds);
+        List<String> advancedMatchedChunks = matchedDocumentChunkIds(advanced.documents(), expectedChunkIds);
+        int baselineRank = firstHitRank(baselineDocs, expectedChunkIds);
+        int advancedRank = firstHitRank(advanced.documents(), expectedChunkIds);
+
         List<String> baselineMatched = matchedDocumentKeywords(baselineDocs, evalCase.expectedKeywords());
         List<String> advancedMatched = matchedDocumentKeywords(advanced.documents(), evalCase.expectedKeywords());
-        boolean citationHit = !matchedReferenceKeywords(advanced.references(), evalCase.expectedKeywords()).isEmpty();
+        boolean baselineHit = hasExpectedChunks ? baselineRank > 0 : !baselineMatched.isEmpty();
+        boolean advancedHit = hasExpectedChunks ? advancedRank > 0 : !advancedMatched.isEmpty();
+        boolean citationHit = citationHit(advanced.references(), expectedChunkIds, evalCase.expectedKeywords());
 
         return new RagEvalCaseResult(
                 evalCase.id(),
                 evalCase.question(),
                 evalCase.expectedFileName(),
+                expectedChunkIds,
                 safeKeywords(evalCase.expectedKeywords()),
-                !baselineMatched.isEmpty(),
-                !advancedMatched.isEmpty(),
+                baselineHit,
+                advancedHit,
                 citationHit,
                 baselineDocs.size(),
                 advanced.documents().size(),
+                baselineMatchedChunks,
+                advancedMatchedChunks,
+                baselineRank,
+                advancedRank,
+                baselineRank == 1,
+                advancedRank == 1,
+                reciprocalRank(baselineRank),
+                reciprocalRank(advancedRank),
                 advanced.rewrittenQuery(),
                 baselineMatched,
                 advancedMatched,
+                failureReason(hasExpectedChunks, baselineHit, advancedHit, advancedRank, citationHit),
                 advanced.references()
         );
     }
@@ -147,6 +174,72 @@ public class RagEvaluationService {
         return matchedKeywords(combined, expectedKeywords);
     }
 
+    private boolean citationHit(List<ReferenceChunk> references, List<String> expectedChunkIds, List<String> expectedKeywords) {
+        if (!expectedChunkIds.isEmpty()) {
+            Set<String> expected = new LinkedHashSet<>(expectedChunkIds);
+            boolean chunkHit = references.stream()
+                    .map(ReferenceChunk::chunkId)
+                    .filter(Objects::nonNull)
+                    .anyMatch(expected::contains);
+            if (chunkHit) {
+                return true;
+            }
+        }
+        return !matchedReferenceKeywords(references, expectedKeywords).isEmpty();
+    }
+
+    private List<String> matchedDocumentChunkIds(List<Document> documents, List<String> expectedChunkIds) {
+        if (expectedChunkIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<String> expected = new LinkedHashSet<>(expectedChunkIds);
+        Set<String> matched = new LinkedHashSet<>();
+        for (Document document : documents) {
+            String chunkId = documentChunkId(document);
+            if (expected.contains(chunkId)) {
+                matched.add(chunkId);
+            }
+        }
+        return List.copyOf(matched);
+    }
+
+    private int firstHitRank(List<Document> documents, List<String> expectedChunkIds) {
+        if (expectedChunkIds.isEmpty()) {
+            return 0;
+        }
+        Set<String> expected = new LinkedHashSet<>(expectedChunkIds);
+        for (int i = 0; i < documents.size(); i++) {
+            if (expected.contains(documentChunkId(documents.get(i)))) {
+                return i + 1;
+            }
+        }
+        return 0;
+    }
+
+    private String documentChunkId(Document document) {
+        Map<String, Object> metadata = document.getMetadata();
+        if (metadata == null) {
+            return String.valueOf(document.getId());
+        }
+        Object evalChunkId = metadata.get("evalChunkId");
+        if (evalChunkId != null && hasText(String.valueOf(evalChunkId))) {
+            return String.valueOf(evalChunkId).trim();
+        }
+        Object chunkId = metadata.get("chunkId");
+        if (chunkId != null && hasText(String.valueOf(chunkId))) {
+            return String.valueOf(chunkId).trim();
+        }
+        Object chunkIndex = metadata.get("chunkIndex");
+        if (chunkIndex != null && hasText(String.valueOf(chunkIndex))) {
+            try {
+                return String.format("chunk-%02d", Integer.parseInt(String.valueOf(chunkIndex).trim()));
+            } catch (NumberFormatException ignored) {
+                return String.valueOf(chunkIndex).trim();
+            }
+        }
+        return String.valueOf(document.getId());
+    }
+
     private List<String> matchedKeywords(String content, List<String> expectedKeywords) {
         if (!hasText(content)) {
             return Collections.emptyList();
@@ -172,6 +265,17 @@ public class RagEvaluationService {
                 .toList();
     }
 
+    private List<String> safeChunkIds(List<String> chunkIds) {
+        if (chunkIds == null) {
+            return Collections.emptyList();
+        }
+        return chunkIds.stream()
+                .filter(this::hasText)
+                .map(String::trim)
+                .distinct()
+                .toList();
+    }
+
     private int safeTopK(Integer topK) {
         if (topK == null || topK <= 0) {
             return DEFAULT_TOP_K;
@@ -188,6 +292,47 @@ public class RagEvaluationService {
             return 0.0;
         }
         return Math.round((count * 1.0 / total) * 10000.0) / 10000.0;
+    }
+
+    private double reciprocalRank(int rank) {
+        if (rank <= 0) {
+            return 0.0;
+        }
+        return Math.round((1.0 / rank) * 10000.0) / 10000.0;
+    }
+
+    private double averageMrr(List<RagEvalCaseResult> results, boolean baseline) {
+        if (results.isEmpty()) {
+            return 0.0;
+        }
+        double total = results.stream()
+                .mapToDouble(result -> baseline ? result.baselineMrr() : result.advancedMrr())
+                .sum();
+        return Math.round((total / results.size()) * 10000.0) / 10000.0;
+    }
+
+    private String failureReason(
+            boolean hasExpectedChunks,
+            boolean baselineHit,
+            boolean advancedHit,
+            int advancedRank,
+            boolean citationHit) {
+        if (!hasExpectedChunks) {
+            return "未配置预期片段，已回退到关键词覆盖";
+        }
+        if (!advancedHit && baselineHit) {
+            return "Advanced 未命中预期片段，普通召回命中";
+        }
+        if (!advancedHit) {
+            return "Advanced 未命中预期片段";
+        }
+        if (advancedRank > 1) {
+            return "命中预期片段，但未排在首位";
+        }
+        if (!citationHit) {
+            return "引用片段未覆盖预期关键词";
+        }
+        return "通过";
     }
 
     private boolean hasText(String value) {

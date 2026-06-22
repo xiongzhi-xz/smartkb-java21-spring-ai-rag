@@ -14,5 +14,6 @@ public record RagEvalCase(
         String id,
         String question,
         String expectedFileName,
+        List<String> expectedChunkIds,
         List<String> expectedKeywords) {
 }

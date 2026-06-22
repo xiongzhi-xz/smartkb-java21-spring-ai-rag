@@ -163,12 +163,14 @@ class SmartKbControllerTest {
                 "RAG-E03",
                 "查询改写在 Advanced RAG 中解决什么问题？",
                 "advanced-rag-demo.md",
+                List.of("chunk-07"),
                 List.of("查询改写")
         )));
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/rag/eval/cases"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("RAG-E03"))
+                .andExpect(jsonPath("$[0].expectedChunkIds[0]").value("chunk-07"))
                 .andExpect(jsonPath("$[0].expectedKeywords[0]").value("查询改写"));
     }
 
@@ -187,6 +189,8 @@ class SmartKbControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalCases").value(1))
                 .andExpect(jsonPath("$.advancedHitRate").value(1.0))
+                .andExpect(jsonPath("$.advancedMrr").value(1.0))
+                .andExpect(jsonPath("$.advancedTop1HitCount").value(1))
                 .andExpect(jsonPath("$.cases[0].advancedHit").value(true));
     }
 
@@ -197,7 +201,8 @@ class SmartKbControllerTest {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/rag/eval/report"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalCases").value(1))
-                .andExpect(jsonPath("$.citationHitCount").value(1));
+                .andExpect(jsonPath("$.citationHitCount").value(1))
+                .andExpect(jsonPath("$.cases[0].failureReason").value("通过"));
     }
 
     private RagEvalReport ragEvalReport() {
@@ -207,22 +212,38 @@ class SmartKbControllerTest {
                 1,
                 1,
                 1,
+                0,
+                1,
                 0.0,
                 1.0,
+                1.0,
+                0.0,
+                1.0,
+                0.0,
                 1.0,
                 List.of(new RagEvalCaseResult(
                         "RAG-E03",
                         "查询改写在 Advanced RAG 中解决什么问题？",
                         "advanced-rag-demo.md",
+                        List.of("chunk-07"),
                         List.of("查询改写"),
                         false,
                         true,
                         true,
                         1,
                         1,
+                        List.of(),
+                        List.of("chunk-07"),
+                        0,
+                        1,
+                        false,
+                        true,
+                        0.0,
+                        1.0,
                         "Advanced RAG 查询改写用于提升检索质量",
                         List.of(),
                         List.of("查询改写"),
+                        "通过",
                         List.of()
                 ))
         );

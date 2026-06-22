@@ -19,7 +19,7 @@ SmartKB 的主线能力是：文档上传、解析、切片、Embedding、pgvect
 - **Advanced RAG 闭环**：文档上传、UTF-8 解析、切片、Ollama Embedding、pgvector 入库、Hybrid Search、查询改写、过滤、重排序和引用片段定位。
 - **Redis ChatMemory**：自研实现 Spring AI `ChatMemory` 接口，Redis List + TTL 持久化多轮会话，支持服务重启后恢复上下文。
 - **流式对话体验**：普通对话和 Advanced RAG 都支持 SSE 流式返回；Advanced 模式展示查询改写、检索、过滤、重排、生成等阶段反馈。
-- **RAG 质量评测**：内置 8 个中文评测问题，对比普通向量召回与 Advanced RAG 的命中率、引用片段命中率和提升用例。
+- **RAG 检索质量评测**：内置 8 个中文评测问题和预期 chunk，对比普通向量召回与 Advanced RAG 的 Recall@K、Top1、MRR 和引用覆盖。
 - **可观测性**：Micrometer 自定义 Counter/Timer，Prometheus 指标采集，Grafana Dashboard 预配置。
 - **Docker Compose 一键运行**：PostgreSQL + pgvector、Redis、Spring Boot、Prometheus、Grafana 一套 Compose 启动。
 - **可选工程工作台实验**：项目接管、任务状态、记忆层、代码上下文和 Eval API 已实现，但首页入口默认隐藏，当前 README 和演示只展示 RAG 主链路。
@@ -83,9 +83,9 @@ flowchart LR
 | 5. 多轮追问 | ![SmartKB 多轮追问](docs/screenshots/desktop/smartkb-05-memory.png) |
 | 6. Advanced RAG 分阶段回答 | ![SmartKB Advanced RAG 分阶段回答](docs/screenshots/desktop/smartkb-06-code-context.png) |
 | 7. 点击引用片段定位原文 | ![SmartKB 引用片段定位原文](docs/screenshots/desktop/smartkb-07-eval-report.png) |
-| 8. RAG 质量评测报告 | ![SmartKB RAG 质量评测报告](docs/screenshots/desktop/smartkb-08-rag-quality-eval.png) |
+| 8. RAG 检索质量评测报告 | ![SmartKB RAG 检索质量评测报告](docs/screenshots/desktop/smartkb-08-rag-quality-eval.png) |
 
-截图为 `1440x900` 桌面横屏视口，按 RAG 演示主链路依次覆盖：上传中文测试文档、查看入库结果、打开文档 chunk 详情、普通问答、多轮追问、Advanced RAG 分阶段回答、点击引用片段定位到原文 chunk、RAG 质量评测报告。
+截图为 `1440x900` 桌面横屏视口，按 RAG 演示主链路依次覆盖：上传中文测试文档、查看入库结果、打开文档 chunk 详情、普通问答、多轮追问、Advanced RAG 分阶段回答、点击引用片段定位到原文 chunk、RAG 检索质量评测报告。
 
 ## 功能清单
 
@@ -96,7 +96,7 @@ flowchart LR
 - 文档切片可视化：查看入库 chunk，引用片段可定位到文档详情。
 - 普通问答：多轮对话、流式输出、会话 ID 管理。
 - Advanced RAG：查询改写、双路召回、文档过滤、关键词/锚点重排、阶段耗时指标。
-- RAG 质量评测：内置中文用例，对比普通召回和 Advanced RAG 检索链路，统计命中率和引用命中率。
+- RAG 检索质量评测：内置中文用例和预期 chunk，对比普通召回和 Advanced RAG 检索链路，统计 Recall@K、Top1、MRR 和引用覆盖。
 - Redis 会话记忆：刷新或重启应用后，同一 `conversationId` 可恢复上下文。
 
 ### 可选工程工作台实验
@@ -223,9 +223,9 @@ test-docs/advanced-rag-demo.md
 | `POST` | `/api/chat/conversation/stream` | 普通多轮流式对话 |
 | `POST` | `/api/chat/advanced/stream` | Advanced RAG 分阶段流式回答 |
 | `DELETE` | `/api/chat/memory/{conversationId}` | 清理 Redis 会话记忆 |
-| `GET` | `/api/rag/eval/cases` | 内置中文 RAG 评测集 |
+| `GET` | `/api/rag/eval/cases` | 内置中文 RAG 检索评测集 |
 | `POST` | `/api/rag/eval/run` | 运行 RAG 检索质量评测 |
-| `GET` | `/api/rag/eval/report` | 默认 RAG 评测报告 |
+| `GET` | `/api/rag/eval/report` | 默认 RAG 检索评测报告 |
 
 ### 可选工程工作台实验
 
@@ -251,7 +251,7 @@ test-docs/advanced-rag-demo.md
 - `mvn test`：115 tests passed。
 - Docker Compose 全链路启动：`smartkb-app` healthy。
 - Redis ChatMemory live checklist：6/6 通过。
-- RAG 质量评测：默认 8 个中文用例，覆盖普通向量召回、Advanced RAG 命中率、引用片段命中率和接口返回结构。
+- RAG 检索质量评测：默认 8 个中文用例，覆盖预期 chunk、Recall@K、Top1、MRR、引用覆盖和接口返回结构。
 - Docker BuildKit 缓存构建：缓存命中后重建约秒级。
 - 可选工程工作台实验：Project Intake 只读挂载、Eval Run 存储和工作台交互已有测试覆盖，但不作为主演示重点。
 - 工作台浏览器 smoke：桌面端和 390px 移动视口均覆盖 6 个工作区切换，移动端无横向溢出。
