@@ -14,13 +14,13 @@ const pageUrl = process.argv[2] || defaultWorkbenchPage();
 const screenshotDir = path.resolve(repoRoot, 'docs/screenshots/desktop');
 
 const screenshots = {
-  upload: 'smartkb-01-workbench-overview.png',
-  uploaded: 'smartkb-02-advanced-rag.png',
-  detail: 'smartkb-03-project-intake.png',
-  qa: 'smartkb-04-agent-task.png',
-  followup: 'smartkb-05-memory.png',
-  advanced: 'smartkb-06-code-context.png',
-  citation: 'smartkb-07-eval-report.png',
+  upload: 'smartkb-01-upload-document.png',
+  uploaded: 'smartkb-02-document-indexed.png',
+  detail: 'smartkb-03-document-chunks.png',
+  qa: 'smartkb-04-normal-rag-qa.png',
+  followup: 'smartkb-05-follow-up-chat.png',
+  advanced: 'smartkb-06-advanced-rag.png',
+  citation: 'smartkb-07-citation-jump.png',
   ragEval: 'smartkb-08-rag-quality-eval.png',
 };
 
@@ -67,45 +67,79 @@ function ragMockExpression() {
       advancedHitCount: 7,
       citationHitCount: 6,
       advancedImprovementCount: 2,
+      baselineTop1HitCount: 3,
+      advancedTop1HitCount: 6,
       baselineHitRate: 0.625,
       advancedHitRate: 0.875,
       citationHitRate: 0.75,
+      baselineRecallAtK: 0.625,
+      advancedRecallAtK: 0.875,
+      baselineMrr: 0.48,
+      advancedMrr: 0.81,
       cases: [
         {
           caseId: 'RAG-01',
           question: '查询改写在 Advanced RAG 中解决什么问题？',
+          expectedChunkIds: ['chunk-07'],
           expectedKeywords: ['查询改写', '模糊提问', '检索表达'],
           rewrittenQuery: 'Advanced RAG 查询改写 模糊提问 检索表达',
           baselineHit: false,
           advancedHit: true,
-          citationHit: true
+          citationHit: true,
+          baselineMatchedChunkIds: [],
+          advancedMatchedChunkIds: ['chunk-07'],
+          baselineFirstHitRank: 0,
+          advancedFirstHitRank: 1,
+          advancedMrr: 1,
+          failureReason: '通过'
         },
         {
           caseId: 'RAG-02',
           question: '为什么引用片段能提升 RAG 系统可信度？',
+          expectedChunkIds: ['chunk-11'],
           expectedKeywords: ['引用片段', '可追溯', '原文 chunk'],
           rewrittenQuery: 'RAG 引用片段 可追溯 原文 chunk 可信度',
           baselineHit: true,
           advancedHit: true,
-          citationHit: true
+          citationHit: true,
+          baselineMatchedChunkIds: ['chunk-11'],
+          advancedMatchedChunkIds: ['chunk-11'],
+          baselineFirstHitRank: 3,
+          advancedFirstHitRank: 1,
+          advancedMrr: 1,
+          failureReason: '通过'
         },
         {
           caseId: 'RAG-03',
           question: 'Hybrid Search 在这里结合了哪两类证据？',
+          expectedChunkIds: ['chunk-09'],
           expectedKeywords: ['pgvector', '关键词', '重排序'],
           rewrittenQuery: 'Hybrid Search pgvector 关键词 重排序',
           baselineHit: true,
           advancedHit: true,
-          citationHit: true
+          citationHit: true,
+          baselineMatchedChunkIds: ['chunk-09'],
+          advancedMatchedChunkIds: ['chunk-09'],
+          baselineFirstHitRank: 2,
+          advancedFirstHitRank: 1,
+          advancedMrr: 1,
+          failureReason: '通过'
         },
         {
           caseId: 'RAG-04',
           question: 'Redis ChatMemory 解决了什么演示问题？',
+          expectedChunkIds: ['chunk-03'],
           expectedKeywords: ['conversationId', 'Redis ChatMemory', '追问'],
           rewrittenQuery: 'Redis ChatMemory conversationId 多轮追问 上下文',
           baselineHit: true,
           advancedHit: true,
-          citationHit: false
+          citationHit: false,
+          baselineMatchedChunkIds: ['chunk-03'],
+          advancedMatchedChunkIds: ['chunk-03'],
+          baselineFirstHitRank: 1,
+          advancedFirstHitRank: 2,
+          advancedMrr: 0.5,
+          failureReason: '命中预期片段，但未排在首位'
         }
       ]
     };
@@ -325,9 +359,9 @@ async function showRagEvalStep(cdp) {
   await waitFor(cdp, `(() => {
     const report = document.getElementById('ragEvalReportCard');
     return Boolean(report)
-      && report.textContent.includes('RAG 质量评测')
-      && report.textContent.includes('Advanced')
-      && report.textContent.includes('提升用例');
+      && report.textContent.includes('内置问题集 RAG 检索评测')
+      && report.textContent.includes('Advanced Recall@K')
+      && report.textContent.includes('不评估当前聊天');
   })()`);
   await delay(500);
 }

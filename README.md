@@ -76,13 +76,13 @@ flowchart LR
 
 | 步骤 | 桌面横屏截图 |
 | --- | --- |
-| 1. 上传知识文档 | ![SmartKB 上传知识文档](docs/screenshots/desktop/smartkb-01-workbench-overview.png) |
-| 2. 上传后进入知识库 | ![SmartKB 文档入库](docs/screenshots/desktop/smartkb-02-advanced-rag.png) |
-| 3. 查看文档切片详情 | ![SmartKB 文档切片详情](docs/screenshots/desktop/smartkb-03-project-intake.png) |
-| 4. 普通 RAG 问答 | ![SmartKB 普通 RAG 问答](docs/screenshots/desktop/smartkb-04-agent-task.png) |
-| 5. 多轮追问 | ![SmartKB 多轮追问](docs/screenshots/desktop/smartkb-05-memory.png) |
-| 6. Advanced RAG 分阶段回答 | ![SmartKB Advanced RAG 分阶段回答](docs/screenshots/desktop/smartkb-06-code-context.png) |
-| 7. 点击引用片段定位原文 | ![SmartKB 引用片段定位原文](docs/screenshots/desktop/smartkb-07-eval-report.png) |
+| 1. 上传知识文档 | ![SmartKB 上传知识文档](docs/screenshots/desktop/smartkb-01-upload-document.png) |
+| 2. 上传后进入知识库 | ![SmartKB 文档入库](docs/screenshots/desktop/smartkb-02-document-indexed.png) |
+| 3. 查看文档切片详情 | ![SmartKB 文档切片详情](docs/screenshots/desktop/smartkb-03-document-chunks.png) |
+| 4. 普通 RAG 问答 | ![SmartKB 普通 RAG 问答](docs/screenshots/desktop/smartkb-04-normal-rag-qa.png) |
+| 5. 多轮追问 | ![SmartKB 多轮追问](docs/screenshots/desktop/smartkb-05-follow-up-chat.png) |
+| 6. Advanced RAG 分阶段回答 | ![SmartKB Advanced RAG 分阶段回答](docs/screenshots/desktop/smartkb-06-advanced-rag.png) |
+| 7. 点击引用片段定位原文 | ![SmartKB 引用片段定位原文](docs/screenshots/desktop/smartkb-07-citation-jump.png) |
 | 8. RAG 检索质量评测报告 | ![SmartKB RAG 检索质量评测报告](docs/screenshots/desktop/smartkb-08-rag-quality-eval.png) |
 
 截图为 `1440x900` 桌面横屏视口，按 RAG 演示主链路依次覆盖：上传中文测试文档、查看入库结果、打开文档 chunk 详情、普通问答、多轮追问、Advanced RAG 分阶段回答、点击引用片段定位到原文 chunk、RAG 检索质量评测报告。

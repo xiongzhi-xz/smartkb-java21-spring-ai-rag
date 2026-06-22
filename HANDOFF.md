@@ -1,5 +1,44 @@
 # HANDOFF - SmartKB
 
+## Latest Snapshot - 2026-06-22 RAG Demo Screenshots
+
+Current goal:
+- Refresh GitHub README screenshots so the public demo shows the complete Chinese RAG flow, not optional Agent/workbench panels.
+
+Current stage:
+- Eight new desktop RAG screenshots were generated and visually checked.
+- README now points to RAG-specific screenshot filenames.
+- Old desktop screenshots with Agent/workbench-oriented filenames were removed.
+
+Recently completed:
+- Updated `scripts/smoke/workbench-desktop-screenshots.mjs` to generate RAG-specific files:
+  - `smartkb-01-upload-document.png`
+  - `smartkb-02-document-indexed.png`
+  - `smartkb-03-document-chunks.png`
+  - `smartkb-04-normal-rag-qa.png`
+  - `smartkb-05-follow-up-chat.png`
+  - `smartkb-06-advanced-rag.png`
+  - `smartkb-07-citation-jump.png`
+  - `smartkb-08-rag-quality-eval.png`
+- Updated the mocked RAG eval screenshot data to the v2 metrics: expected chunk, Recall@K, Top1, MRR, citation coverage, and failure reason.
+- Updated README image paths to the new RAG flow screenshots.
+
+Verified latest:
+- `node --check .\scripts\smoke\workbench-desktop-screenshots.mjs`: passed.
+- `node .\scripts\smoke\workbench-desktop-screenshots.mjs`: passed and generated 8 screenshots.
+- Visual inspection:
+  - upload screenshot shows one Chinese document upload, no duplicate upload.
+  - Advanced RAG screenshot shows Chinese question, query rewrite, retrieval/filter/rerank/generation stages.
+  - citation screenshot highlights `chunk-11` in document detail after reference click.
+  - eval screenshot clearly says fixed Chinese question set and not current chat/history, with Recall@K/Top1/MRR/citation coverage.
+
+Workspace status:
+- Working tree has uncommitted screenshot, README, script, and HANDOFF changes.
+- No files under `E:\project\work\job\smartkb-demo-output` are touched.
+
+Next step only:
+- Run README screenshot link check and `git diff --check`, then commit/push the screenshot refresh.
+
 ## Latest Snapshot - 2026-06-22 RAG Eval v2
 
 Current goal:
@@ -23,11 +62,11 @@ Verified latest:
 - `mvn test`: 115 tests passed.
 
 Workspace status:
-- Working tree has uncommitted RAG Eval v2 changes.
+- RAG Eval v2 was committed and pushed as `3330cdd feat: deepen rag retrieval evaluation`.
 - Do not commit temporary demo outputs under `E:\project\work\job\smartkb-demo-output`.
 
 Next step only:
-- Run `git diff --check`, review the final diff, then commit the RAG Eval v2 slice.
+- Refresh GitHub README screenshots for the v2 RAG flow.
 
 ## Latest Snapshot - 2026-06-21 RAG Quality Eval
 
