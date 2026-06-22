@@ -204,7 +204,6 @@ git diff --check
 ```text
 README.md
 docs/demo-runbook.md
-docs/INTERVIEW_TALK_TRACK.md
 docs/AGENT_PLATFORM_SPEC.md
 docs/EVAL_TECHNICAL_SUMMARY.md
 ```

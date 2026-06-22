@@ -12,7 +12,6 @@ SmartKB 的主线能力是：文档上传、解析、切片、Embedding、pgvect
 2. [docs/github-showcase.md](docs/github-showcase.md)：快速展示摘要、推荐浏览顺序、项目摘要和边界说明。
 3. [DEMO.md](DEMO.md)：本地 5 分钟演示路径。
 4. [docs/demo-runbook.md](docs/demo-runbook.md)：设计说明、设计取舍和替代路径。
-5. [docs/INTERVIEW_TALK_TRACK.md](docs/INTERVIEW_TALK_TRACK.md)：项目讲解、面试追问和本地验收清单。
 
 展示边界：SmartKB 是本地可运行、可演示、可解释的 Java 21 + Spring AI RAG 项目，不声称已经生产商用；生产级 HA、TLS、托管 Secret 和完整多 Agent OS 不在当前范围。
 ## 项目亮点
@@ -309,7 +308,6 @@ SmartKB 是我做的 Java 21 + Spring AI 企业知识库项目，主演示是一
 | [DEMO.md](DEMO.md) | 5 分钟演示脚本 |
 | [docs/github-showcase.md](docs/github-showcase.md) | GitHub 展示摘要、浏览顺序和项目摘要 |
 | [docs/demo-runbook.md](docs/demo-runbook.md) | 演示 Runbook、设计取舍和替代路径 |
-| [docs/INTERVIEW_TALK_TRACK.md](docs/INTERVIEW_TALK_TRACK.md) | 项目讲解、面试追问和本地验收清单 |
 | [TESTING.md](TESTING.md) | 测试指南 |
 | [SPEC.md](SPEC.md) | 当前规格、进度和设计说明 |
 | [docs/AGENT_PLATFORM_SPEC.md](docs/AGENT_PLATFORM_SPEC.md) | SmartKB v2 Agent 平台规格 |
