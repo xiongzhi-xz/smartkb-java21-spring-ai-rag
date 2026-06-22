@@ -78,7 +78,7 @@ flowchart LR
 
 ![SmartKB RAG 完整演示动图](docs/screenshots/smartkb-rag-demo.gif)
 
-高清 MP4 版本：[smartkb-rag-demo.mp4](docs/screenshots/smartkb-rag-demo.mp4)
+GitHub README 内嵌展示使用 GIF；高清 MP4 可通过链接播放或下载：[smartkb-rag-demo.mp4](docs/screenshots/smartkb-rag-demo.mp4)
 
 | 步骤 | 桌面横屏截图 |
 | --- | --- |

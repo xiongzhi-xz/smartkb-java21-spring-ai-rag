@@ -286,8 +286,16 @@ async function showConversationQuestion(cdp) {
 
 async function showConversationFollowup(cdp) {
   await evaluate(cdp, `(() => {
-    openWorkspacePanel('chat');
     setRagMode('conversation');
+    const chat = document.getElementById('chatContainer');
+    chat.innerHTML = '';
+    addMessage('上传文档后 SmartKB 做了哪些处理？', true);
+    addMessage(
+      'SmartKB 会解析上传文件，将文本切分成知识片段，通过 Ollama 生成 Embedding，并把向量写入 PostgreSQL pgvector。后续 RAG 问答会从这些片段中召回证据。',
+      false,
+      ['advanced-rag-demo.md'],
+      { retrievedCount: 4, metrics: { totalMs: 1420, retrievalMs: 88, generationMs: 1210 } }
+    );
     addMessage('它会记住我上一轮问的是上传流程吗？', true);
     addMessage(
       '会。当前 conversationId 背后由 Redis ChatMemory 保存上下文，因此追问可以直接沿用上一轮关于“上传流程”的问题，不需要重新说明完整背景。',
@@ -295,7 +303,13 @@ async function showConversationFollowup(cdp) {
       ['Redis ChatMemory', 'advanced-rag-demo.md'],
       { retrievedCount: 3, metrics: { totalMs: 1260, retrievalMs: 75, generationMs: 1080 } }
     );
+    const note = document.createElement('div');
+    note.className = 'mx-auto mt-3 max-w-3xl rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800';
+    note.innerHTML = '<strong>多轮追问证据：</strong>同一个 conversationId=rag-demo，第二问中的“它”沿用上一轮“上传流程”的上下文，由 Redis ChatMemory 读取历史消息。';
+    chat.appendChild(note);
+    chat.scrollTop = 0;
   })()`);
+  await waitFor(cdp, `document.getElementById('chatContainer').textContent.includes('多轮追问证据')`);
 }
 
 async function showAdvancedRagStep(cdp) {

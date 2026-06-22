@@ -10,12 +10,15 @@ Current stage:
 - README embeds the GIF and links the MP4 before the static screenshot table.
 
 Recently completed:
+- Fixed the multi-turn follow-up screenshot so it shows both the first upload-flow question and the follow-up using `conversationId=rag-demo` / Redis ChatMemory context.
+- Regenerated all 8 screenshots and rebuilt the GIF/MP4 from the corrected screenshot set.
 - Added `docs/screenshots/smartkb-rag-demo.mp4` (22.47s, 1280x800, about 410KB).
 - Added `docs/screenshots/smartkb-rag-demo.gif` (960x600, about 569KB).
-- Updated README with the demo GIF and MP4 link.
+- Updated README with the demo GIF and clarified that the MP4 is linked for playback/download because GitHub README inline preview uses GIF.
 
 Verified latest:
 - `ffprobe` confirms the MP4 is H.264, 1280x800, 22.47s.
+- Visual check of `smartkb-05-follow-up-chat.png` passed: it now shows the prior question, the follow-up, and the multi-turn context evidence.
 - Visual check of the GIF first frame passed.
 
 Workspace status:
