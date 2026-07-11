@@ -1,0 +1,150 @@
+services:
+  # PostgreSQL 16 + pgvector 扩展
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: smartkb-postgres
+    environment:
+      POSTGRES_DB: smartkb
+      POSTGRES_USER: smartkb
+      POSTGRES_PASSWORD: smartkb123
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    # 不映射到宿主机，容器内部通信走 Docker 网络
+    # 如需从宿主机直连：取消下行注释
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartkb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - smartkb-network
+
+  # Redis - 会话记忆 + 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: smartkb-redis
+    # 不映射到宿主机（容器内部通信走 Docker 网络）
+    # 如需从宿主机 redis-cli 连接：取消下行注释
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - smartkb-network
+
+  reranker:
+    build:
+      context: ./reranker-service
+      dockerfile: Dockerfile
+    container_name: smartkb-reranker
+    ports:
+      - "8090:8090"
+    environment:
+      RERANKER_MODEL: BAAI/bge-reranker-v2-m3
+      RERANKER_MAX_LENGTH: 1024
+    gpus: all
+    volumes:
+      - reranker_models:/models/huggingface
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+    networks:
+      - smartkb-network
+
+  # SmartKB Spring Boot 应用
+  smartkb-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartkb-app
+    ports:
+      - "8082:8080"
+    environment:
+      # 使用 Docker 网络内部 DNS 连接 PostgreSQL 和 Redis
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartkb
+      SPRING_DATA_REDIS_HOST: redis
+      # Ollama 在宿主机运行，容器内通过 host.docker.internal 访问
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      # AI 模型配置（通过环境变量注入，不硬编码）
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-${TRANSIT_API_KEY:-your-api-key-here}}
+      TRANSIT_BASE_URL: ${TRANSIT_BASE_URL:-https://api.deepseek.com}
+      AI_MODEL: ${AI_MODEL:-deepseek-chat}
+      SMARTKB_RERANKER_BASE_URL: http://reranker:8090
+      SMARTKB_RERANKER_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      reranker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - smartkb-network
+
+  # Prometheus - 指标采集
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: smartkb-prometheus
+    # 不映射到宿主机，Grafana 通过 Docker 网络访问
+    # 容器内部 Grafana 可通过 http://prometheus:9090 访问
+    # 如需从宿主机浏览器访问：取消下行注释
+    # ports:
+    #   - "9091:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - smartkb-app
+    networks:
+      - smartkb-network
+
+  # Grafana - 可视化
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: smartkb-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - smartkb-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+  reranker_models:
+
+networks:
+  smartkb-network:
+    driver: bridge

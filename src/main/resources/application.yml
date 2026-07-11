@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: smartkb
+
+  # Java 21 Virtual Threads - 2026主流IO密集场景优化
+  threads:
+    virtual:
+      enabled: true  # 全局启用虚拟线程（Spring Boot 3.2+）
+
+  # 数据源配置 - PostgreSQL 16 + pgvector
+  datasource:
+    url: jdbc:postgresql://localhost:5432/smartkb
+    username: smartkb
+    password: smartkb123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+
+  # Redis 配置 - 会话记忆 + 缓存
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+
+  # Spring AI 配置
+  ai:
+    # OpenAI 兼容接口 — 用于 Chat
+    openai:
+      api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:your-api-key-here}}
+      base-url: ${TRANSIT_BASE_URL:https://api.deepseek.com}
+      chat:
+        options:
+          model: ${AI_MODEL:deepseek-chat}
+          temperature: 0.7
+          max-tokens: 2000
+      embedding:
+        enabled: false  # Chat 用中转站，Embedding 用本地 Ollama
+
+    # Ollama 本地模型 — 用于 Embedding（nomic-embed-text，768 维）
+    # 前提：本地已安装 Ollama 并拉取模型：ollama pull nomic-embed-text
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      embedding:
+        enabled: true
+        options:
+          model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+
+    # pgvector 向量存储配置
+    vectorstore:
+      pgvector:
+        index-type: HNSW  # 2026主流高性能索引
+        distance-type: COSINE_DISTANCE
+        dimensions: 768  # nomic-embed-text 输出 768 维
+        remove-existing-vector-store-table: false
+        initialize-schema: true
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+# 服务器配置
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,text/html,text/xml,text/plain
+
+# 可观测性 - Actuator + Prometheus
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0  # 开发环境全采样，生产环境建议 0.1
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.smartkb: DEBUG
+    org.springframework.ai: DEBUG
+    org.springframework.jdbc: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# 应用自定义配置
+smartkb:
+  # 文档处理配置
+  document:
+    max-file-size: 50MB
+    allowed-extensions: pdf,docx,txt,md
+    # Virtual Threads 并发配置 - 文档解析
+    parse-concurrency: 50  # 虚拟线程可大幅提升并发数
+
+  # Embedding 批处理配置
+  embedding:
+    batch-size: 100
+    # Virtual Threads 并发配置 - Embedding 生成
+    concurrent-requests: 30
+
+  # RAG 检索配置
+  rag:
+    top-k: 5  # 向量检索返回 Top-K 文档
+    similarity-threshold: 0.7
+    context-window: 4000  # Token 限制
+    refusal-threshold: ${SMARTKB_RAG_REFUSAL_THRESHOLD:0.18}
+
+  # 会话记忆配置
+  chat-memory:
+    ttl-hours: 24  # 会话过期时间（小时），活跃会话自动续期
+
+  reranker:
+    enabled: ${SMARTKB_RERANKER_ENABLED:true}
+    base-url: ${SMARTKB_RERANKER_BASE_URL:http://localhost:8090}
+    timeout: ${SMARTKB_RERANKER_TIMEOUT:3s}

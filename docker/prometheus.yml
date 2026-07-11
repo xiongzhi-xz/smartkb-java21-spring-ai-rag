@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Spring Boot Actuator 指标采集（Docker 网络内部）
+  - job_name: 'smartkb-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      # Docker Compose 内部用服务名 smartkb-app 连接
+      # 本地开发（IDEA 启动）用 host.docker.internal 连接宿主机
+      - targets:
+          - 'smartkb-app:8080'
+        labels:
+          environment: 'docker'
+      - targets:
+          - 'host.docker.internal:8080'
+        labels:
+          environment: 'local'

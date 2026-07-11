@@ -1,0 +1,495 @@
+import fs from 'fs';
+import path from 'path';
+import {
+  assert,
+  defaultWorkbenchPage,
+  delay,
+  evaluate,
+  repoRoot,
+  runChromeSmoke,
+  waitFor,
+} from './lib/chrome-cdp.mjs';
+
+const pageUrl = process.argv[2] || defaultWorkbenchPage();
+const screenshotDir = path.resolve(repoRoot, 'docs/screenshots/desktop');
+
+const screenshots = {
+  upload: 'smartkb-01-upload-document.png',
+  uploaded: 'smartkb-02-document-indexed.png',
+  detail: 'smartkb-03-document-chunks.png',
+  qa: 'smartkb-04-normal-rag-qa.png',
+  followup: 'smartkb-05-follow-up-chat.png',
+  advanced: 'smartkb-06-advanced-rag.png',
+  citation: 'smartkb-07-citation-jump.png',
+  refusal: 'smartkb-08-low-confidence-refusal.png',
+  ragEval: 'smartkb-09-rag-quality-eval.png',
+  answerEval: 'smartkb-10-answer-quality-judge.png',
+};
+
+function ragMockExpression() {
+  return `(() => {
+    const documents = [
+      { fileName: 'advanced-rag-demo.md', chunkCount: 12, description: 'Advanced RAG demo corpus' },
+      { fileName: 'virtual-threads-guide.md', chunkCount: 6, description: 'Java 21 IO notes' }
+    ];
+
+    const documentDetail = {
+      fileName: 'advanced-rag-demo.md',
+      chunks: [
+        {
+          id: 'chunk-01',
+          content: 'SmartKB 会读取 Markdown、TXT、PDF 和 DOCX 文档，按 UTF-8 解析文本，然后切分成可检索的知识片段。'
+        },
+        {
+          id: 'chunk-02',
+          content: '每个片段会通过本地 Ollama 的 nomic-embed-text 生成向量，并写入 PostgreSQL pgvector，用于后续相似度召回。'
+        },
+        {
+          id: 'chunk-03',
+          content: '普通对话模式使用 Redis ChatMemory 保存 conversationId 对应的上下文，刷新页面或服务重启后仍可继续追问。'
+        },
+        {
+          id: 'chunk-07',
+          content: 'Advanced RAG 会先改写用户问题，把简短或模糊的提问扩展成更适合检索的表达，从而命中文档中的关键章节。'
+        },
+        {
+          id: 'chunk-09',
+          content: 'Hybrid Search 将 pgvector 语义召回与关键词证据结合，在调用模型前完成文档过滤、候选片段筛选和重排序。'
+        },
+        {
+          id: 'chunk-11',
+          content: '引用片段让最终回答可追溯：用户可以展开引用，并跳转到支撑该回答的具体原文 chunk。'
+        }
+      ]
+    };
+
+    const ragEvalReport = {
+      totalCases: 8,
+      baselineHitCount: 5,
+      advancedHitCount: 7,
+      citationHitCount: 6,
+      advancedImprovementCount: 2,
+      baselineTop1HitCount: 3,
+      advancedTop1HitCount: 6,
+      baselineHitRate: 0.625,
+      advancedHitRate: 0.875,
+      citationHitRate: 0.75,
+      baselineRecallAtK: 0.625,
+      advancedRecallAtK: 0.875,
+      baselineMrr: 0.48,
+      advancedMrr: 0.81,
+      cases: [
+        {
+          caseId: 'RAG-01',
+          question: '查询改写在 Advanced RAG 中解决什么问题？',
+          expectedChunkIds: ['chunk-07'],
+          expectedKeywords: ['查询改写', '模糊提问', '检索表达'],
+          rewrittenQuery: 'Advanced RAG 查询改写 模糊提问 检索表达',
+          baselineHit: false,
+          advancedHit: true,
+          citationHit: true,
+          baselineMatchedChunkIds: [],
+          advancedMatchedChunkIds: ['chunk-07'],
+          baselineFirstHitRank: 0,
+          advancedFirstHitRank: 1,
+          advancedMrr: 1,
+          failureReason: '通过'
+        },
+        {
+          caseId: 'RAG-02',
+          question: '为什么引用片段能提升 RAG 系统可信度？',
+          expectedChunkIds: ['chunk-11'],
+          expectedKeywords: ['引用片段', '可追溯', '原文 chunk'],
+          rewrittenQuery: 'RAG 引用片段 可追溯 原文 chunk 可信度',
+          baselineHit: true,
+          advancedHit: true,
+          citationHit: true,
+          baselineMatchedChunkIds: ['chunk-11'],
+          advancedMatchedChunkIds: ['chunk-11'],
+          baselineFirstHitRank: 3,
+          advancedFirstHitRank: 1,
+          advancedMrr: 1,
+          failureReason: '通过'
+        },
+        {
+          caseId: 'RAG-03',
+          question: 'Hybrid Search 在这里结合了哪两类证据？',
+          expectedChunkIds: ['chunk-09'],
+          expectedKeywords: ['pgvector', '关键词', '重排序'],
+          rewrittenQuery: 'Hybrid Search pgvector 关键词 重排序',
+          baselineHit: true,
+          advancedHit: true,
+          citationHit: true,
+          baselineMatchedChunkIds: ['chunk-09'],
+          advancedMatchedChunkIds: ['chunk-09'],
+          baselineFirstHitRank: 2,
+          advancedFirstHitRank: 1,
+          advancedMrr: 1,
+          failureReason: '通过'
+        },
+        {
+          caseId: 'RAG-04',
+          question: 'Redis ChatMemory 解决了什么演示问题？',
+          expectedChunkIds: ['chunk-03'],
+          expectedKeywords: ['conversationId', 'Redis ChatMemory', '追问'],
+          rewrittenQuery: 'Redis ChatMemory conversationId 多轮追问 上下文',
+          baselineHit: true,
+          advancedHit: true,
+          citationHit: false,
+          baselineMatchedChunkIds: ['chunk-03'],
+          advancedMatchedChunkIds: ['chunk-03'],
+          baselineFirstHitRank: 1,
+          advancedFirstHitRank: 2,
+          advancedMrr: 0.5,
+          failureReason: '命中预期片段，但未排在首位'
+        }
+      ]
+    };
+
+    window.fetch = async (input) => {
+      const url = String(input);
+      if (url.includes('/api/rag/eval/run')) {
+        return new Response(JSON.stringify(ragEvalReport), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (url.includes('/api/documents/') && !url.endsWith('/api/documents')) {
+        return new Response(JSON.stringify({ success: true, document: documentDetail }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (url.includes('/api/documents')) {
+        return new Response(JSON.stringify({ success: true, documents }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (url.includes('/api/chat/memory/')) {
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      throw new Error('Unexpected screenshot fetch: ' + url);
+    };
+
+    window.__ragDemo = { documents, documentDetail };
+  })()`;
+}
+
+async function capture(cdp, key) {
+  await delay(300);
+  const layout = await evaluate(cdp, `(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    styled: getComputedStyle(document.querySelector('.app-shell')).display === 'flex',
+    overflowX: document.documentElement.scrollWidth > window.innerWidth || document.body.scrollWidth > window.innerWidth
+  }))()`);
+  assert(layout.width === 1440 && layout.height === 900, `Unexpected viewport before ${key}: ${JSON.stringify(layout)}`);
+  assert(layout.styled, `Tailwind layout is not active before ${key}: ${JSON.stringify(layout)}`);
+  assert(!layout.overflowX, `Horizontal overflow before ${key}: ${JSON.stringify(layout)}`);
+
+  const result = await cdp.send('Page.captureScreenshot', {
+    format: 'png',
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  const output = path.join(screenshotDir, screenshots[key]);
+  fs.mkdirSync(screenshotDir, { recursive: true });
+  fs.writeFileSync(output, Buffer.from(result.data, 'base64'));
+  return output;
+}
+
+async function initPage(cdp) {
+  await waitFor(cdp, `Boolean(document.getElementById('workspaceNavChat'))`);
+  await waitFor(cdp, `typeof openWorkspacePanel === 'function' && typeof setRagMode === 'function'`, 30000);
+  await waitFor(cdp, `getComputedStyle(document.querySelector('.app-shell')).display === 'flex'`, 30000);
+  await evaluate(cdp, ragMockExpression());
+  await evaluate(cdp, `(() => {
+    const style = document.createElement('style');
+    style.textContent = '.fa-solid::before, .fa::before { content: "" !important; } .fa-solid, .fa { width: 0.75rem; }';
+    document.head.appendChild(style);
+    localStorage.clear();
+    openWorkspacePanel('chat');
+    setRagMode('conversation');
+    conversationId = 'rag-demo-20260621';
+    localStorage.setItem(conversationIdKey, conversationId);
+    updateConversationStatus();
+  })()`);
+}
+
+async function showUploadStep(cdp) {
+  await evaluate(cdp, `(() => {
+    const docList = document.getElementById('documentList');
+    docList.innerHTML = '';
+    const uploadingDiv = document.createElement('div');
+    uploadingDiv.className = 'p-3 bg-blue-50 border border-blue-200 rounded-lg';
+    uploadingDiv.innerHTML = \`
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-spinner fa-spin text-blue-600"></i>
+        <div class="flex-1">
+          <div class="font-medium text-blue-900 text-sm">advanced-rag-demo.md</div>
+          <div class="text-xs text-blue-600 mt-1">正在上传并生成向量...</div>
+        </div>
+      </div>
+    \`;
+    docList.prepend(uploadingDiv);
+    document.getElementById('chatContainer').innerHTML = \`
+      <div class="mx-auto mt-14 max-w-2xl rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-blue-600">步骤 1 / 上传</p>
+        <h3 class="mt-2 text-xl font-semibold text-gray-900">上传知识文档</h3>
+        <p class="mt-3 text-sm leading-6 text-gray-600">
+          演示从上传 <strong>advanced-rag-demo.md</strong> 开始。SmartKB 会解析中文 Markdown，切分知识片段，生成 Embedding，并把向量写入 PostgreSQL pgvector。
+        </p>
+      </div>
+    \`;
+  })()`);
+}
+
+async function showUploadedList(cdp) {
+  await evaluate(cdp, `(() => {
+    loadDocuments();
+    document.getElementById('chatContainer').innerHTML = \`
+      <div class="mx-auto mt-14 max-w-2xl rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">步骤 2 / 入库</p>
+        <h3 class="mt-2 text-xl font-semibold text-gray-900">文档已切片并进入检索层</h3>
+        <p class="mt-3 text-sm leading-6 text-gray-600">
+          左侧文档列表已经显示上传后的文件名和 chunk 数量，说明文档已经从上传流程进入可检索的知识库。
+        </p>
+      </div>
+    \`;
+  })()`);
+  await waitFor(cdp, `document.getElementById('documentList').textContent.includes('advanced-rag-demo.md')`);
+}
+
+async function showDocumentDetailStep(cdp) {
+  await evaluate(cdp, `showDocumentDetail('advanced-rag-demo.md')`);
+  await waitFor(cdp, `document.getElementById('documentDetailBody').textContent.includes('pgvector')`);
+}
+
+async function showConversationQuestion(cdp) {
+  await evaluate(cdp, `(() => {
+    closeDocumentDetail();
+    openWorkspacePanel('chat');
+    setRagMode('conversation');
+    const chat = document.getElementById('chatContainer');
+    chat.innerHTML = '';
+    addMessage('上传文档后 SmartKB 做了哪些处理？', true);
+    addMessage(
+      'SmartKB 会解析上传文件，将文本切分成知识片段，通过 Ollama 生成 Embedding，并把向量写入 PostgreSQL pgvector。后续 RAG 问答会从这些片段中召回证据。',
+      false,
+      ['advanced-rag-demo.md'],
+      { retrievedCount: 4, metrics: { totalMs: 1420, retrievalMs: 88, generationMs: 1210 } }
+    );
+  })()`);
+}
+
+async function showConversationFollowup(cdp) {
+  await evaluate(cdp, `(() => {
+    setRagMode('conversation');
+    const chat = document.getElementById('chatContainer');
+    chat.innerHTML = '';
+    addMessage('上传文档后 SmartKB 做了哪些处理？', true);
+    addMessage(
+      'SmartKB 会解析上传文件，将文本切分成知识片段，通过 Ollama 生成 Embedding，并把向量写入 PostgreSQL pgvector。后续 RAG 问答会从这些片段中召回证据。',
+      false,
+      ['advanced-rag-demo.md'],
+      { retrievedCount: 4, metrics: { totalMs: 1420, retrievalMs: 88, generationMs: 1210 } }
+    );
+    addMessage('它会记住我上一轮问的是上传流程吗？', true);
+    addMessage(
+      '会。当前 conversationId 背后由 Redis ChatMemory 保存上下文，因此追问可以直接沿用上一轮关于“上传流程”的问题，不需要重新说明完整背景。',
+      false,
+      ['Redis ChatMemory', 'advanced-rag-demo.md'],
+      { retrievedCount: 3, metrics: { totalMs: 1260, retrievalMs: 75, generationMs: 1080 } }
+    );
+    const note = document.createElement('div');
+    note.className = 'mx-auto mt-3 max-w-3xl rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800';
+    note.innerHTML = '<strong>多轮追问证据：</strong>同一个 conversationId=rag-demo，第二问中的“它”沿用上一轮“上传流程”的上下文，由 Redis ChatMemory 读取历史消息。';
+    chat.appendChild(note);
+    chat.scrollTop = 0;
+  })()`);
+  await waitFor(cdp, `document.getElementById('chatContainer').textContent.includes('多轮追问证据')`);
+}
+
+async function showAdvancedRagStep(cdp) {
+  await evaluate(cdp, `(() => {
+    openWorkspacePanel('chat');
+    setRagMode('advanced');
+    setAdvancedFilter('advanced-rag-demo.md');
+    const chat = document.getElementById('chatContainer');
+    chat.innerHTML = '';
+    addMessage('查询改写和引用片段为什么能提升 RAG 可信度？', true);
+    addMessage(
+      '查询改写会把简短问题扩展成更适合检索的表达，Hybrid Search 再结合语义召回和关键词证据。引用片段让用户可以回到原文 chunk 检查答案依据，因此能提升可解释性和可信度。',
+      false,
+      ['advanced-rag-demo.md'],
+      {
+        retrievedCount: 5,
+        confidence: 0.91,
+        rewrittenQuery: 'Advanced RAG 查询改写 引用片段 可信度 可追溯',
+        metrics: { totalMs: 2130, rewriteMs: 180, retrievalMs: 96, filterMs: 32, rerankMs: 55, generationMs: 1767 },
+        stages: [
+          { message: '改写问题以提升召回命中率', details: { rewrittenQuery: 'Advanced RAG 查询改写 引用片段 可信度 可追溯', durationMs: 180 } },
+          { message: '结合 pgvector 与关键词进行 Hybrid Search', details: { candidateCount: 16, retrievedCount: 5, durationMs: 96 } },
+          { message: '过滤并重排序候选片段', details: { referenceCount: 2, durationMs: 87 } },
+          { message: '基于引用片段生成回答', details: { totalMs: 2130 } }
+        ],
+        references: [
+          { fileName: 'advanced-rag-demo.md', chunkId: 'chunk-07', preview: 'Advanced RAG 会先改写用户问题，把简短或模糊的提问扩展成更适合检索的表达。' },
+          { fileName: 'advanced-rag-demo.md', chunkId: 'chunk-11', preview: '引用片段让最终回答可追溯，用户可以跳转到支撑回答的具体原文 chunk。' }
+        ]
+      }
+    );
+  })()`);
+  await waitFor(cdp, `document.getElementById('chatContainer').textContent.includes('改写问题以提升召回命中率')`);
+}
+
+async function showLowConfidenceRefusalStep(cdp) {
+  await evaluate(cdp, `(() => {
+    closeDocumentDetail();
+    openWorkspacePanel('chat');
+    setRagMode('advanced');
+    setAdvancedFilter('advanced-rag-demo.md');
+    const chat = document.getElementById('chatContainer');
+    chat.innerHTML = '';
+    addMessage('请根据知识库预测下周上海的天气。', true);
+    addMessage(
+      '当前知识库中没有足够证据回答这个问题。请补充相关文档，或换一个与已上传资料相关的问题。',
+      false,
+      ['advanced-rag-demo.md'],
+      {
+        retrievedCount: 3,
+        confidence: 0.08,
+        refused: true,
+        refusalReason: '检索证据与问题的关键词和领域锚点覆盖不足',
+        metrics: { totalMs: 286, rewriteMs: 126, retrievalMs: 92, filterMs: 18, rerankMs: 50, generationMs: 0 },
+        stages: [
+          { message: '改写问题以提升召回命中率', details: { rewrittenQuery: '上海 下周 天气预测', durationMs: 126 } },
+          { message: '结合 pgvector 与关键词进行 Hybrid Search', details: { candidateCount: 8, retrievedCount: 3, durationMs: 92 } },
+          { message: '检索证据不足，已停止生成', details: { confidence: 0.08, reason: '证据覆盖不足', totalMs: 286 } }
+        ]
+      }
+    );
+  })()`);
+  await waitFor(cdp, `document.getElementById('chatContainer').textContent.includes('已触发低置信度拒答')`);
+}
+
+async function showAnswerEvaluationStep(cdp) {
+  await evaluate(cdp, `(() => {
+    openWorkspacePanel('chat');
+    setRagMode('advanced');
+    const chat = document.getElementById('chatContainer');
+    chat.innerHTML = \`
+      <div class="mx-auto mt-8 max-w-3xl rounded-2xl border border-violet-100 bg-white p-6 shadow-sm">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">LLM-as-Judge / 离线答案评估</p>
+            <h3 class="mt-2 text-xl font-semibold text-gray-900">答案质量三维评估</h3>
+            <p class="mt-2 text-sm leading-6 text-gray-500">输入问题、生成答案与引用上下文，评估答案是否有依据、是否切题、检索证据是否相关。</p>
+          </div>
+          <span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">POST /api/rag/eval/answer</span>
+        </div>
+        <div class="mt-5 grid grid-cols-3 gap-3">
+          <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4"><p class="text-xs text-emerald-700">Faithfulness</p><p class="mt-1 text-3xl font-semibold text-emerald-800">0.94</p><p class="mt-2 text-xs text-emerald-700">关键结论均有引用上下文支持</p></div>
+          <div class="rounded-xl border border-blue-100 bg-blue-50 p-4"><p class="text-xs text-blue-700">Answer Relevance</p><p class="mt-1 text-3xl font-semibold text-blue-800">0.91</p><p class="mt-2 text-xs text-blue-700">直接回答查询改写的作用</p></div>
+          <div class="rounded-xl border border-amber-100 bg-amber-50 p-4"><p class="text-xs text-amber-700">Context Relevance</p><p class="mt-1 text-3xl font-semibold text-amber-800">0.88</p><p class="mt-2 text-xs text-amber-700">引用片段包含所需核心证据</p></div>
+        </div>
+        <div class="mt-4 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <span class="text-sm text-gray-600">综合评分用于版本回归对比，不替代人工标注</span>
+          <span class="text-lg font-semibold text-gray-900">Overall 0.91</span>
+        </div>
+      </div>\`;
+  })()`);
+  await waitFor(cdp, `document.getElementById('chatContainer').textContent.includes('Faithfulness')`);
+}
+
+async function showCitationJumpStep(cdp) {
+  await evaluate(cdp, `(() => {
+    const summary = document.querySelector('#chatContainer details summary');
+    if (summary) summary.click();
+  })()`);
+  await waitFor(cdp, `Boolean(document.querySelector('[data-reference-chunk-id="chunk-11"]'))`);
+  await evaluate(cdp, `(() => {
+    const reference = document.querySelector('[data-reference-chunk-id="chunk-11"]');
+    reference.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+    showDocumentDetail('advanced-rag-demo.md', 'chunk-11');
+  })()`);
+  await waitFor(cdp, `(() => {
+    const overlay = document.getElementById('documentDetailOverlay');
+    const target = document.querySelector('[data-document-chunk-id="chunk-11"]');
+    return !overlay.classList.contains('hidden') && Boolean(target) && target.textContent.includes('引用片段');
+  })()`);
+  await delay(500);
+}
+
+async function showRagEvalStep(cdp) {
+  await evaluate(cdp, `(() => {
+    closeDocumentDetail();
+    openWorkspacePanel('chat');
+    setRagMode('advanced');
+    runRagEval();
+  })()`);
+  await waitFor(cdp, `(() => {
+    const report = document.getElementById('ragEvalReportCard');
+    return Boolean(report)
+      && report.textContent.includes('内置问题集 RAG 检索评测')
+      && report.textContent.includes('Advanced Recall@K')
+      && report.textContent.includes('不评估当前聊天');
+  })()`);
+  await delay(500);
+}
+
+async function run(cdp) {
+  await initPage(cdp);
+  const outputs = [];
+
+  await showUploadStep(cdp);
+  outputs.push(await capture(cdp, 'upload'));
+
+  await showUploadedList(cdp);
+  outputs.push(await capture(cdp, 'uploaded'));
+
+  await showDocumentDetailStep(cdp);
+  outputs.push(await capture(cdp, 'detail'));
+
+  await showConversationQuestion(cdp);
+  outputs.push(await capture(cdp, 'qa'));
+
+  await showConversationFollowup(cdp);
+  outputs.push(await capture(cdp, 'followup'));
+
+  await showAdvancedRagStep(cdp);
+  outputs.push(await capture(cdp, 'advanced'));
+
+  await showCitationJumpStep(cdp);
+  outputs.push(await capture(cdp, 'citation'));
+
+  await showLowConfidenceRefusalStep(cdp);
+  outputs.push(await capture(cdp, 'refusal'));
+
+  await showRagEvalStep(cdp);
+  outputs.push(await capture(cdp, 'ragEval'));
+
+  await showAnswerEvaluationStep(cdp);
+  outputs.push(await capture(cdp, 'answerEval'));
+
+  return outputs;
+}
+
+runChromeSmoke(pageUrl, {
+  profileName: 'workbench-rag-screenshots',
+  width: 1440,
+  height: 900,
+  deviceScaleFactor: 1,
+  mobile: false,
+}, run)
+  .then((outputs) => {
+    console.log(JSON.stringify({ ok: true, outputs }, null, 2));
+  })
+  .catch((error) => {
+    console.error(error.stack || error.message);
+    process.exit(1);
+  });

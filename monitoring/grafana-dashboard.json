@@ -1,0 +1,103 @@
+{
+  "dashboard": {
+    "title": "SmartKB - 企业智能知识库监控",
+    "uid": "smartkb-main",
+    "tags": ["smartkb", "rag", "virtual-threads"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Virtual Threads 活跃数量",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "jvm_threads_live_threads{application=\"smartkb\"}",
+            "legendFormat": "总线程数"
+          },
+          {
+            "expr": "jvm_threads_daemon_threads{application=\"smartkb\"}",
+            "legendFormat": "守护线程数"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 2,
+        "title": "API 请求耗时（P95）",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"smartkb\"}[5m])) by (uri, le))",
+            "legendFormat": "{{uri}}"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 3,
+        "title": "文档上传成功率",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{uri=\"/api/documents/upload\", status=\"200\"}[5m])) / sum(rate(http_server_requests_seconds_count{uri=\"/api/documents/upload\"}[5m])) * 100",
+            "legendFormat": "成功率 %"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 8, "w": 6, "h": 4}
+      },
+      {
+        "id": 4,
+        "title": "RAG 查询 QPS",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{uri=~\"/api/chat.*\"}[1m]))",
+            "legendFormat": "QPS"
+          }
+        ],
+        "gridPos": {"x": 6, "y": 8, "w": 6, "h": 4}
+      },
+      {
+        "id": 5,
+        "title": "JVM 内存使用",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{application=\"smartkb\", area=\"heap\"}",
+            "legendFormat": "Heap 已用"
+          },
+          {
+            "expr": "jvm_memory_max_bytes{application=\"smartkb\", area=\"heap\"}",
+            "legendFormat": "Heap 最大"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}
+      },
+      {
+        "id": 6,
+        "title": "向量数据库文档数量",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "pg_stat_user_tables_n_tup_ins{relname=\"vector_store\"}",
+            "legendFormat": "总文档数"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 12, "w": 6, "h": 4}
+      },
+      {
+        "id": 7,
+        "title": "Embedding 生成耗时",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(embedding_generation_seconds_bucket[5m])) by (le))",
+            "legendFormat": "P95 耗时"
+          }
+        ],
+        "gridPos": {"x": 6, "y": 12, "w": 18, "h": 8}
+      }
+    ],
+    "refresh": "10s"
+  }
+}
