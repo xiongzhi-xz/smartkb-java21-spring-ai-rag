@@ -36,7 +36,7 @@
 
 ## 当前阶段
 
-GitHub 发布前清理与验证。
+企业级 RAG 架构重构规格已确认，准备进入 Phase 1。
 
 ## 已完成
 
@@ -47,14 +47,13 @@ GitHub 发布前清理与验证。
 
 ## 正在做
 
-- 检查敏感信息和历史记录。
-- 清理本机路径和无效构建配置。
-- 添加 GitHub Actions。
+- 单租户企业 RAG 重构：Milvus + OpenSearch + PostgreSQL + MinIO + RabbitMQ + Redis。
+- 设计持久化会话与异步文档入库的迁移边界。
 
 ## 下一步
 
-- 确认历史 API 密钥已经在供应商后台作废。
-- 用户明确确认后，清理本机 reflog 和不可达 Git 对象。
+- 实施 Phase 1：建立领域端口、持久化会话模型与 Redis 缓存适配层。
+- 在开始数据库 schema/migration 前确认迁移方案、回滚策略和旧 pgvector 数据保留方式。
 
 ## 风险
 
