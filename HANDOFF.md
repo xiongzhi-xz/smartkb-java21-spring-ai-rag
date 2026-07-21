@@ -1,5 +1,15 @@
 # SmartKB Handoff
 
+## 2026-07-21 企业 RAG Phase 1a
+
+- 已引入 Flyway，并在本地 PostgreSQL 16 上实际执行 `V1__enterprise_rag_core.sql`。
+- 已创建知识库、文档、Chunk、入库任务、会话、消息和检索 trace 共 7 张核心表。
+- 原 `vector_store` 表已确认保留，未被迁移修改或删除。
+- Spring AI ChatMemory 已从 Redis List 切换为 PostgreSQL 持久化实现，使用原子会话序号保证并发写入顺序。
+- Redis 依赖和容器保留，职责收敛为缓存、限流和分布式协调。
+- 已在 Temurin JDK 21.0.11 容器运行 `mvn -B clean test`：42 个测试通过，0 失败。
+- 本地 `smartkb-postgres` 与 `smartkb-redis` 容器当前运行中，供下一阶段联调使用。
+
 ## 2026-07-21 JDK 21 验证
 
 - 已使用 `maven:3.9-eclipse-temurin-21` 容器执行全新 `mvn -B clean verify`。
@@ -36,24 +46,25 @@
 
 ## 当前阶段
 
-企业级 RAG 架构重构规格已确认，准备进入 Phase 1。
+企业级 RAG 重构 Phase 1a 已完成，准备收敛领域端口与持久化适配器。
 
 ## 已完成
 
 - 移除 Agent 工作台代码、页面、测试和设计文档。
 - README、SPEC、DEMO、TESTING 收敛为 RAG 主线。
-- 保留文档入库、Hybrid Search、流式问答、引用定位、Redis ChatMemory、评测和监控。
+- 保留文档入库、Hybrid Search、流式问答、引用定位、评测和监控。
+- 已引入 Flyway V1 企业 RAG 核心表，并将 ChatMemory 从 Redis 切换为 PostgreSQL 持久化。
 - 已在 JDK 21 环境完成全新构建，43 个自动化测试全部通过。
 
 ## 正在做
 
 - 单租户企业 RAG 重构：Milvus + OpenSearch + PostgreSQL + MinIO + RabbitMQ + Redis。
-- 设计持久化会话与异步文档入库的迁移边界。
+- 收敛领域端口、Repository 适配器与 Redis 缓存边界。
 
 ## 下一步
 
-- 实施 Phase 1：建立领域端口、持久化会话模型与 Redis 缓存适配层。
-- 在开始数据库 schema/migration 前确认迁移方案、回滚策略和旧 pgvector 数据保留方式。
+- 实施 Phase 1b：建立领域端口、Repository 适配器与 Redis 缓存适配层。
+- 实施 Phase 2 前确认 MinIO、RabbitMQ 的本地部署参数与重试策略。
 
 ## 风险
 

@@ -82,7 +82,7 @@ public class AdvancedRagService {
      * @param queryRewritingService 查询改写服务
      * @param vectorStoreService    向量存储服务
      * @param chatModel             OpenAI 兼容 ChatModel（Advanced RAG 专用，避免触发默认 RAG Advisor）
-     * @param chatMemory            会话记忆（Redis 持久化）
+     * @param chatMemory            会话记忆（PostgreSQL 持久化）
      * @param metricsService        可观测性指标服务
      */
     public AdvancedRagService(
@@ -103,7 +103,7 @@ public class AdvancedRagService {
     /**
      * Advanced RAG 查询（使用 ChatMemory 管理对话历史）
      * <p>
-     * 通过 conversationId 从 ChatMemory（Redis）自动读取历史，
+     * 通过 conversationId 从 ChatMemory（PostgreSQL）自动读取历史，
      * 生成答案后自动将用户问题和 AI 回复写入 ChatMemory，
      * 支持服务重启后恢复会话上下文。
      *
@@ -132,7 +132,7 @@ public class AdvancedRagService {
         AdvancedRagResult result = queryAdvancedWithDetailsInternal(
                 question, metadataFilter, history, conversationId, stageConsumer);
 
-        // 将本轮对话写入 ChatMemory（Redis），保证下次追问可读取
+        // 将本轮对话写入 PostgreSQL ChatMemory，保证重启后仍可读取
         if (conversationId != null && !conversationId.isEmpty()) {
             chatMemory.add(conversationId, new UserMessage(question));
             chatMemory.add(conversationId, new AssistantMessage(result.answer()));
@@ -874,7 +874,7 @@ public class AdvancedRagService {
      * - 用于查询改写时的上下文推断
      * <p>
      * 此方法使得 Advanced RAG 不再依赖前端传的 history 文本，
-     * 而是统一从 ChatMemory（Redis）读取，实现了会话状态的统一管理。
+     * 而是统一从 ChatMemory（PostgreSQL）读取，实现会话状态的持久化管理。
      *
      * @param conversationId 会话 ID
      * @return 历史文本（如 "用户：xxx\n助手：yyy"），无历史时返回空字符串

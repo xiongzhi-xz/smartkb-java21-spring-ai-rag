@@ -291,7 +291,7 @@ public class SmartKbController {
     /**
      * 清除指定会话的 ChatMemory
      * <p>
-     * 当用户点击"新会话"时，前端调用此接口清除 Redis 中对应的会话数据。
+     * 当用户点击"新会话"时，前端调用此接口清除 PostgreSQL 中对应的持久化会话消息。
      * 确保新建会话后不会再读取到旧对话上下文。
      *
      * @param conversationId 会话 ID

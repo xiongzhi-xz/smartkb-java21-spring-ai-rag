@@ -130,7 +130,8 @@ src/main/java/com/smartkb
 
 ## 分阶段任务
 
-- [ ] Phase 1: 建立模块边界、领域端口与 PostgreSQL 持久化会话模型；Redis ChatMemory 改为缓存适配器。
+- [x] Phase 1a: 引入 Flyway 企业 RAG 核心表，完成 PostgreSQL 持久化会话；Redis 不再承载长期记忆。
+- [ ] Phase 1b: 建立领域端口、Repository 适配器与 Redis 缓存适配层。
 - [ ] Phase 2: 引入 MinIO、RabbitMQ，完成异步文档入库、状态机、重试和幂等控制。
 - [ ] Phase 3: 引入 Milvus 与 OpenSearch，完成双路召回、过滤、RRF 融合和索引一致性。
 - [ ] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。

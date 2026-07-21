@@ -16,7 +16,7 @@
     <artifactId>smartkb-java21-spring-ai-rag</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>SmartKB - Enterprise Knowledge Base with Advanced RAG</name>
-    <description>企业智能知识库系统（Java 21 + Spring AI + pgvector）</description>
+    <description>企业智能知识库系统（Java 21 + Spring AI + 事件驱动 RAG）</description>
 
     <properties>
         <java.version>21</java.version>
@@ -54,7 +54,7 @@
             <artifactId>spring-ai-core</artifactId>
         </dependency>
 
-        <!-- PostgreSQL + pgvector 向量存储 -->
+        <!-- PostgreSQL：当前 pgvector 兼容链路与企业元数据/会话事实存储 -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-pgvector-store-spring-boot-starter</artifactId>
@@ -71,7 +71,18 @@
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
 
-        <!-- Redis - 会话记忆、缓存、限流 -->
+        <!-- 数据库迁移：新增企业 RAG 核心表时保持版本化与可追溯 -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- Redis - 缓存、限流与分布式协调，不承载长期会话事实 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>

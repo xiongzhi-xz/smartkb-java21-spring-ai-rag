@@ -19,7 +19,12 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
 
-  # Redis 配置 - 会话记忆 + 缓存
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  # Redis 配置 - 缓存、限流与分布式协调
   data:
     redis:
       host: localhost
