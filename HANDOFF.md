@@ -1,5 +1,13 @@
 # SmartKB Handoff
 
+## 2026-07-21 JDK 21 验证
+
+- 已使用 `maven:3.9-eclipse-temurin-21` 容器执行全新 `mvn -B clean verify`。
+- 验证环境为 Temurin JDK 21.0.11、Maven 3.9.16。
+- 验证结果：43 个测试全部通过，项目成功编译并生成可执行 Jar。
+- `docker compose config --quiet` 与 `git diff --check` 通过。
+- 本轮未执行真实 PostgreSQL、Redis、Ollama、Reranker 和 ChatModel 联调，也未执行压力测试。
+
 ## 2026-07-11 补充进度
 
 - 已使用最新代码重启本地 SmartKB，并完成正常回答、低置信度拒答和答案 Judge 的真实模型验收。
@@ -27,7 +35,7 @@ GitHub 发布前清理与验证。
 - 移除 Agent 工作台代码、页面、测试和设计文档。
 - README、SPEC、DEMO、TESTING 收敛为 RAG 主线。
 - 保留文档入库、Hybrid Search、流式问答、引用定位、Redis ChatMemory、评测和监控。
-- 自动化测试已通过。
+- 已在 JDK 21 环境完成全新构建，43 个自动化测试全部通过。
 
 ## 正在做
 
@@ -37,7 +45,6 @@ GitHub 发布前清理与验证。
 
 ## 下一步
 
-- 使用 JDK 21 执行完整验证。
 - 确认是否重写 Git 历史以清除曾提交的真实 API 密钥。
 
 ## 风险

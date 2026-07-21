@@ -104,7 +104,8 @@ Question
 - [ ] 升级到稳定版 Spring AI 并记录迁移差异。
 - [ ] 接入 Cross-Encoder reranker，与规则重排进行 A/B 对比。
 - [ ] 增加答案忠实度和上下文相关性评测。
-- [ ] 使用 Java 21 环境重新执行完整测试和压力测试。
+- [x] 使用 Java 21 环境重新执行完整测试。
+- [ ] 使用 Java 21 环境执行压力测试。
 - [ ] 拆分体积较大的 Controller 与 Advanced RAG 编排类。
 
 ## BGE Reranker
