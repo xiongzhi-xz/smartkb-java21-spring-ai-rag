@@ -1,8 +1,8 @@
 package com.smartkb.infrastructure.persistence;
 
 import com.smartkb.application.port.outbound.ConversationRepository;
+import com.smartkb.application.port.outbound.ConversationContextCache;
 import com.smartkb.domain.conversation.ConversationMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -24,10 +24,20 @@ import java.util.List;
  * 重复序号或不稳定顺序。</p>
  */
 @Slf4j
-@RequiredArgsConstructor
 public class PostgresChatMemory implements ChatMemory {
 
     private final ConversationRepository conversationRepository;
+    private final ConversationContextCache contextCache;
+    private final int cacheWindowSize;
+
+    public PostgresChatMemory(
+            ConversationRepository conversationRepository,
+            ConversationContextCache contextCache,
+            int cacheWindowSize) {
+        this.conversationRepository = conversationRepository;
+        this.contextCache = contextCache;
+        this.cacheWindowSize = cacheWindowSize;
+    }
 
     @Override
     public void add(String conversationId, Message message) {
@@ -46,6 +56,7 @@ public class PostgresChatMemory implements ChatMemory {
                 .map(message -> new ConversationMessage(messageType(message), message.getContent()))
                 .toList();
         conversationRepository.append(conversationId, persistentMessages);
+        contextCache.evict(conversationId);
         log.debug("已持久化会话消息: conversationId={}, count={}", conversationId, messages.size());
     }
 
@@ -54,7 +65,10 @@ public class PostgresChatMemory implements ChatMemory {
         if (conversationId == null || conversationId.isBlank() || lastN <= 0) {
             return Collections.emptyList();
         }
-        return conversationRepository.findRecent(conversationId, lastN).stream()
+        List<ConversationMessage> messages = contextCache.get(conversationId)
+                .filter(cached -> lastN <= cached.size() || cached.size() < cacheWindowSize)
+                .orElseGet(() -> loadAndCache(conversationId, lastN));
+        return takeRecent(messages, lastN).stream()
                 .map(this::toMessage)
                 .toList();
     }
@@ -66,6 +80,7 @@ public class PostgresChatMemory implements ChatMemory {
             return;
         }
         conversationRepository.clearMessages(conversationId);
+        contextCache.evict(conversationId);
         log.info("已清除持久化会话消息: conversationId={}", conversationId);
     }
 
@@ -85,5 +100,19 @@ public class PostgresChatMemory implements ChatMemory {
             return "SYSTEM";
         }
         return "USER";
+    }
+
+    private List<ConversationMessage> loadAndCache(String conversationId, int lastN) {
+        List<ConversationMessage> messages = conversationRepository.findRecent(
+                conversationId,
+                Math.max(lastN, cacheWindowSize)
+        );
+        contextCache.put(conversationId, messages);
+        return messages;
+    }
+
+    private List<ConversationMessage> takeRecent(List<ConversationMessage> messages, int lastN) {
+        int start = Math.max(0, messages.size() - lastN);
+        return messages.subList(start, messages.size());
     }
 }

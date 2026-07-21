@@ -2,6 +2,7 @@ package com.smartkb.config;
 
 import com.smartkb.infrastructure.persistence.PostgresChatMemory;
 import com.smartkb.application.port.outbound.ConversationRepository;
+import com.smartkb.application.port.outbound.ConversationContextCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -45,9 +46,12 @@ public class AdvisorConfig {
     private double similarityThreshold;
 
     @Bean
-    public ChatMemory chatMemory() {
+    public ChatMemory chatMemory(
+            ConversationRepository conversationRepository,
+            ConversationContextCache conversationContextCache,
+            @Value("${smartkb.conversation-cache.window-size:100}") int cacheWindowSize) {
         log.info("初始化 ChatMemory (PostgreSQL 持久化模式)");
-        return new PostgresChatMemory(conversationRepository);
+        return new PostgresChatMemory(conversationRepository, conversationContextCache, cacheWindowSize);
     }
 
     @Bean

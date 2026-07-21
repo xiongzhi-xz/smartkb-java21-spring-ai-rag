@@ -134,6 +134,10 @@ smartkb:
   chat-memory:
     ttl-hours: 24  # 会话过期时间（小时），活跃会话自动续期
 
+  conversation-cache:
+    ttl: 5m
+    window-size: 100
+
   reranker:
     enabled: ${SMARTKB_RERANKER_ENABLED:true}
     base-url: ${SMARTKB_RERANKER_BASE_URL:http://localhost:8090}
