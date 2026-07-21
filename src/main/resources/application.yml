@@ -110,6 +110,10 @@ logging:
 
 # 应用自定义配置
 smartkb:
+  messaging:
+    ingestion:
+      exchange: smartkb.ingestion
+      routing-key: document.requested
   # 文档处理配置
   document:
     max-file-size: 50MB

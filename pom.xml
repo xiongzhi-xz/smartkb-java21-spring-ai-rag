@@ -71,6 +71,11 @@
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
         <!-- 数据库迁移：新增企业 RAG 核心表时保持版本化与可追溯 -->
         <dependency>
             <groupId>org.flywaydb</groupId>
