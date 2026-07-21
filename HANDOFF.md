@@ -1,5 +1,12 @@
 # SmartKB Handoff
 
+## 2026-07-21 提交环境说明
+
+- `docker-compose.yml` 与 `src/main/resources/application.yml` 已补充本地 RabbitMQ 运行配置：发布确认、死信策略、服务健康检查和应用容器连接配置。
+- 上述两个配置文件及本交接记录尚未提交；`git diff --check` 通过。
+- 当前会话的提权审批服务返回 404，导致 Docker Compose 校验、`git add` 和 `git commit` 都未实际执行。
+- 下一会话先执行 `docker compose config --quiet`，再提交：`chore: 配置本地 RabbitMQ 服务`。
+
 ## 2026-07-21 企业 RAG Phase 1a
 
 - 已引入 Flyway，并在本地 PostgreSQL 16 上实际执行 `V1__enterprise_rag_core.sql`。

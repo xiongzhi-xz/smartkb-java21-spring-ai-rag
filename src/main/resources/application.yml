@@ -37,6 +37,19 @@ spring:
           max-idle: 10
           min-idle: 5
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:smartkb}
+    password: ${RABBITMQ_PASSWORD:smartkb123}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        default-requeue-rejected: false
+
   # Spring AI 配置
   ai:
     # OpenAI 兼容接口 — 用于 Chat
