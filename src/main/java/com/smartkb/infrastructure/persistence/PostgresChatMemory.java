@@ -1,5 +1,7 @@
 package com.smartkb.infrastructure.persistence;
 
+import com.smartkb.application.port.outbound.ConversationRepository;
+import com.smartkb.domain.conversation.ConversationMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -7,13 +9,10 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * PostgreSQL 持久化会话记忆。
@@ -28,36 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PostgresChatMemory implements ChatMemory {
 
-    private static final String ADVANCE_SEQUENCE_SQL = """
-            INSERT INTO conversation (id, status, next_sequence, created_at, updated_at, last_message_at)
-            VALUES (?, 'ACTIVE', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            ON CONFLICT (id) DO UPDATE
-            SET status = 'ACTIVE',
-                next_sequence = conversation.next_sequence + 1,
-                updated_at = CURRENT_TIMESTAMP,
-                last_message_at = CURRENT_TIMESTAMP
-            RETURNING next_sequence
-            """;
-
-    private static final String INSERT_MESSAGE_SQL = """
-            INSERT INTO conversation_message
-                (id, conversation_id, sequence_no, message_type, content, created_at)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """;
-
-    private static final String LOAD_RECENT_MESSAGES_SQL = """
-            SELECT message_type, content
-            FROM (
-                SELECT message_type, content, sequence_no
-                FROM conversation_message
-                WHERE conversation_id = ?
-                ORDER BY sequence_no DESC
-                LIMIT ?
-            ) recent_messages
-            ORDER BY sequence_no ASC
-            """;
-
-    private final JdbcTemplate jdbcTemplate;
+    private final ConversationRepository conversationRepository;
 
     @Override
     public void add(String conversationId, Message message) {
@@ -71,23 +41,11 @@ public class PostgresChatMemory implements ChatMemory {
             return;
         }
 
-        for (Message message : messages) {
-            if (message == null) {
-                continue;
-            }
-            Long sequence = jdbcTemplate.queryForObject(ADVANCE_SEQUENCE_SQL, Long.class, conversationId);
-            if (sequence == null) {
-                throw new IllegalStateException("会话序号生成失败: " + conversationId);
-            }
-            jdbcTemplate.update(
-                    INSERT_MESSAGE_SQL,
-                    UUID.randomUUID(),
-                    conversationId,
-                    sequence,
-                    messageType(message),
-                    message.getContent()
-            );
-        }
+        List<ConversationMessage> persistentMessages = messages.stream()
+                .filter(java.util.Objects::nonNull)
+                .map(message -> new ConversationMessage(messageType(message), message.getContent()))
+                .toList();
+        conversationRepository.append(conversationId, persistentMessages);
         log.debug("已持久化会话消息: conversationId={}, count={}", conversationId, messages.size());
     }
 
@@ -96,12 +54,9 @@ public class PostgresChatMemory implements ChatMemory {
         if (conversationId == null || conversationId.isBlank() || lastN <= 0) {
             return Collections.emptyList();
         }
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                LOAD_RECENT_MESSAGES_SQL,
-                conversationId,
-                lastN
-        );
-        return rows.stream().map(this::toMessage).toList();
+        return conversationRepository.findRecent(conversationId, lastN).stream()
+                .map(this::toMessage)
+                .toList();
     }
 
     @Override
@@ -110,22 +65,15 @@ public class PostgresChatMemory implements ChatMemory {
         if (conversationId == null || conversationId.isBlank()) {
             return;
         }
-        jdbcTemplate.update("DELETE FROM conversation_message WHERE conversation_id = ?", conversationId);
-        jdbcTemplate.update("""
-                UPDATE conversation
-                SET status = 'CLEARED', updated_at = CURRENT_TIMESTAMP, last_message_at = NULL
-                WHERE id = ?
-                """, conversationId);
+        conversationRepository.clearMessages(conversationId);
         log.info("已清除持久化会话消息: conversationId={}", conversationId);
     }
 
-    private Message toMessage(Map<String, Object> row) {
-        String type = String.valueOf(row.get("message_type"));
-        String content = String.valueOf(row.getOrDefault("content", ""));
-        return switch (type) {
-            case "ASSISTANT" -> new AssistantMessage(content);
-            case "SYSTEM" -> new SystemMessage(content);
-            default -> new UserMessage(content);
+    private Message toMessage(ConversationMessage message) {
+        return switch (message.type()) {
+            case "ASSISTANT" -> new AssistantMessage(message.content());
+            case "SYSTEM" -> new SystemMessage(message.content());
+            default -> new UserMessage(message.content());
         };
     }
 

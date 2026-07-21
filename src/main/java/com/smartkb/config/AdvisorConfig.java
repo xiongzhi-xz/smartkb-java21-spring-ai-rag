@@ -1,6 +1,7 @@
 package com.smartkb.config;
 
 import com.smartkb.infrastructure.persistence.PostgresChatMemory;
+import com.smartkb.application.port.outbound.ConversationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Spring AI 客户端与 Advisor 配置。
@@ -27,12 +27,15 @@ public class AdvisorConfig {
 
     private final ChatModel chatModel;
     private final VectorStore vectorStore;
-    private final JdbcTemplate jdbcTemplate;
+    private final ConversationRepository conversationRepository;
 
-    public AdvisorConfig(ChatModel chatModel, VectorStore vectorStore, JdbcTemplate jdbcTemplate) {
+    public AdvisorConfig(
+            ChatModel chatModel,
+            VectorStore vectorStore,
+            ConversationRepository conversationRepository) {
         this.chatModel = chatModel;
         this.vectorStore = vectorStore;
-        this.jdbcTemplate = jdbcTemplate;
+        this.conversationRepository = conversationRepository;
     }
 
     @Value("${smartkb.rag.top-k:5}")
@@ -44,7 +47,7 @@ public class AdvisorConfig {
     @Bean
     public ChatMemory chatMemory() {
         log.info("初始化 ChatMemory (PostgreSQL 持久化模式)");
-        return new PostgresChatMemory(jdbcTemplate);
+        return new PostgresChatMemory(conversationRepository);
     }
 
     @Bean

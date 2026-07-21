@@ -10,6 +10,12 @@
 - 已在 Temurin JDK 21.0.11 容器运行 `mvn -B clean test`：42 个测试通过，0 失败。
 - 本地 `smartkb-postgres` 与 `smartkb-redis` 容器当前运行中，供下一阶段联调使用。
 
+## 2026-07-21 企业 RAG Phase 1b
+
+- 已建立 `ConversationRepository` 出站端口、`ConversationMessage` 领域记录和 JDBC/PostgreSQL 适配器。
+- `PostgresChatMemory` 现在只负责 Spring AI 消息转换，通过领域端口访问会话事实，不再直接执行 SQL。
+- 已增加端口和 JDBC 仓储单元测试；Temurin JDK 21.0.11 下 `mvn -B clean test` 为 43 个测试通过、0 失败。
+
 ## 2026-07-21 JDK 21 验证
 
 - 已使用 `maven:3.9-eclipse-temurin-21` 容器执行全新 `mvn -B clean verify`。
@@ -46,7 +52,7 @@
 
 ## 当前阶段
 
-企业级 RAG 重构 Phase 1a 已完成，准备收敛领域端口与持久化适配器。
+企业级 RAG 重构 Phase 1b 已完成，准备建立 Redis 缓存边界并进入异步文档入库。
 
 ## 已完成
 
@@ -59,11 +65,11 @@
 ## 正在做
 
 - 单租户企业 RAG 重构：Milvus + OpenSearch + PostgreSQL + MinIO + RabbitMQ + Redis。
-- 收敛领域端口、Repository 适配器与 Redis 缓存边界。
+- 建立 Redis 缓存适配器与会话摘要缓存策略。
 
 ## 下一步
 
-- 实施 Phase 1b：建立领域端口、Repository 适配器与 Redis 缓存适配层。
+- 实施 Phase 1c：建立 Redis 缓存适配器与会话摘要缓存策略。
 - 实施 Phase 2 前确认 MinIO、RabbitMQ 的本地部署参数与重试策略。
 
 ## 风险
