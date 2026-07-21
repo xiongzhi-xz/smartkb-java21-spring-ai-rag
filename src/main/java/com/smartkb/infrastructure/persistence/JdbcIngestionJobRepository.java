@@ -47,4 +47,14 @@ public class JdbcIngestionJobRepository implements IngestionJobRepository {
                 IngestionJobStatus.valueOf(rs.getString("status")),
                 rs.getInt("retry_count"))) : Optional.empty(), idempotencyKey);
     }
+
+    @Override
+    public boolean markProcessing(java.util.UUID jobId) {
+        int updated = jdbcTemplate.update("""
+                UPDATE ingestion_job
+                SET status = 'PROCESSING', started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND status IN ('PENDING', 'RETRYING')
+                """, jobId);
+        return updated == 1;
+    }
 }
