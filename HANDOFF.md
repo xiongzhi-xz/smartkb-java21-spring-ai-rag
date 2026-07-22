@@ -20,6 +20,8 @@
 - Phase 2 is complete. The next independent module is Phase 3: Milvus/OpenSearch dual retrieval and index consistency.
 - Phase 3 design is now recorded in `docs/PHASE3_RETRIEVAL_DESIGN.md`. It fixes the chunk identity contract, both-index `READY` gate, deletion order, weighted RRF contract, and single-backend degradation behavior without changing schema or runtime dependencies.
 - The next focused implementation task is Phase 3a: add domain records and outbound index ports with unit tests. Do not add Milvus/OpenSearch dependencies or change migrations until that task is underway and the existing adapter style has been followed.
+- Phase 3a is complete: `IndexableChunk`, `RetrievalRequest`, and `RetrievalCandidate` define immutable shared contracts; `DenseVectorIndex` and `KeywordIndex` isolate the future Milvus/OpenSearch adapters. `chunkId` is the stable upsert key. `mvn -B test` passed with 86 tests.
+- The next focused implementation task is Phase 3b: add Milvus/OpenSearch Docker Compose services, configuration properties, health checks, and adapter dependencies. Do not change the PostgreSQL migration scripts in that task.
 - The historical environment notes below are retained only as context.
 
 ## 2026-07-21 提交环境说明
