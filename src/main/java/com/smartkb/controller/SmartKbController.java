@@ -2,6 +2,7 @@ package com.smartkb.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartkb.application.DocumentIngestionSubmissionService;
+import com.smartkb.application.EnterpriseChatService;
 import com.smartkb.application.DocumentDeletionConflictException;
 import com.smartkb.application.DocumentDeletionResult;
 import com.smartkb.application.DocumentDeletionService;
@@ -9,6 +10,7 @@ import com.smartkb.application.DocumentRetryResult;
 import com.smartkb.application.DocumentRetryService;
 import com.smartkb.application.DocumentUploadResult;
 import com.smartkb.domain.AdvancedRagMetrics;
+import com.smartkb.domain.EnterpriseChatResult;
 import com.smartkb.domain.AdvancedRagResult;
 import com.smartkb.domain.AnswerEvaluationReport;
 import com.smartkb.domain.AnswerEvaluationRequest;
@@ -65,6 +67,7 @@ import java.util.concurrent.CountDownLatch;
 public class SmartKbController {
 
     private final RagService ragService;
+    private final EnterpriseChatService enterpriseChatService;
     private final AdvancedRagService advancedRagService;
     private final RagEvaluationService ragEvaluationService;
     private final AnswerEvaluationService answerEvaluationService;
@@ -509,6 +512,30 @@ public class SmartKbController {
         return conversationId;
     }
 
+    /** Canonical enterprise RAG endpoint. Stages and the final evidence trace are delivered over SSE. */
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<StreamingResponseBody> chatEnterpriseStream(@RequestBody EnterpriseChatRequest request) {
+        String conversationId = resolveConversationId(request.getConversationId());
+        StreamingResponseBody body = outputStream -> {
+            try {
+                writeSseEvent(outputStream, "conversation", Map.of("conversationId", conversationId));
+                EnterpriseChatResult result = enterpriseChatService.answer(
+                        request.getQuestion(), conversationId, request.getKnowledgeBaseId(),
+                        request.getDocumentIds() == null ? List.of() : request.getDocumentIds(),
+                        stage -> writeSseEventUnchecked(outputStream, "stage", Map.of("name", stage)));
+                writeSseEvent(outputStream, "done", Map.of(
+                        "success", true, "conversationId", conversationId, "answer", result.answer(),
+                        "rewrittenQuery", result.rewrittenQuery(), "references", result.references(),
+                        "retrievalMode", result.retrievalMode(), "traceId", result.traceId(),
+                        "latencyMs", result.latencyMs()));
+            } catch (Exception exception) {
+                log.error("enterprise chat stream failed: conversationId={}", conversationId, exception);
+                writeSseEvent(outputStream, "error", Map.of("error", exception.getMessage()));
+            }
+        };
+        return ResponseEntity.ok().contentType(MediaType.TEXT_EVENT_STREAM).body(body);
+    }
+
     /** 重新提交失败的文档入库任务。 */
     @PostMapping("/documents/{documentId}/retry")
     public ResponseEntity<Map<String, Object>> retryDocument(@PathVariable UUID documentId) {
@@ -762,6 +789,14 @@ public class SmartKbController {
     public static class ConversationRequest {
         private String question;
         private String conversationId;
+    }
+
+    @Data
+    public static class EnterpriseChatRequest {
+        private String question;
+        private String conversationId;
+        private UUID knowledgeBaseId;
+        private List<UUID> documentIds;
     }
 
     /**

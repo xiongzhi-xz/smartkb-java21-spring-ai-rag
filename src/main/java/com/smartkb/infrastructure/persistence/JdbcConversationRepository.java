@@ -46,6 +46,21 @@ public class JdbcConversationRepository implements ConversationRepository {
     }
 
     @Override
+    @Transactional
+    public UUID appendWithMetadata(String conversationId, ConversationMessage message) {
+        Long sequence = jdbcTemplate.queryForObject(ADVANCE_SEQUENCE_SQL, Long.class, conversationId);
+        if (sequence == null) throw new IllegalStateException("conversation sequence generation failed: " + conversationId);
+        UUID messageId = UUID.randomUUID();
+        jdbcTemplate.update("""
+                INSERT INTO conversation_message
+                    (id, conversation_id, sequence_no, message_type, content, citations, trace_id, created_at)
+                VALUES (?, ?, ?, ?, ?, CAST(? AS jsonb), ?, CURRENT_TIMESTAMP)
+                """, messageId, conversationId, sequence, message.type(), message.content(),
+                message.citationsJson(), message.traceId());
+        return messageId;
+    }
+
+    @Override
     public List<ConversationMessage> findRecent(String conversationId, int limit) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 SELECT message_type, content

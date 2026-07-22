@@ -1,6 +1,7 @@
 package com.smartkb.controller;
 
 import com.smartkb.application.DocumentIngestionSubmissionService;
+import com.smartkb.application.EnterpriseChatService;
 import com.smartkb.application.DocumentUploadResult;
 import com.smartkb.application.DocumentDeletionConflictException;
 import com.smartkb.application.DocumentDeletionResult;
@@ -59,6 +60,9 @@ class SmartKbControllerTest {
 
     @MockBean
     private RagService ragService;
+
+    @MockBean
+    private EnterpriseChatService enterpriseChatService;
 
     @MockBean
     private AdvancedRagService advancedRagService;

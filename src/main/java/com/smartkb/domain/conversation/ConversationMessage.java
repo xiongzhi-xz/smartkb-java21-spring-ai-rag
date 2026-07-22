@@ -5,7 +5,11 @@ package com.smartkb.domain.conversation;
  *
  * <p>该类型与 Spring AI 的 {@code Message} 隔离，避免领域与具体模型客户端耦合。</p>
  */
-public record ConversationMessage(String type, String content) {
+public record ConversationMessage(String type, String content, String citationsJson, java.util.UUID traceId) {
+
+    public ConversationMessage(String type, String content) {
+        this(type, content, null, null);
+    }
 
     public ConversationMessage {
         if (type == null || type.isBlank()) {

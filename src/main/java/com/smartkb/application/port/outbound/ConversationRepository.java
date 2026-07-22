@@ -13,6 +13,8 @@ public interface ConversationRepository {
 
     void append(String conversationId, List<ConversationMessage> messages);
 
+    java.util.UUID appendWithMetadata(String conversationId, ConversationMessage message);
+
     List<ConversationMessage> findRecent(String conversationId, int limit);
 
     void clearMessages(String conversationId);

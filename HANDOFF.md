@@ -2,6 +2,12 @@
 
 ## Current State (2026-07-22)
 
+- Phase 4 is in progress. The first delivery adds `EnterpriseChatService`, which uses the Phase 3 dual-index retrieval result to generate an evidence-grounded answer, persists user/assistant messages, citation JSON, and a durable `retrieval_trace` linked to the assistant message.
+- `POST /api/chat/stream` is the canonical enterprise SSE endpoint. It emits `conversation`, `stage` (`rewriting`, `retrieving`, `generating`), and `done` events containing citations, retrieval mode, and `traceId`. Existing `/api/chat/**` routes remain unchanged.
+- No new Flyway migration was needed: V1 already includes `conversation_message.citations`, `conversation_message.trace_id`, and `retrieval_trace`.
+- The next focused Phase 4 task is a read-side retrieval-trace endpoint and frontend consumption of the new SSE events. Keep that task separate from this commit.
+- Verification for this delivery: `mvn -B test` passed (94 tests); `git diff --check` passed.
+
 - Phase 2a and 2b are implemented: MinIO/RabbitMQ configuration, repeatable object-storage consumption, upload submission orchestration, `kb_document`/`ingestion_job` atomic preparation, object persistence, and event publication.
 - `POST /api/documents/upload` now returns `202 Accepted` with `documentId`, `jobId`, `status`, and `queued`; duplicate content reuses the checksum-keyed document/task and does not create a second indexing task.
 - Consumer transitions update both `ingestion_job` and `kb_document` together with guarded `PROCESSING -> READY/FAILED` state changes.
