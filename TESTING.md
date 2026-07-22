@@ -37,6 +37,19 @@ mvn -Pintegration-tests verify
 docker version --format '{{.Server.Version}}'
 ```
 
+在 Docker Desktop 29 的 Windows 环境中，Testcontainers 1.20.6 需要使用 Docker socket 容器运行，并显式设置 Docker API 版本：
+
+```powershell
+docker run --rm `
+  -e TESTCONTAINERS_RYUK_DISABLED=true `
+  -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal `
+  -v "${PWD}:/workspace" `
+  -v "${env:USERPROFILE}\.m2:/root/.m2" `
+  -v "/var/run/docker.sock:/var/run/docker.sock" `
+  -w /workspace maven:3.9-eclipse-temurin-21 `
+  mvn -B "-Dapi.version=1.40" -P integration-tests verify
+```
+
 ## 本地链路验证
 
 ### 1. 启动 PostgreSQL 和 Redis

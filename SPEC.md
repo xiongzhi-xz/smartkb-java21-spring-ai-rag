@@ -133,14 +133,14 @@ src/main/java/com/smartkb
 - [x] Phase 1a: 引入 Flyway 企业 RAG 核心表，完成 PostgreSQL 持久化会话；Redis 不再承载长期记忆。
 - [x] Phase 1b: 建立会话领域端口与 PostgreSQL Repository 适配器。
 - [ ] Phase 1c: 建立 Redis 缓存适配层与会话摘要缓存策略。
-- [ ] Phase 2: 引入 MinIO、RabbitMQ，完成异步文档入库、状态机、重试和幂等控制。
+- [x] Phase 2: 引入 MinIO、RabbitMQ，完成异步文档入库、状态机、重试和幂等控制。
   - [x] Phase 2a: 完成 MinIO/RabbitMQ 本地配置、扩展入库事件和消费者状态门禁。
   - [x] Phase 2b: 完成上传提交编排、`kb_document`/`ingestion_job` 原子准备、对象保存和事件发布。
-  - [ ] Phase 2c: 补齐文档状态查询、删除、失败重试和 Testcontainers 集成验证。
+  - [x] Phase 2c: 补齐文档状态查询、删除、失败重试和 Testcontainers 集成验证。
     - [x] Phase 2c-a: 企业文档列表/详情优先读取 `kb_document` 与最新 `ingestion_job`，并保留文件名兼容查询。
     - [x] Phase 2c-b: 增加失败入库任务重试 API，完成 `FAILED -> RETRYING` 保护迁移、对象校验、幂等竞态控制和发布失败补偿。
     - [x] Phase 2c-c: 增加企业文档删除 API，保护活动任务，按索引、MinIO、PostgreSQL 顺序清理并支持失败后重试。
-    - [ ] Phase 2c-d: 已新增 PostgreSQL Testcontainers 用例，待 Docker 引擎可用后完成真实容器验证。
+    - [x] Phase 2c-d: PostgreSQL 16 Testcontainers 已完成真实验证，覆盖 Flyway 迁移、幂等提交、状态保护、失败重试和稳定状态删除。
 - [ ] Phase 3: 引入 Milvus 与 OpenSearch，完成双路召回、过滤、RRF 融合和索引一致性。
 - [ ] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。
 - [ ] Phase 5: 补齐 Testcontainers 集成测试、故障降级、监控指标和压测报告。

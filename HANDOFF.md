@@ -14,9 +14,10 @@
 - Verification passed locally: `mvn -B test` (81 tests) and `git diff --check`.
 - The same 81 tests passed in `maven:3.9-eclipse-temurin-21` (Temurin JDK 21.0.11).
 - Added `EnterpriseRagPersistenceIT`: it migrates a PostgreSQL Testcontainers database and verifies document/job idempotency, duplicate-consumer guards, failed-job retry, and stable-state deletion.
-- `mvn -B -P integration-tests verify` compiled the new test and passed all 81 unit tests, but Testcontainers could not connect to the local Docker engine (`npipe://./pipe/docker_engine` permission denied). The integration assertions are pending a Docker Desktop engine restart/availability check.
+- PostgreSQL Testcontainers verification passed in `maven:3.9-eclipse-temurin-21`: all 81 unit tests and 2 integration tests passed. Testcontainers started PostgreSQL 16.14 and Flyway applied V1/V2 successfully.
+- Docker Desktop 29 requires the documented Docker-socket container command with `-Dapi.version=1.40`; the native Windows Testcontainers client defaults to an unsupported Docker API version.
 - Real PostgreSQL/MinIO/RabbitMQ end-to-end verification is still pending for this retry stage.
-- Phase 2c now only remains: running the Testcontainers integration verification with a reachable Docker engine.
+- Phase 2 is complete. The next independent module is Phase 3: Milvus/OpenSearch dual retrieval and index consistency.
 - The historical environment notes below are retained only as context.
 
 ## 2026-07-21 提交环境说明
@@ -78,7 +79,7 @@
 
 ## 当前阶段
 
-企业级 RAG 重构 Phase 1b 已完成，准备建立 Redis 缓存边界并进入异步文档入库。
+企业级 RAG 重构 Phase 2 已完成，下一阶段为 Milvus/OpenSearch 双路召回与索引一致性。
 
 ## 已完成
 
@@ -88,14 +89,13 @@
 - 已引入 Flyway V1 企业 RAG 核心表，并将 ChatMemory 从 Redis 切换为 PostgreSQL 持久化。
 - 已在 JDK 21 环境完成全新构建，43 个自动化测试全部通过。
 
-## 正在做
+## 下一阶段（待新对话）
 
-- 单租户企业 RAG 重构：Milvus + OpenSearch + PostgreSQL + MinIO + RabbitMQ + Redis。
-- 建立 Redis 缓存适配器与会话摘要缓存策略。
+- Phase 3 设计与实施：Milvus/OpenSearch 双路召回、RRF 融合和索引一致性。
 
 ## 下一步
 
-- 确认 Docker Desktop 引擎可用后执行 `mvn -B -P integration-tests verify`，验证 PostgreSQL 迁移、任务状态迁移、重试/删除保护和重复事件消费。
+- 新开对话后先为 Phase 3 编写和评审 Milvus/OpenSearch 检索与一致性 SPEC，再拆分实施任务。
 
 ## 风险
 
