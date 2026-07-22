@@ -139,6 +139,7 @@ src/main/java/com/smartkb
   - [ ] Phase 2c: 补齐文档状态查询、删除、失败重试和 Testcontainers 集成验证。
     - [x] Phase 2c-a: 企业文档列表/详情优先读取 `kb_document` 与最新 `ingestion_job`，并保留文件名兼容查询。
     - [x] Phase 2c-b: 增加失败入库任务重试 API，完成 `FAILED -> RETRYING` 保护迁移、对象校验、幂等竞态控制和发布失败补偿。
+    - [x] Phase 2c-c: 增加企业文档删除 API，保护活动任务，按索引、MinIO、PostgreSQL 顺序清理并支持失败后重试。
 - [ ] Phase 3: 引入 Milvus 与 OpenSearch，完成双路召回、过滤、RRF 融合和索引一致性。
 - [ ] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。
 - [ ] Phase 5: 补齐 Testcontainers 集成测试、故障降级、监控指标和压测报告。

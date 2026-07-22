@@ -2,6 +2,9 @@ package com.smartkb.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartkb.application.DocumentIngestionSubmissionService;
+import com.smartkb.application.DocumentDeletionConflictException;
+import com.smartkb.application.DocumentDeletionResult;
+import com.smartkb.application.DocumentDeletionService;
 import com.smartkb.application.DocumentRetryResult;
 import com.smartkb.application.DocumentRetryService;
 import com.smartkb.application.DocumentUploadResult;
@@ -66,6 +69,7 @@ public class SmartKbController {
     private final RagEvaluationService ragEvaluationService;
     private final AnswerEvaluationService answerEvaluationService;
     private final DocumentIngestionSubmissionService documentIngestionSubmissionService;
+    private final DocumentDeletionService documentDeletionService;
     private final DocumentRetryService documentRetryService;
     private final DocumentManagementService documentManagementService;
     private final ChatMemory chatMemory;
@@ -408,6 +412,16 @@ public class SmartKbController {
         log.info("删除文档: {}", fileName);
 
         try {
+            if (isUuid(fileName)) {
+                DocumentDeletionResult result = documentDeletionService.delete(UUID.fromString(fileName));
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "documentId", result.documentId().toString(),
+                        "fileName", result.fileName(),
+                        "deletedChunks", result.deletedChunks(),
+                        "message", "文档删除成功"));
+            }
+
             int deletedCount = documentManagementService.deleteDocument(fileName);
 
             Map<String, Object> response = new HashMap<>();
@@ -418,6 +432,14 @@ public class SmartKbController {
 
             return ResponseEntity.ok(response);
 
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()));
+        } catch (DocumentDeletionConflictException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()));
         } catch (Exception e) {
             log.error("删除文档失败: {}", fileName, e);
             return ResponseEntity.internalServerError().body(Map.of(

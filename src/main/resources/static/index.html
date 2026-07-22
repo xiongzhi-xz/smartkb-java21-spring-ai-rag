@@ -1182,7 +1182,7 @@
         }
     }
 
-    async function deleteDocument(fileName, triggerButton) {
+    async function deleteDocument(fileName, triggerButton, documentId = '') {
         const confirmed = window.confirm(`确定删除“${fileName}”吗？删除后需要重新上传才能恢复。`);
         if (!confirmed) {
             return;
@@ -1193,7 +1193,8 @@
         triggerButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
         try {
-            const res = await fetch(`/api/documents/${encodeURIComponent(fileName)}`, {
+            const deleteTarget = documentId || fileName;
+            const res = await fetch(`/api/documents/${encodeURIComponent(deleteTarget)}`, {
                 method: 'DELETE'
             });
             const data = await res.json();
@@ -1357,7 +1358,7 @@
                     const deleteButton = docDiv.querySelector('.document-delete-button');
                     deleteButton.addEventListener('click', e => {
                         e.stopPropagation();
-                        deleteDocument(fileName, deleteButton);
+                        deleteDocument(fileName, deleteButton, doc.documentId || '');
                     });
                     docList.appendChild(docDiv);
                 });

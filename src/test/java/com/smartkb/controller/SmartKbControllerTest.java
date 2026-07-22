@@ -2,6 +2,9 @@ package com.smartkb.controller;
 
 import com.smartkb.application.DocumentIngestionSubmissionService;
 import com.smartkb.application.DocumentUploadResult;
+import com.smartkb.application.DocumentDeletionConflictException;
+import com.smartkb.application.DocumentDeletionResult;
+import com.smartkb.application.DocumentDeletionService;
 import com.smartkb.application.DocumentRetryResult;
 import com.smartkb.application.DocumentRetryService;
 import com.smartkb.config.GlobalExceptionHandler;
@@ -68,6 +71,9 @@ class SmartKbControllerTest {
 
     @MockBean
     private DocumentIngestionSubmissionService documentIngestionSubmissionService;
+
+    @MockBean
+    private DocumentDeletionService documentDeletionService;
 
     @MockBean
     private DocumentRetryService documentRetryService;
@@ -285,6 +291,47 @@ class SmartKbControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error").value("文档当前不可重试: " + documentId + ", status=READY"));
+    }
+
+    @Test
+    void shouldDeleteEnterpriseDocumentByUuid() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        when(documentDeletionService.delete(documentId))
+                .thenReturn(new DocumentDeletionResult(documentId, "demo.md", 3));
+
+        mockMvc.perform(delete("/api/documents/{documentId}", documentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.documentId").value(documentId.toString()))
+                .andExpect(jsonPath("$.fileName").value("demo.md"))
+                .andExpect(jsonPath("$.deletedChunks").value(3));
+
+        verify(documentDeletionService).delete(documentId);
+    }
+
+    @Test
+    void shouldReturnConflictWhenEnterpriseDocumentIsActive() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        when(documentDeletionService.delete(documentId))
+                .thenThrow(new DocumentDeletionConflictException("文档当前不可删除"));
+
+        mockMvc.perform(delete("/api/documents/{documentId}", documentId))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").value("文档当前不可删除"));
+    }
+
+    @Test
+    void shouldKeepLegacyFileNameDeletionCompatibility() throws Exception {
+        when(documentManagementService.deleteDocument("legacy.md")).thenReturn(2);
+
+        mockMvc.perform(delete("/api/documents/legacy.md"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.fileName").value("legacy.md"))
+                .andExpect(jsonPath("$.deletedChunks").value(2));
+
+        verify(documentManagementService).deleteDocument("legacy.md");
     }
 
     @Test

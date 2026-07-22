@@ -8,11 +8,13 @@
 - Document list/detail reads now use `kb_document` and the latest `ingestion_job` first; UUID detail lookup exposes lifecycle/task fields, while the legacy file-name route and vector-store chunk content remain compatible.
 - `POST /api/documents/{documentId}/retry` now retries only `FAILED` jobs: it verifies the MinIO object, atomically advances the job to `RETRYING`, increments `retry_count`, clears stale errors, and republishes the existing object event.
 - Retry requests are idempotent under races: a request that observes an existing `RETRYING` job does not publish a duplicate event. RabbitMQ publication failures are compensated back to `FAILED` with `RETRY_PUBLISH_FAILED`.
+- `DELETE /api/documents/{documentId}` now deletes only stable `READY`/`FAILED` documents, locks the document and latest job, clears current pgvector chunks, removes the MinIO object, and cascades PostgreSQL facts; active jobs return `409` and failed external cleanup leaves the fact retryable.
+- The static workbench now passes enterprise `documentId` to the delete endpoint while preserving filename deletion for legacy vector_store-only documents.
 - `JdbcIngestionJobRepository` uses `ON CONFLICT DO NOTHING` so idempotent preparation remains safe inside a transaction under concurrent duplicate uploads.
-- Verification passed locally: `mvn -B test` (69 tests) and `git diff --check`.
-- The same 69 tests passed in `maven:3.9-eclipse-temurin-21` (Temurin JDK 21.0.11).
+- Verification passed locally: `mvn -B test` (81 tests) and `git diff --check`.
+- The same 81 tests passed in `maven:3.9-eclipse-temurin-21` (Temurin JDK 21.0.11).
 - Real PostgreSQL/MinIO/RabbitMQ end-to-end verification is still pending for this retry stage.
-- Phase 2c remains: delete API and Testcontainers integration verification.
+- Phase 2c now only remains: Testcontainers integration verification.
 - The historical environment notes below are retained only as context.
 
 ## 2026-07-21 提交环境说明
@@ -91,8 +93,7 @@
 
 ## 下一步
 
-- 补齐 Phase 2c 的文档删除 API，并处理 PostgreSQL、MinIO 与索引数据的最终一致清理。
-- 增加 Testcontainers 集成验证，覆盖 PostgreSQL 迁移、任务状态迁移和重复事件消费。
+- 增加 Testcontainers 集成验证，覆盖 PostgreSQL 迁移、任务状态迁移、重试/删除保护和重复事件消费。
 
 ## 风险
 

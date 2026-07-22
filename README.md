@@ -109,7 +109,8 @@ docker compose up -d
 | `GET` | `/api/documents` | 查询文档列表 |
 | `GET` | `/api/documents/{documentId}` | 按文档 ID 查询状态、任务和 chunks；兼容文件名查询 |
 | `POST` | `/api/documents/{documentId}/retry` | 校验原文件并重新提交失败的异步入库任务；重复请求不会重复发布事件 |
-| `DELETE` | `/api/documents/{fileName}` | 删除文档和向量 |
+| `DELETE` | `/api/documents/{documentId}` | 删除 READY/FAILED 企业文档、兼容向量索引和 MinIO 原文件；活动任务返回冲突 |
+| `DELETE` | `/api/documents/{fileName}` | 兼容删除旧 vector_store 文件名文档 |
 | `POST` | `/api/chat/conversation/stream` | 多轮流式对话 |
 | `POST` | `/api/chat/advanced/stream` | Advanced RAG 分阶段流式回答 |
 | `DELETE` | `/api/chat/memory/{conversationId}` | 清理会话记忆 |

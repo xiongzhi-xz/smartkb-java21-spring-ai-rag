@@ -61,6 +61,7 @@ class StaticWorkbenchHtmlTest {
                 "function streamConversationMessage(payload, pendingMessage)",
                 "function streamAdvancedMessage(payload, pendingMessage)",
                 "function renderAdvancedDocumentFilter()",
+                "deleteDocument(fileName, deleteButton, doc.documentId || '')",
                 "Advanced Recall@K",
                 "Advanced MRR"
         );
