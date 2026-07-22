@@ -146,7 +146,7 @@ mvn test
 git diff --check
 ```
 
-涉及真实 PostgreSQL、Redis、Ollama 或 Chat API 的验证，需要按 [TESTING.md](TESTING.md) 准备本地环境。
+企业文档生命周期的 PostgreSQL Testcontainers 验证使用 `mvn -Pintegration-tests verify`。涉及真实 PostgreSQL、Redis、Ollama 或 Chat API 的验证，需要按 [TESTING.md](TESTING.md) 准备本地环境。
 
 ## 项目边界
 

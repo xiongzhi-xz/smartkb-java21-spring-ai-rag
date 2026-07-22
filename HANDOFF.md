@@ -13,8 +13,10 @@
 - `JdbcIngestionJobRepository` uses `ON CONFLICT DO NOTHING` so idempotent preparation remains safe inside a transaction under concurrent duplicate uploads.
 - Verification passed locally: `mvn -B test` (81 tests) and `git diff --check`.
 - The same 81 tests passed in `maven:3.9-eclipse-temurin-21` (Temurin JDK 21.0.11).
+- Added `EnterpriseRagPersistenceIT`: it migrates a PostgreSQL Testcontainers database and verifies document/job idempotency, duplicate-consumer guards, failed-job retry, and stable-state deletion.
+- `mvn -B -P integration-tests verify` compiled the new test and passed all 81 unit tests, but Testcontainers could not connect to the local Docker engine (`npipe://./pipe/docker_engine` permission denied). The integration assertions are pending a Docker Desktop engine restart/availability check.
 - Real PostgreSQL/MinIO/RabbitMQ end-to-end verification is still pending for this retry stage.
-- Phase 2c now only remains: Testcontainers integration verification.
+- Phase 2c now only remains: running the Testcontainers integration verification with a reachable Docker engine.
 - The historical environment notes below are retained only as context.
 
 ## 2026-07-21 提交环境说明
@@ -93,7 +95,7 @@
 
 ## 下一步
 
-- 增加 Testcontainers 集成验证，覆盖 PostgreSQL 迁移、任务状态迁移、重试/删除保护和重复事件消费。
+- 确认 Docker Desktop 引擎可用后执行 `mvn -B -P integration-tests verify`，验证 PostgreSQL 迁移、任务状态迁移、重试/删除保护和重复事件消费。
 
 ## 风险
 

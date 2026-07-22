@@ -23,13 +23,19 @@ git diff --check
 
 ## 集成测试
 
-Redis Testcontainers 用例：
+PostgreSQL Testcontainers 用例（企业文档生命周期）：
 
 ```bash
 mvn -Pintegration-tests verify
 ```
 
 需要本机 Docker 可用。
+
+该用例会对 Flyway V1/V2 迁移后的真实 PostgreSQL 验证重复上传幂等、重复消费状态保护、失败重试和稳定文档删除。运行前先确认：
+
+```bash
+docker version --format '{{.Server.Version}}'
+```
 
 ## 本地链路验证
 
