@@ -134,6 +134,9 @@ src/main/java/com/smartkb
 - [x] Phase 1b: 建立会话领域端口与 PostgreSQL Repository 适配器。
 - [ ] Phase 1c: 建立 Redis 缓存适配层与会话摘要缓存策略。
 - [ ] Phase 2: 引入 MinIO、RabbitMQ，完成异步文档入库、状态机、重试和幂等控制。
+  - [x] Phase 2a: 完成 MinIO/RabbitMQ 本地配置、扩展入库事件和消费者状态门禁。
+  - [x] Phase 2b: 完成上传提交编排、`kb_document`/`ingestion_job` 原子准备、对象保存和事件发布。
+  - [ ] Phase 2c: 补齐文档状态查询、删除、失败重试和 Testcontainers 集成验证。
 - [ ] Phase 3: 引入 Milvus 与 OpenSearch，完成双路召回、过滤、RRF 融合和索引一致性。
 - [ ] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。
 - [ ] Phase 5: 补齐 Testcontainers 集成测试、故障降级、监控指标和压测报告。

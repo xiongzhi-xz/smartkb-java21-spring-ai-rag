@@ -2,12 +2,13 @@
 
 ## Current State (2026-07-22)
 
-- Commit `940b07c` completed the local RabbitMQ configuration and consumer test baseline.
-- Phase 2a is implemented: MinIO object storage configuration, Docker Compose services, object storage port/adapter, and RabbitMQ consumer processing with guarded `PROCESSING -> READY/FAILED` transitions.
-- The ingestion event now requires `objectKey`, `fileName`, and `fileType`; the consumer exposes a repeatable object-storage `Resource` instead of a one-shot stream.
-- Verification passed: `mvn -B test` (50 tests), `docker compose config --quiet`, `docker compose -f docker-compose-minimal.yml config --quiet`, and `git diff --check`.
-- Phase 2 still needs the upload submission orchestration that creates `kb_document`, persists an ingestion job, stores the object, and publishes the extended event. Delete/retry APIs and integration tests remain pending.
-- The historical environment note below predates commit `940b07c` and is retained only as context.
+- Phase 2a and 2b are implemented: MinIO/RabbitMQ configuration, repeatable object-storage consumption, upload submission orchestration, `kb_document`/`ingestion_job` atomic preparation, object persistence, and event publication.
+- `POST /api/documents/upload` now returns `202 Accepted` with `documentId`, `jobId`, `status`, and `queued`; duplicate content reuses the checksum-keyed document/task and does not create a second indexing task.
+- Consumer transitions update both `ingestion_job` and `kb_document` together with guarded `PROCESSING -> READY/FAILED` state changes.
+- `JdbcIngestionJobRepository` uses `ON CONFLICT DO NOTHING` so idempotent preparation remains safe inside a transaction under concurrent duplicate uploads.
+- Verification passed: `mvn -B test` (56 tests), `git diff --check`, and the same 56 tests in `maven:3.9-eclipse-temurin-21` (Temurin JDK 21.0.11).
+- Phase 2c remains: document status/detail APIs, delete/retry APIs, and Testcontainers integration verification.
+- The historical environment notes below are retained only as context.
 
 ## 2026-07-21 提交环境说明
 

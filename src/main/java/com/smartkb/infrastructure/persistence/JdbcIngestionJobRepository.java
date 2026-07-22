@@ -4,7 +4,6 @@ import com.smartkb.application.port.outbound.IngestionJobRepository;
 import com.smartkb.domain.IngestionJob;
 import com.smartkb.domain.IngestionJobStatus;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -19,20 +18,13 @@ public class JdbcIngestionJobRepository implements IngestionJobRepository {
 
     @Override
     public IngestionJob createOrGet(IngestionJob job) {
-        Optional<IngestionJob> existing = findByIdempotencyKey(job.idempotencyKey());
-        if (existing.isPresent()) {
-            return existing.get();
-        }
-        try {
-            jdbcTemplate.update("""
-                    INSERT INTO ingestion_job (id, document_id, idempotency_key, status, retry_count, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    """, job.id(), job.documentId(), job.idempotencyKey(), job.status().name(), job.retryCount());
-            return job;
-        } catch (DuplicateKeyException ignored) {
-            return findByIdempotencyKey(job.idempotencyKey())
-                    .orElseThrow(() -> new IllegalStateException("幂等任务读取失败: " + job.idempotencyKey()));
-        }
+        jdbcTemplate.update("""
+                INSERT INTO ingestion_job (id, document_id, idempotency_key, status, retry_count, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT DO NOTHING
+                """, job.id(), job.documentId(), job.idempotencyKey(), job.status().name(), job.retryCount());
+        return findByIdempotencyKey(job.idempotencyKey())
+                .orElseThrow(() -> new IllegalStateException("幂等任务读取失败: " + job.idempotencyKey()));
     }
 
     @Override
@@ -48,37 +40,4 @@ public class JdbcIngestionJobRepository implements IngestionJobRepository {
                 rs.getInt("retry_count"))) : Optional.empty(), idempotencyKey);
     }
 
-    @Override
-    public boolean markProcessing(java.util.UUID jobId) {
-        int updated = jdbcTemplate.update("""
-                UPDATE ingestion_job
-                SET status = 'PROCESSING', started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ? AND status IN ('PENDING', 'RETRYING')
-                """, jobId);
-        return updated == 1;
-    }
-
-    @Override
-    public boolean markReady(java.util.UUID jobId) {
-        int updated = jdbcTemplate.update("""
-                UPDATE ingestion_job
-                SET status = 'READY', finished_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ? AND status = 'PROCESSING'
-                """, jobId);
-        return updated == 1;
-    }
-
-    @Override
-    public boolean markFailed(java.util.UUID jobId, String errorCode, String errorMessage) {
-        int updated = jdbcTemplate.update("""
-                UPDATE ingestion_job
-                SET status = 'FAILED',
-                    error_code = ?,
-                    error_message = ?,
-                    finished_at = CURRENT_TIMESTAMP,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ? AND status = 'PROCESSING'
-                """, errorCode, errorMessage, jobId);
-        return updated == 1;
-    }
 }

@@ -1,5 +1,7 @@
 package com.smartkb.controller;
 
+import com.smartkb.application.DocumentIngestionSubmissionService;
+import com.smartkb.application.DocumentUploadResult;
 import com.smartkb.config.GlobalExceptionHandler;
 import com.smartkb.domain.AdvancedRagMetrics;
 import com.smartkb.domain.AdvancedRagResult;
@@ -7,6 +9,7 @@ import com.smartkb.domain.AnswerEvaluationReport;
 import com.smartkb.domain.RagEvalCase;
 import com.smartkb.domain.RagEvalCaseResult;
 import com.smartkb.domain.RagEvalReport;
+import com.smartkb.domain.IngestionJobStatus;
 import com.smartkb.service.AdvancedRagService;
 import com.smartkb.service.AnswerEvaluationService;
 import com.smartkb.service.DocumentManagementService;
@@ -21,12 +24,15 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.doThrow;
@@ -34,6 +40,7 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,6 +64,9 @@ class SmartKbControllerTest {
     private AnswerEvaluationService answerEvaluationService;
 
     @MockBean
+    private DocumentIngestionSubmissionService documentIngestionSubmissionService;
+
+    @MockBean
     private DocumentManagementService documentManagementService;
 
     @MockBean
@@ -64,6 +74,36 @@ class SmartKbControllerTest {
 
     @MockBean
     private SmartKbMetricsService metricsService;
+
+    @Test
+    void shouldAcceptDocumentForAsynchronousIngestion() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        UUID jobId = UUID.randomUUID();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "demo.md",
+                "text/markdown",
+                "SmartKB content".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        when(documentIngestionSubmissionService.submit(
+                any(), eq("demo.md"), eq("md"), eq("text/markdown"), eq(file.getSize())))
+                .thenReturn(new DocumentUploadResult(
+                        documentId,
+                        jobId,
+                        "demo.md",
+                        IngestionJobStatus.PENDING,
+                        true));
+
+        mockMvc.perform(multipart("/api/documents/upload").file(file))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.documentId").value(documentId.toString()))
+                .andExpect(jsonPath("$.jobId").value(jobId.toString()))
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.queued").value(true));
+
+        verify(documentIngestionSubmissionService).submit(
+                any(), eq("demo.md"), eq("md"), eq("text/markdown"), eq(file.getSize()));
+    }
 
     @Test
     void shouldUseProvidedConversationIdForConversationChat() throws Exception {

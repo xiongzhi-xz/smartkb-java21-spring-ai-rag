@@ -1,6 +1,6 @@
 package com.smartkb.infrastructure.messaging;
 
-import com.smartkb.application.port.outbound.IngestionJobRepository;
+import com.smartkb.application.port.outbound.DocumentIngestionRepository;
 import com.smartkb.application.port.outbound.ObjectStorage;
 import com.smartkb.domain.IngestionRequestedEvent;
 import com.smartkb.service.RagService;
@@ -27,14 +27,14 @@ class IngestionJobListenerTest {
 
     @Test
     void shouldProcessObjectAndMarkJobReady() throws Exception {
-        IngestionJobRepository repository = mock(IngestionJobRepository.class);
+        DocumentIngestionRepository repository = mock(DocumentIngestionRepository.class);
         ObjectStorage objectStorage = mock(ObjectStorage.class);
         RagService ragService = mock(RagService.class);
         UUID jobId = UUID.randomUUID();
         IngestionRequestedEvent event = event(jobId);
 
-        when(repository.markProcessing(jobId)).thenReturn(true);
-        when(repository.markReady(jobId)).thenReturn(true);
+        when(repository.markProcessing(jobId, event.documentId())).thenReturn(true);
+        when(repository.markReady(jobId, event.documentId())).thenReturn(true);
         when(objectStorage.get("documents/doc-1.md"))
                 .thenReturn(new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)));
 
@@ -48,37 +48,38 @@ class IngestionJobListenerTest {
         assertEquals("doc-1.md", resourceCaptor.getValue().getFilename());
         assertEquals("content", new String(
                 resourceCaptor.getValue().getInputStream().readAllBytes(), StandardCharsets.UTF_8));
-        verify(repository).markReady(jobId);
+        verify(repository).markReady(jobId, event.documentId());
     }
 
     @Test
     void shouldSkipDuplicateEventBeforeReadingObject() {
-        IngestionJobRepository repository = mock(IngestionJobRepository.class);
+        DocumentIngestionRepository repository = mock(DocumentIngestionRepository.class);
         ObjectStorage objectStorage = mock(ObjectStorage.class);
         RagService ragService = mock(RagService.class);
         UUID jobId = UUID.randomUUID();
 
-        when(repository.markProcessing(jobId)).thenReturn(false);
+        IngestionRequestedEvent event = event(jobId);
+        when(repository.markProcessing(jobId, event.documentId())).thenReturn(false);
 
-        new IngestionJobListener(repository, objectStorage, ragService).consume(event(jobId));
+        new IngestionJobListener(repository, objectStorage, ragService).consume(event);
 
-        verify(repository).markProcessing(jobId);
+        verify(repository).markProcessing(jobId, event.documentId());
         verify(objectStorage, org.mockito.Mockito.never()).get("documents/doc-1.md");
         verifyNoInteractions(ragService);
     }
 
     @Test
     void shouldMarkJobFailedAndRejectMessageWhenProcessingFails() {
-        IngestionJobRepository repository = mock(IngestionJobRepository.class);
+        DocumentIngestionRepository repository = mock(DocumentIngestionRepository.class);
         ObjectStorage objectStorage = mock(ObjectStorage.class);
         RagService ragService = mock(RagService.class);
         UUID jobId = UUID.randomUUID();
         IngestionRequestedEvent event = event(jobId);
 
-        when(repository.markProcessing(jobId)).thenReturn(true);
+        when(repository.markProcessing(jobId, event.documentId())).thenReturn(true);
         when(objectStorage.get("documents/doc-1.md"))
                 .thenReturn(new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)));
-        when(repository.markFailed(jobId, "INGESTION_FAILED", "embedding unavailable"))
+        when(repository.markFailed(jobId, event.documentId(), "INGESTION_FAILED", "embedding unavailable"))
                 .thenReturn(true);
         doThrow(new IllegalStateException("embedding unavailable"))
                 .when(ragService)
@@ -87,26 +88,32 @@ class IngestionJobListenerTest {
         assertThrows(IllegalStateException.class,
                 () -> new IngestionJobListener(repository, objectStorage, ragService).consume(event));
 
-        verify(repository).markFailed(jobId, "INGESTION_FAILED", "embedding unavailable");
+        verify(repository).markFailed(
+                jobId,
+                event.documentId(),
+                "INGESTION_FAILED",
+                "embedding unavailable");
     }
 
     @Test
     void shouldRejectMessageWhenReadyTransitionFails() {
-        IngestionJobRepository repository = mock(IngestionJobRepository.class);
+        DocumentIngestionRepository repository = mock(DocumentIngestionRepository.class);
         ObjectStorage objectStorage = mock(ObjectStorage.class);
         RagService ragService = mock(RagService.class);
         UUID jobId = UUID.randomUUID();
 
-        when(repository.markProcessing(jobId)).thenReturn(true);
-        when(repository.markReady(jobId)).thenReturn(false);
-        when(repository.markFailed(eq(jobId), eq("INGESTION_FAILED"), any()))
+        IngestionRequestedEvent event = event(jobId);
+        when(repository.markProcessing(jobId, event.documentId())).thenReturn(true);
+        when(repository.markReady(jobId, event.documentId())).thenReturn(false);
+        when(repository.markFailed(eq(jobId), eq(event.documentId()), eq("INGESTION_FAILED"), any()))
                 .thenReturn(false);
 
         assertThrows(IllegalStateException.class,
-                () -> new IngestionJobListener(repository, objectStorage, ragService).consume(event(jobId)));
+                () -> new IngestionJobListener(repository, objectStorage, ragService).consume(event));
 
         verify(repository).markFailed(
                 jobId,
+                event.documentId(),
                 "INGESTION_FAILED",
                 "入库任务无法迁移到 READY: " + jobId);
     }

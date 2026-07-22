@@ -123,6 +123,9 @@ logging:
 
 # 应用自定义配置
 smartkb:
+  knowledge-base:
+    id: ${SMARTKB_KNOWLEDGE_BASE_ID:00000000-0000-0000-0000-000000000001}
+    name: ${SMARTKB_KNOWLEDGE_BASE_NAME:Default Knowledge Base}
   object-storage:
     endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
     access-key: ${MINIO_ACCESS_KEY:smartkb}

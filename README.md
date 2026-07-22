@@ -105,7 +105,7 @@ docker compose up -d
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| `POST` | `/api/documents/upload` | 上传、切片并写入向量库 |
+| `POST` | `/api/documents/upload` | 保存原文件并提交 RabbitMQ 异步入库任务，返回 `documentId`/`jobId` |
 | `GET` | `/api/documents` | 查询文档列表 |
 | `GET` | `/api/documents/{fileName}` | 查询文档和 chunks |
 | `DELETE` | `/api/documents/{fileName}` | 删除文档和向量 |

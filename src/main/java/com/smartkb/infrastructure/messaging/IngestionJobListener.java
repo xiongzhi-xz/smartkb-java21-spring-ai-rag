@@ -1,6 +1,6 @@
 package com.smartkb.infrastructure.messaging;
 
-import com.smartkb.application.port.outbound.IngestionJobRepository;
+import com.smartkb.application.port.outbound.DocumentIngestionRepository;
 import com.smartkb.application.port.outbound.ObjectStorage;
 import com.smartkb.domain.IngestionRequestedEvent;
 import com.smartkb.service.RagService;
@@ -22,13 +22,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class IngestionJobListener {
 
-    private final IngestionJobRepository ingestionJobRepository;
+    private final DocumentIngestionRepository documentIngestionRepository;
     private final ObjectStorage objectStorage;
     private final RagService ragService;
 
     @RabbitListener(queues = RabbitIngestionTopology.QUEUE)
     public void consume(IngestionRequestedEvent event) {
-        if (!ingestionJobRepository.markProcessing(event.jobId())) {
+        if (!documentIngestionRepository.markProcessing(event.jobId(), event.documentId())) {
             log.info("跳过重复或无效入库事件: jobId={}", event.jobId());
             return;
         }
@@ -40,7 +40,7 @@ public class IngestionJobListener {
                     "documentId", event.documentId().toString(),
                     "idempotencyKey", event.idempotencyKey()
             ));
-            if (!ingestionJobRepository.markReady(event.jobId())) {
+            if (!documentIngestionRepository.markReady(event.jobId(), event.documentId())) {
                 throw new IllegalStateException("入库任务无法迁移到 READY: " + event.jobId());
             }
             log.info("入库任务处理完成: jobId={}, documentId={}", event.jobId(), event.documentId());
@@ -76,7 +76,11 @@ public class IngestionJobListener {
                 ? cause.getClass().getSimpleName()
                 : cause.getMessage();
         try {
-            if (!ingestionJobRepository.markFailed(event.jobId(), "INGESTION_FAILED", errorMessage)) {
+            if (!documentIngestionRepository.markFailed(
+                    event.jobId(),
+                    event.documentId(),
+                    "INGESTION_FAILED",
+                    errorMessage)) {
                 log.warn("入库任务无法迁移到 FAILED: jobId={}", event.jobId());
             }
         } catch (Exception statusException) {

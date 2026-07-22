@@ -1,6 +1,8 @@
 package com.smartkb.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartkb.application.DocumentIngestionSubmissionService;
+import com.smartkb.application.DocumentUploadResult;
 import com.smartkb.domain.AdvancedRagMetrics;
 import com.smartkb.domain.AdvancedRagResult;
 import com.smartkb.domain.AnswerEvaluationReport;
@@ -19,7 +21,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -61,6 +62,7 @@ public class SmartKbController {
     private final AdvancedRagService advancedRagService;
     private final RagEvaluationService ragEvaluationService;
     private final AnswerEvaluationService answerEvaluationService;
+    private final DocumentIngestionSubmissionService documentIngestionSubmissionService;
     private final DocumentManagementService documentManagementService;
     private final ChatMemory chatMemory;
     private final SmartKbMetricsService metricsService;
@@ -71,13 +73,12 @@ public class SmartKbController {
      * <p>
      * 处理流程：
      * 1. 接收 MultipartFile
-     * 2. 调用 RagService.addDocument（解析 → Embedding → 存储）
-     * 3. 返回处理结果（文档块数量）
+     * 2. 保存原始文件并创建 PostgreSQL 入库任务
+     * 3. 发布 RabbitMQ 事件，由消费者异步解析和索引
      * <p>
      * Virtual Threads 优化：
-     * - Controller 方法运行在虚拟线程（不阻塞平台线程）
-     * - 文档处理任务使用虚拟线程池并发执行
-     * - 支持高并发上传（传统线程池无法做到）
+     * - Controller 的数据库、MinIO 和 RabbitMQ 等阻塞 IO 运行在虚拟线程上
+     * - 解析与 Embedding 已移出请求线程，由消息消费者异步执行
      *
      * @param file 上传的文档文件
      * @return 处理结果
@@ -101,22 +102,28 @@ public class SmartKbController {
                 ));
             }
 
-            // 2. 转换为 Spring Resource
-            Resource resource = file.getResource();
+            // 2. 提交异步入库任务
+            DocumentUploadResult result = documentIngestionSubmissionService.submit(
+                    file,
+                    fileName,
+                    fileType,
+                    file.getContentType(),
+                    file.getSize());
 
-            // 3. 调用 RagService 处理文档
-            int chunkCount = ragService.addDocument(resource, fileType, null);
-
-            // 4. 返回成功响应
+            // 3. 返回任务标识，客户端后续可按 jobId 查询状态
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("fileName", fileName);
+            response.put("fileName", result.fileName());
             response.put("fileType", fileType);
-            response.put("chunkCount", chunkCount);
-            response.put("message", "文档上传成功");
+            response.put("documentId", result.documentId().toString());
+            response.put("jobId", result.jobId().toString());
+            response.put("status", result.status().name());
+            response.put("queued", result.queued());
+            response.put("message", result.queued() ? "文档已提交异步入库" : "已存在相同文档的入库任务");
 
-            log.info("文档上传成功: {}, {} chunks", fileName, chunkCount);
-            return ResponseEntity.ok(response);
+            log.info("文档上传已受理: fileName={}, documentId={}, jobId={}, status={}",
+                    result.fileName(), result.documentId(), result.jobId(), result.status());
+            return ResponseEntity.accepted().body(response);
 
         } catch (Exception e) {
             log.error("文档上传失败: {}", file.getOriginalFilename(), e);
