@@ -127,6 +127,23 @@ public class JdbcDocumentIngestionRepository implements DocumentIngestionReposit
     }
 
     @Override
+    public KnowledgeDocument requireDocument(UUID documentId) {
+        KnowledgeDocument document = jdbcTemplate.queryForObject("""
+                SELECT id, knowledge_base_id, file_name, content_type, object_key,
+                       content_checksum, size_bytes, version_no, status
+                FROM kb_document WHERE id = ?
+                """, (rs, rowNum) -> new KnowledgeDocument(
+                rs.getObject("id", UUID.class), rs.getObject("knowledge_base_id", UUID.class),
+                rs.getString("file_name"), rs.getString("content_type"), rs.getString("object_key"),
+                rs.getString("content_checksum"), rs.getLong("size_bytes"), rs.getInt("version_no"),
+                KnowledgeDocumentStatus.valueOf(rs.getString("status"))), documentId);
+        if (document == null) {
+            throw new IllegalStateException("document does not exist: " + documentId);
+        }
+        return document;
+    }
+
+    @Override
     @Transactional
     public Optional<DocumentIngestionSubmission> markRetrying(UUID jobId, UUID documentId) {
         int jobUpdated = jdbcTemplate.update("""

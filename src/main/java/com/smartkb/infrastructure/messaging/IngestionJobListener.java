@@ -2,8 +2,9 @@ package com.smartkb.infrastructure.messaging;
 
 import com.smartkb.application.port.outbound.DocumentIngestionRepository;
 import com.smartkb.application.port.outbound.ObjectStorage;
+import com.smartkb.application.DocumentIndexingService;
+import com.smartkb.application.IndexingFailureException;
 import com.smartkb.domain.IngestionRequestedEvent;
-import com.smartkb.service.RagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -12,7 +13,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.util.Map;
 
 /**
  * 文档入库事件消费者。
@@ -24,7 +24,7 @@ public class IngestionJobListener {
 
     private final DocumentIngestionRepository documentIngestionRepository;
     private final ObjectStorage objectStorage;
-    private final RagService ragService;
+    private final DocumentIndexingService documentIndexingService;
 
     @RabbitListener(queues = RabbitIngestionTopology.QUEUE)
     public void consume(IngestionRequestedEvent event) {
@@ -35,11 +35,8 @@ public class IngestionJobListener {
 
         try {
             Resource resource = objectStorageResource(event.objectKey(), event.fileName());
-            ragService.addDocument(resource, event.fileType(), Map.of(
-                    "jobId", event.jobId().toString(),
-                    "documentId", event.documentId().toString(),
-                    "idempotencyKey", event.idempotencyKey()
-            ));
+            documentIndexingService.index(documentIngestionRepository.requireDocument(event.documentId()),
+                    resource, event.fileType());
             if (!documentIngestionRepository.markReady(event.jobId(), event.documentId())) {
                 throw new IllegalStateException("入库任务无法迁移到 READY: " + event.jobId());
             }
@@ -79,7 +76,7 @@ public class IngestionJobListener {
             if (!documentIngestionRepository.markFailed(
                     event.jobId(),
                     event.documentId(),
-                    "INGESTION_FAILED",
+                    errorCode(cause),
                     errorMessage)) {
                 log.warn("入库任务无法迁移到 FAILED: jobId={}", event.jobId());
             }
@@ -87,5 +84,12 @@ public class IngestionJobListener {
             cause.addSuppressed(statusException);
             log.error("记录入库任务失败状态时发生异常: jobId={}", event.jobId(), statusException);
         }
+    }
+
+    private String errorCode(Exception cause) {
+        if (cause instanceof IndexingFailureException indexingFailure) {
+            return indexingFailure.errorCode();
+        }
+        return "INGESTION_FAILED";
     }
 }

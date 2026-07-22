@@ -1,9 +1,12 @@
 package com.smartkb.infrastructure.messaging;
 
+import com.smartkb.application.DocumentIndexingService;
+import com.smartkb.application.IndexingFailureException;
 import com.smartkb.application.port.outbound.DocumentIngestionRepository;
 import com.smartkb.application.port.outbound.ObjectStorage;
 import com.smartkb.domain.IngestionRequestedEvent;
-import com.smartkb.service.RagService;
+import com.smartkb.domain.KnowledgeDocument;
+import com.smartkb.domain.KnowledgeDocumentStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.Resource;
 
@@ -14,8 +17,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -29,102 +30,62 @@ class IngestionJobListenerTest {
     void shouldProcessObjectAndMarkJobReady() throws Exception {
         DocumentIngestionRepository repository = mock(DocumentIngestionRepository.class);
         ObjectStorage objectStorage = mock(ObjectStorage.class);
-        RagService ragService = mock(RagService.class);
-        UUID jobId = UUID.randomUUID();
-        IngestionRequestedEvent event = event(jobId);
+        DocumentIndexingService indexingService = mock(DocumentIndexingService.class);
+        IngestionRequestedEvent event = event(UUID.randomUUID());
+        KnowledgeDocument document = document(event);
+        when(repository.markProcessing(event.jobId(), event.documentId())).thenReturn(true);
+        when(repository.markReady(event.jobId(), event.documentId())).thenReturn(true);
+        when(repository.requireDocument(event.documentId())).thenReturn(document);
+        when(objectStorage.get(event.objectKey())).thenReturn(new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)));
 
-        when(repository.markProcessing(jobId, event.documentId())).thenReturn(true);
-        when(repository.markReady(jobId, event.documentId())).thenReturn(true);
-        when(objectStorage.get("documents/doc-1.md"))
-                .thenReturn(new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)));
-
-        new IngestionJobListener(repository, objectStorage, ragService).consume(event);
+        new IngestionJobListener(repository, objectStorage, indexingService).consume(event);
 
         var resourceCaptor = org.mockito.ArgumentCaptor.forClass(Resource.class);
-        verify(ragService).addDocument(
-                resourceCaptor.capture(),
-                eq("md"),
-                argThat(metadata -> jobId.toString().equals(metadata.get("jobId"))));
+        verify(indexingService).index(eq(document), resourceCaptor.capture(), eq("md"));
         assertEquals("doc-1.md", resourceCaptor.getValue().getFilename());
-        assertEquals("content", new String(
-                resourceCaptor.getValue().getInputStream().readAllBytes(), StandardCharsets.UTF_8));
-        verify(repository).markReady(jobId, event.documentId());
+        assertEquals("content", new String(resourceCaptor.getValue().getInputStream().readAllBytes(), StandardCharsets.UTF_8));
+        verify(repository).markReady(event.jobId(), event.documentId());
     }
 
     @Test
     void shouldSkipDuplicateEventBeforeReadingObject() {
         DocumentIngestionRepository repository = mock(DocumentIngestionRepository.class);
         ObjectStorage objectStorage = mock(ObjectStorage.class);
-        RagService ragService = mock(RagService.class);
-        UUID jobId = UUID.randomUUID();
+        DocumentIndexingService indexingService = mock(DocumentIndexingService.class);
+        IngestionRequestedEvent event = event(UUID.randomUUID());
+        when(repository.markProcessing(event.jobId(), event.documentId())).thenReturn(false);
 
-        IngestionRequestedEvent event = event(jobId);
-        when(repository.markProcessing(jobId, event.documentId())).thenReturn(false);
+        new IngestionJobListener(repository, objectStorage, indexingService).consume(event);
 
-        new IngestionJobListener(repository, objectStorage, ragService).consume(event);
-
-        verify(repository).markProcessing(jobId, event.documentId());
-        verify(objectStorage, org.mockito.Mockito.never()).get("documents/doc-1.md");
-        verifyNoInteractions(ragService);
+        verify(objectStorage, org.mockito.Mockito.never()).get(event.objectKey());
+        verifyNoInteractions(indexingService);
     }
 
     @Test
-    void shouldMarkJobFailedAndRejectMessageWhenProcessingFails() {
+    void shouldMarkJobFailedWhenTargetIndexWriteFails() {
         DocumentIngestionRepository repository = mock(DocumentIngestionRepository.class);
         ObjectStorage objectStorage = mock(ObjectStorage.class);
-        RagService ragService = mock(RagService.class);
-        UUID jobId = UUID.randomUUID();
-        IngestionRequestedEvent event = event(jobId);
-
-        when(repository.markProcessing(jobId, event.documentId())).thenReturn(true);
-        when(objectStorage.get("documents/doc-1.md"))
-                .thenReturn(new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)));
-        when(repository.markFailed(jobId, event.documentId(), "INGESTION_FAILED", "embedding unavailable"))
-                .thenReturn(true);
-        doThrow(new IllegalStateException("embedding unavailable"))
-                .when(ragService)
-                .addDocument(any(), eq("md"), anyMap());
+        DocumentIndexingService indexingService = mock(DocumentIndexingService.class);
+        IngestionRequestedEvent event = event(UUID.randomUUID());
+        when(repository.markProcessing(event.jobId(), event.documentId())).thenReturn(true);
+        when(repository.requireDocument(event.documentId())).thenReturn(document(event));
+        when(objectStorage.get(event.objectKey())).thenReturn(new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)));
+        when(repository.markFailed(event.jobId(), event.documentId(), "OPENSEARCH_INDEX_FAILED", "OpenSearch upsert failed")).thenReturn(true);
+        doThrow(new IndexingFailureException("OPENSEARCH_INDEX_FAILED", new IllegalStateException("OpenSearch upsert failed")))
+                .when(indexingService).index(any(), any(), eq("md"));
 
         assertThrows(IllegalStateException.class,
-                () -> new IngestionJobListener(repository, objectStorage, ragService).consume(event));
+                () -> new IngestionJobListener(repository, objectStorage, indexingService).consume(event));
 
-        verify(repository).markFailed(
-                jobId,
-                event.documentId(),
-                "INGESTION_FAILED",
-                "embedding unavailable");
-    }
-
-    @Test
-    void shouldRejectMessageWhenReadyTransitionFails() {
-        DocumentIngestionRepository repository = mock(DocumentIngestionRepository.class);
-        ObjectStorage objectStorage = mock(ObjectStorage.class);
-        RagService ragService = mock(RagService.class);
-        UUID jobId = UUID.randomUUID();
-
-        IngestionRequestedEvent event = event(jobId);
-        when(repository.markProcessing(jobId, event.documentId())).thenReturn(true);
-        when(repository.markReady(jobId, event.documentId())).thenReturn(false);
-        when(repository.markFailed(eq(jobId), eq(event.documentId()), eq("INGESTION_FAILED"), any()))
-                .thenReturn(false);
-
-        assertThrows(IllegalStateException.class,
-                () -> new IngestionJobListener(repository, objectStorage, ragService).consume(event));
-
-        verify(repository).markFailed(
-                jobId,
-                event.documentId(),
-                "INGESTION_FAILED",
-                "入库任务无法迁移到 READY: " + jobId);
+        verify(repository).markFailed(event.jobId(), event.documentId(), "OPENSEARCH_INDEX_FAILED", "OpenSearch upsert failed");
     }
 
     private IngestionRequestedEvent event(UUID jobId) {
-        return new IngestionRequestedEvent(
-                jobId,
-                UUID.randomUUID(),
-                "upload-1",
-                "documents/doc-1.md",
-                "doc-1.md",
-                "md");
+        return new IngestionRequestedEvent(jobId, UUID.randomUUID(), "upload-1", "documents/doc-1.md", "doc-1.md", "md");
+    }
+
+    private KnowledgeDocument document(IngestionRequestedEvent event) {
+        return new KnowledgeDocument(event.documentId(), UUID.randomUUID(), event.fileName(), "text/markdown",
+                event.objectKey(), "a".repeat(64), 7, 1, KnowledgeDocumentStatus.PROCESSING);
     }
 }

@@ -17,6 +17,8 @@ public interface DocumentIngestionRepository {
 
     Optional<DocumentIngestionSubmission> findLatest(UUID documentId);
 
+    KnowledgeDocument requireDocument(UUID documentId);
+
     Optional<DocumentIngestionSubmission> markRetrying(UUID jobId, UUID documentId);
 
     boolean markRetryPublishFailed(UUID jobId, UUID documentId, String errorCode, String errorMessage);
