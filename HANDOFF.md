@@ -1,5 +1,14 @@
 # SmartKB Handoff
 
+## Current State (2026-07-22)
+
+- Commit `940b07c` completed the local RabbitMQ configuration and consumer test baseline.
+- Phase 2a is implemented: MinIO object storage configuration, Docker Compose services, object storage port/adapter, and RabbitMQ consumer processing with guarded `PROCESSING -> READY/FAILED` transitions.
+- The ingestion event now requires `objectKey`, `fileName`, and `fileType`; the consumer exposes a repeatable object-storage `Resource` instead of a one-shot stream.
+- Verification passed: `mvn -B test` (50 tests), `docker compose config --quiet`, `docker compose -f docker-compose-minimal.yml config --quiet`, and `git diff --check`.
+- Phase 2 still needs the upload submission orchestration that creates `kb_document`, persists an ingestion job, stores the object, and publishes the extended event. Delete/retry APIs and integration tests remain pending.
+- The historical environment note below predates commit `940b07c` and is retained only as context.
+
 ## 2026-07-21 提交环境说明
 
 - `docker-compose.yml` 与 `src/main/resources/application.yml` 已补充本地 RabbitMQ 运行配置：发布确认、死信策略、服务健康检查和应用容器连接配置。

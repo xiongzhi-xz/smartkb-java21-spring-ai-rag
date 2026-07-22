@@ -123,6 +123,11 @@ logging:
 
 # 应用自定义配置
 smartkb:
+  object-storage:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:smartkb}
+    secret-key: ${MINIO_SECRET_KEY:smartkb123}
+    bucket: ${MINIO_BUCKET:smartkb-documents}
   messaging:
     ingestion:
       exchange: smartkb.ingestion

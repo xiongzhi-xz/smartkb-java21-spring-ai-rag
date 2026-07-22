@@ -61,6 +61,26 @@ services:
     networks:
       - smartkb-network
 
+  minio:
+    image: minio/minio:RELEASE.2024-06-13T19-53-10Z
+    container_name: smartkb-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: smartkb
+      MINIO_ROOT_PASSWORD: smartkb123
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - smartkb-network
+
   reranker:
     build:
       context: ./reranker-service
@@ -96,6 +116,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartkb
       SPRING_DATA_REDIS_HOST: redis
       SPRING_RABBITMQ_HOST: rabbitmq
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: smartkb
+      MINIO_SECRET_KEY: smartkb123
+      MINIO_BUCKET: smartkb-documents
       # Ollama 在宿主机运行，容器内通过 host.docker.internal 访问
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       # AI 模型配置（通过环境变量注入，不硬编码）
@@ -110,6 +134,8 @@ services:
       redis:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      minio:
         condition: service_healthy
       reranker:
         condition: service_healthy
@@ -167,6 +193,7 @@ volumes:
   grafana_data:
   reranker_models:
   rabbitmq_data:
+  minio_data:
 
 networks:
   smartkb-network:

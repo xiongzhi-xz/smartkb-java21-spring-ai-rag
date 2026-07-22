@@ -76,6 +76,12 @@
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>9.0.1</version>
+        </dependency>
+
         <!-- 数据库迁移：新增企业 RAG 核心表时保持版本化与可追溯 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

@@ -57,4 +57,28 @@ public class JdbcIngestionJobRepository implements IngestionJobRepository {
                 """, jobId);
         return updated == 1;
     }
+
+    @Override
+    public boolean markReady(java.util.UUID jobId) {
+        int updated = jdbcTemplate.update("""
+                UPDATE ingestion_job
+                SET status = 'READY', finished_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND status = 'PROCESSING'
+                """, jobId);
+        return updated == 1;
+    }
+
+    @Override
+    public boolean markFailed(java.util.UUID jobId, String errorCode, String errorMessage) {
+        int updated = jdbcTemplate.update("""
+                UPDATE ingestion_job
+                SET status = 'FAILED',
+                    error_code = ?,
+                    error_message = ?,
+                    finished_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND status = 'PROCESSING'
+                """, errorCode, errorMessage, jobId);
+        return updated == 1;
+    }
 }
