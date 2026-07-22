@@ -114,6 +114,10 @@ git status --short
 - Redis 会话记忆持久化。
 - 可观测性指标和性能压测报告。
 
+## Task Queue Continuity
+
+Unless the user explicitly limits the scope to a named task or says not to continue, treat ordered unchecked items in `TASKS.md` and `SPEC.md` as a continuous work queue. Complete, verify, document, and commit each task when possible, then immediately start the next unblocked task, including the next documented phase. The existing one-task focus rule controls change size only; it does not require waiting for user input.
+
 ## 常用验证问题
 
 上传 `test-docs/advanced-rag-demo.md` 后，Advanced 模式选择该文档，验证：
