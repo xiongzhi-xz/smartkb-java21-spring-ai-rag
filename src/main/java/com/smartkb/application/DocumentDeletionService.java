@@ -2,6 +2,8 @@ package com.smartkb.application;
 
 import com.smartkb.application.port.outbound.DocumentDeletionRepository;
 import com.smartkb.application.port.outbound.DocumentIndexCleaner;
+import com.smartkb.application.port.outbound.DenseVectorIndex;
+import com.smartkb.application.port.outbound.KeywordIndex;
 import com.smartkb.application.port.outbound.ObjectStorage;
 import com.smartkb.domain.DocumentIngestionSubmission;
 import com.smartkb.domain.IngestionJobStatus;
@@ -20,6 +22,8 @@ import java.util.UUID;
 public class DocumentDeletionService {
 
     private final DocumentDeletionRepository documentDeletionRepository;
+    private final DenseVectorIndex denseVectorIndex;
+    private final KeywordIndex keywordIndex;
     private final DocumentIndexCleaner documentIndexCleaner;
     private final ObjectStorage objectStorage;
 
@@ -29,6 +33,8 @@ public class DocumentDeletionService {
                 .orElseThrow(() -> new IllegalArgumentException("文档不存在: " + documentId));
         requireDeletable(submission);
 
+        denseVectorIndex.deleteByDocumentId(documentId);
+        keywordIndex.deleteByDocumentId(documentId);
         int deletedChunks = documentIndexCleaner.deleteByDocumentId(documentId);
         objectStorage.delete(submission.document().objectKey());
         if (!documentDeletionRepository.delete(documentId, submission.job().id())) {

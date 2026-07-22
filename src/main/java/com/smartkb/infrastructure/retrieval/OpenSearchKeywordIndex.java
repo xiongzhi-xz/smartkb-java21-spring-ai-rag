@@ -61,7 +61,17 @@ public class OpenSearchKeywordIndex implements KeywordIndex {
 
     @Override
     public int deleteByDocumentId(UUID documentId) {
-        throw new UnsupportedOperationException("OpenSearch cleanup is implemented in Phase 3e");
+        try {
+            String index = properties.getOpensearch().getIndex();
+            if (!client.indices().exists(request -> request.index(index)).value()) return 0;
+            return Math.toIntExact(client.deleteByQuery(request -> request
+                    .index(index)
+                    .query(query -> query.term(term -> term.field("documentId")
+                            .value(FieldValue.of(documentId.toString()))))
+                    .refresh(true)).deleted());
+        } catch (IOException exception) {
+            throw new IllegalStateException("OpenSearch delete failed", exception);
+        }
     }
 
     private RetrievalCandidate candidate(Map<String, Object> source, Double score) {

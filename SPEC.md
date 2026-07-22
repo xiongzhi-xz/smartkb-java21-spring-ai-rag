@@ -147,7 +147,7 @@ src/main/java/com/smartkb
   - [x] Phase 3b: 接入 Milvus/OpenSearch 本地配置、健康检查和客户端适配器；未修改 PostgreSQL migration。
   - [x] Phase 3c: 入库双索引写入和 READY 门禁。
   - [x] Phase 3d: 并行召回、过滤、RRF 融合和降级。
-  - [ ] Phase 3e: 双索引删除和集成验证。
+  - [ ] Phase 3e: 双索引删除和集成验证（代码完成，Compose 烟测待环境就绪）。
 - [ ] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。
 - [ ] Phase 5: 补齐 Testcontainers 集成测试、故障降级、监控指标和压测报告。
 - [ ] Phase 6: Docker Compose/K3s 本地部署验收与项目文档更新。

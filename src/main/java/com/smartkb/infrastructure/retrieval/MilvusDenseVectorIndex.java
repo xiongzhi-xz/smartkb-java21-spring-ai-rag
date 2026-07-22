@@ -72,8 +72,12 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
 
     @Override
     public int deleteByDocumentId(UUID documentId) {
+        String collection = properties.getMilvus().getCollection();
+        R<Boolean> existing = client.hasCollection(HasCollectionParam.newBuilder().withCollectionName(collection).build());
+        requireSuccess(existing, "check collection");
+        if (!Boolean.TRUE.equals(existing.getData())) return 0;
         requireSuccess(client.delete(DeleteParam.newBuilder()
-                .withCollectionName(properties.getMilvus().getCollection())
+                .withCollectionName(collection)
                 .withExpr("documentId == \\\"" + documentId + "\\\"").build()), "delete");
         return 0;
     }
