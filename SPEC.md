@@ -144,7 +144,7 @@ src/main/java/com/smartkb
 - [ ] Phase 3: 引入 Milvus 与 OpenSearch，完成双路召回、过滤、RRF 融合和索引一致性。
   - [x] Phase 3 design: 双索引唯一 chunk identity、入库 READY 门禁、删除顺序、RRF 合同和单后端降级已评审。详见 `docs/PHASE3_RETRIEVAL_DESIGN.md`。
   - [x] Phase 3a: 建立 chunk/candidate 领域模型与索引端口，并覆盖幂等写入键和请求边界测试。
-  - [ ] Phase 3b: 接入 Milvus/OpenSearch 本地配置和适配器。
+  - [x] Phase 3b: 接入 Milvus/OpenSearch 本地配置、健康检查和客户端适配器；未修改 PostgreSQL migration。
   - [ ] Phase 3c: 入库双索引写入和 READY 门禁。
   - [ ] Phase 3d: 并行召回、过滤、RRF 融合和降级。
   - [ ] Phase 3e: 双索引删除和集成验证。

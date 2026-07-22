@@ -135,6 +135,15 @@ smartkb:
     ingestion:
       exchange: smartkb.ingestion
       routing-key: document.requested
+  retrieval:
+    milvus:
+      host: ${SMARTKB_RETRIEVAL_MILVUS_HOST:localhost}
+      port: ${SMARTKB_RETRIEVAL_MILVUS_PORT:19530}
+      collection: ${SMARTKB_RETRIEVAL_MILVUS_COLLECTION:smartkb_chunks}
+      embedding-dimensions: ${SMARTKB_RETRIEVAL_EMBEDDING_DIMENSIONS:768}
+    opensearch:
+      endpoint: ${SMARTKB_RETRIEVAL_OPENSEARCH_ENDPOINT:http://localhost:9200}
+      index: ${SMARTKB_RETRIEVAL_OPENSEARCH_INDEX:smartkb_chunks}
   # 文档处理配置
   document:
     max-file-size: 50MB

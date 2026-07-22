@@ -22,6 +22,8 @@
 - The next focused implementation task is Phase 3a: add domain records and outbound index ports with unit tests. Do not add Milvus/OpenSearch dependencies or change migrations until that task is underway and the existing adapter style has been followed.
 - Phase 3a is complete: `IndexableChunk`, `RetrievalRequest`, and `RetrievalCandidate` define immutable shared contracts; `DenseVectorIndex` and `KeywordIndex` isolate the future Milvus/OpenSearch adapters. `chunkId` is the stable upsert key. `mvn -B test` passed with 86 tests.
 - The next focused implementation task is Phase 3b: add Milvus/OpenSearch Docker Compose services, configuration properties, health checks, and adapter dependencies. Do not change the PostgreSQL migration scripts in that task.
+- Phase 3b is complete: Docker Compose now declares standalone Milvus 2.4.8 and OpenSearch 2.18.0 with persistent volumes and health checks. The application has `smartkb.retrieval` properties, Milvus/OpenSearch client beans, and small availability gateways. The Milvus SDK excludes unused bulk-import and cloud-storage dependencies to keep the online RAG runtime focused. `docker compose config --quiet` and `mvn -B -o test` passed with 87 tests.
+- The next focused implementation task is Phase 3c: persist deterministic chunk facts, write both indexes before the existing READY transition, and add duplicate-event/failure tests. This requires a separately reviewed PostgreSQL migration before changing `document_chunk` facts.
 - The historical environment notes below are retained only as context.
 
 ## 2026-07-21 提交环境说明

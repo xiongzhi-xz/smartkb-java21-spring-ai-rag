@@ -81,6 +81,52 @@ services:
     networks:
       - smartkb-network
 
+  milvus:
+    image: milvusdb/milvus:v2.4.8
+    container_name: smartkb-milvus
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_USE_EMBED: "true"
+      COMMON_STORAGETYPE: local
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    volumes:
+      - milvus_data:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - smartkb-network
+
+  opensearch:
+    image: opensearchproject/opensearch:2.18.0
+    container_name: smartkb-opensearch
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      - smartkb-network
+
   reranker:
     build:
       context: ./reranker-service
@@ -120,6 +166,9 @@ services:
       MINIO_ACCESS_KEY: smartkb
       MINIO_SECRET_KEY: smartkb123
       MINIO_BUCKET: smartkb-documents
+      SMARTKB_RETRIEVAL_MILVUS_HOST: milvus
+      SMARTKB_RETRIEVAL_MILVUS_PORT: 19530
+      SMARTKB_RETRIEVAL_OPENSEARCH_ENDPOINT: http://opensearch:9200
       # Ollama 在宿主机运行，容器内通过 host.docker.internal 访问
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       # AI 模型配置（通过环境变量注入，不硬编码）
@@ -136,6 +185,10 @@ services:
       rabbitmq:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      milvus:
+        condition: service_healthy
+      opensearch:
         condition: service_healthy
       reranker:
         condition: service_healthy
@@ -194,6 +247,8 @@ volumes:
   reranker_models:
   rabbitmq_data:
   minio_data:
+  milvus_data:
+  opensearch_data:
 
 networks:
   smartkb-network:

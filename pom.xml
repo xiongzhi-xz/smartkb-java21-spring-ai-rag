@@ -27,6 +27,9 @@
         <spring-ai.version>1.0.0-M1</spring-ai.version>
         <lombok.version>1.18.32</lombok.version>
         <testcontainers.version>1.20.6</testcontainers.version>
+        <milvus-sdk.version>2.4.8</milvus-sdk.version>
+        <opensearch-java.version>2.18.0</opensearch-java.version>
+        <opensearch-rest-client.version>2.12.0</opensearch-rest-client.version>
     </properties>
 
     <dependencies>
@@ -80,6 +83,64 @@
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>9.0.1</version>
+        </dependency>
+
+        <!-- Enterprise retrieval backends: Milvus dense vectors and OpenSearch keywords. -->
+        <dependency>
+            <groupId>io.milvus</groupId>
+            <artifactId>milvus-sdk-java</artifactId>
+            <version>${milvus-sdk.version}</version>
+            <exclusions>
+                <!-- Bulk-import and cloud-storage SDKs are not used by the online RAG path. -->
+                <exclusion>
+                    <groupId>org.apache.parquet</groupId>
+                    <artifactId>parquet-avro</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.parquet</groupId>
+                    <artifactId>parquet-hadoop</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.konghq</groupId>
+                    <artifactId>unirest-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-s3</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-sts</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.minio</groupId>
+                    <artifactId>minio</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-storage-blob</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-identity</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opensearch.client</groupId>
+            <artifactId>opensearch-java</artifactId>
+            <version>${opensearch-java.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.opensearch.client</groupId>
+            <artifactId>opensearch-rest-client</artifactId>
+            <version>${opensearch-rest-client.version}</version>
         </dependency>
 
         <!-- 数据库迁移：新增企业 RAG 核心表时保持版本化与可追溯 -->
