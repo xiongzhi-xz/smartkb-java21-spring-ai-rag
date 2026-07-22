@@ -108,13 +108,15 @@ services:
     environment:
       discovery.type: single-node
       plugins.security.disabled: "true"
+      # OpenSearch 2.12+ validates this during bootstrap even with security disabled.
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-SmartkbLocalAdmin123!}
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
     ulimits:
       memlock:
         soft: -1
         hard: -1
     ports:
-      - "9200:9200"
+      - "${SMARTKB_OPENSEARCH_PORT:-9200}:9200"
       - "9600:9600"
     volumes:
       - opensearch_data:/usr/share/opensearch/data

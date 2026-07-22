@@ -66,7 +66,7 @@ public class OpenSearchKeywordIndex implements KeywordIndex {
             if (!client.indices().exists(request -> request.index(index)).value()) return 0;
             return Math.toIntExact(client.deleteByQuery(request -> request
                     .index(index)
-                    .query(query -> query.term(term -> term.field("documentId")
+                    .query(query -> query.term(term -> term.field("documentId.keyword")
                             .value(FieldValue.of(documentId.toString()))))
                     .refresh(true)).deleted());
         } catch (IOException exception) {

@@ -13,9 +13,12 @@ import io.milvus.param.R;
 import io.milvus.param.collection.CreateCollectionParam;
 import io.milvus.param.collection.FieldType;
 import io.milvus.param.collection.HasCollectionParam;
+import io.milvus.param.collection.LoadCollectionParam;
 import io.milvus.param.dml.DeleteParam;
 import io.milvus.param.dml.UpsertParam;
 import io.milvus.param.dml.SearchParam;
+import io.milvus.param.index.CreateIndexParam;
+import io.milvus.param.IndexType;
 import io.milvus.param.MetricType;
 import io.milvus.response.SearchResultsWrapper;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +81,7 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
         if (!Boolean.TRUE.equals(existing.getData())) return 0;
         requireSuccess(client.delete(DeleteParam.newBuilder()
                 .withCollectionName(collection)
-                .withExpr("documentId == \\\"" + documentId + "\\\"").build()), "delete");
+                .withExpr("documentId == \"" + documentId + "\"").build()), "delete");
         return 0;
     }
 
@@ -86,16 +89,26 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
         String collection = properties.getMilvus().getCollection();
         R<Boolean> existing = client.hasCollection(HasCollectionParam.newBuilder().withCollectionName(collection).build());
         requireSuccess(existing, "check collection");
-        if (Boolean.TRUE.equals(existing.getData())) return;
-        List<FieldType> fields = List.of(
-                varchar("chunkId", true), varchar("documentId", false), varchar("knowledgeBaseId", false),
-                FieldType.newBuilder().withName("versionNo").withDataType(DataType.Int32).build(),
-                FieldType.newBuilder().withName("ordinal").withDataType(DataType.Int32).build(),
-                FieldType.newBuilder().withName("content").withDataType(DataType.VarChar).withMaxLength(65535).build(),
-                FieldType.newBuilder().withName("embedding").withDataType(DataType.FloatVector)
-                        .withDimension(properties.getMilvus().getEmbeddingDimensions()).build());
-        requireSuccess(client.createCollection(CreateCollectionParam.newBuilder()
-                .withCollectionName(collection).withFieldTypes(fields).build()), "create collection");
+        if (!Boolean.TRUE.equals(existing.getData())) {
+            List<FieldType> fields = List.of(
+                    varchar("chunkId", true), varchar("documentId", false), varchar("knowledgeBaseId", false),
+                    FieldType.newBuilder().withName("versionNo").withDataType(DataType.Int32).build(),
+                    FieldType.newBuilder().withName("ordinal").withDataType(DataType.Int32).build(),
+                    FieldType.newBuilder().withName("content").withDataType(DataType.VarChar).withMaxLength(65535).build(),
+                    FieldType.newBuilder().withName("embedding").withDataType(DataType.FloatVector)
+                            .withDimension(properties.getMilvus().getEmbeddingDimensions()).build());
+            requireSuccess(client.createCollection(CreateCollectionParam.newBuilder()
+                    .withCollectionName(collection).withFieldTypes(fields).build()), "create collection");
+            requireSuccess(client.createIndex(CreateIndexParam.newBuilder()
+                    .withCollectionName(collection)
+                    .withFieldName("embedding")
+                    .withIndexType(IndexType.AUTOINDEX)
+                    .withMetricType(MetricType.COSINE)
+                    .withSyncMode(true)
+                    .build()), "create vector index");
+        }
+        requireSuccess(client.loadCollection(LoadCollectionParam.newBuilder()
+                .withCollectionName(collection).build()), "load collection");
     }
 
     private FieldType varchar(String name, boolean primaryKey) {
@@ -122,9 +135,9 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
     }
 
     private String filterExpression(RetrievalRequest request) {
-        String knowledgeBase = "knowledgeBaseId == \\\"" + request.knowledgeBaseId() + "\\\"";
+        String knowledgeBase = "knowledgeBaseId == \"" + request.knowledgeBaseId() + "\"";
         if (request.documentIds().isEmpty()) return knowledgeBase;
-        String documentIds = request.documentIds().stream().map(id -> "\\\"" + id + "\\\"")
+        String documentIds = request.documentIds().stream().map(id -> "\"" + id + "\"")
                 .collect(Collectors.joining(", "));
         return knowledgeBase + " && documentId in [" + documentIds + "]";
     }
