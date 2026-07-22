@@ -7,6 +7,8 @@
 - No new Flyway migration was needed: V1 already includes `conversation_message.citations`, `conversation_message.trace_id`, and `retrieval_trace`.
 - The next focused Phase 4 task is a read-side retrieval-trace endpoint and frontend consumption of the new SSE events. Keep that task separate from this commit.
 - Verification for this delivery: `mvn -B test` passed (94 tests); `git diff --check` passed.
+- Phase 4 trace read-side is complete: `GET /api/retrieval-traces/{traceId}` returns the stored query, structured candidates, retrieval mode, latency, and creation time; unknown IDs return 404. `mvn -B test` passed (95 tests).
+- The static workbench has not switched to `/api/chat/stream`: it presently has no enterprise `knowledgeBaseId` state. The next focused task is to expose/select that boundary from document metadata, then consume the enterprise SSE endpoint without sending an invalid request.
 
 - Phase 2a and 2b are implemented: MinIO/RabbitMQ configuration, repeatable object-storage consumption, upload submission orchestration, `kb_document`/`ingestion_job` atomic preparation, object persistence, and event publication.
 - `POST /api/documents/upload` now returns `202 Accepted` with `documentId`, `jobId`, `status`, and `queued`; duplicate content reuses the checksum-keyed document/task and does not create a second indexing task.

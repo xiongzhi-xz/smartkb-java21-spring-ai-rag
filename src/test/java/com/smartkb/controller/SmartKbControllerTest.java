@@ -2,6 +2,7 @@ package com.smartkb.controller;
 
 import com.smartkb.application.DocumentIngestionSubmissionService;
 import com.smartkb.application.EnterpriseChatService;
+import com.smartkb.application.RetrievalTraceQueryService;
 import com.smartkb.application.DocumentUploadResult;
 import com.smartkb.application.DocumentDeletionConflictException;
 import com.smartkb.application.DocumentDeletionResult;
@@ -63,6 +64,9 @@ class SmartKbControllerTest {
 
     @MockBean
     private EnterpriseChatService enterpriseChatService;
+
+    @MockBean
+    private RetrievalTraceQueryService retrievalTraceQueryService;
 
     @MockBean
     private AdvancedRagService advancedRagService;
@@ -221,6 +225,19 @@ class SmartKbControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error").value("redis unavailable"));
+    }
+
+    @Test
+    void shouldReturnEnterpriseRetrievalTrace() throws Exception {
+        UUID traceId = UUID.randomUUID();
+        when(retrievalTraceQueryService.get(traceId)).thenReturn(Map.of(
+                "traceId", traceId.toString(), "query", "rewritten", "candidates", List.of(Map.of("chunkId", "chunk-1")),
+                "retrievalMode", "hybrid", "latencyMs", 12, "createdAt", "2026-07-22T00:00:00Z"));
+
+        mockMvc.perform(get("/api/retrieval-traces/{traceId}", traceId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.traceId").value(traceId.toString()))
+                .andExpect(jsonPath("$.candidates[0].chunkId").value("chunk-1"));
     }
 
     @Test

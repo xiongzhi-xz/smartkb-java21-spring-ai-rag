@@ -3,6 +3,7 @@ package com.smartkb.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartkb.application.DocumentIngestionSubmissionService;
 import com.smartkb.application.EnterpriseChatService;
+import com.smartkb.application.RetrievalTraceQueryService;
 import com.smartkb.application.DocumentDeletionConflictException;
 import com.smartkb.application.DocumentDeletionResult;
 import com.smartkb.application.DocumentDeletionService;
@@ -68,6 +69,7 @@ public class SmartKbController {
 
     private final RagService ragService;
     private final EnterpriseChatService enterpriseChatService;
+    private final RetrievalTraceQueryService retrievalTraceQueryService;
     private final AdvancedRagService advancedRagService;
     private final RagEvaluationService ragEvaluationService;
     private final AnswerEvaluationService answerEvaluationService;
@@ -534,6 +536,15 @@ public class SmartKbController {
             }
         };
         return ResponseEntity.ok().contentType(MediaType.TEXT_EVENT_STREAM).body(body);
+    }
+
+    @GetMapping("/retrieval-traces/{traceId}")
+    public ResponseEntity<Map<String, Object>> getRetrievalTrace(@PathVariable UUID traceId) {
+        try {
+            return ResponseEntity.ok(retrievalTraceQueryService.get(traceId));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "error", exception.getMessage()));
+        }
     }
 
     /** 重新提交失败的文档入库任务。 */
