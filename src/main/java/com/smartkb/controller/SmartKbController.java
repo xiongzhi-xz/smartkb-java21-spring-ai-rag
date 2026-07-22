@@ -2,6 +2,8 @@ package com.smartkb.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartkb.application.DocumentIngestionSubmissionService;
+import com.smartkb.application.DocumentRetryResult;
+import com.smartkb.application.DocumentRetryService;
 import com.smartkb.application.DocumentUploadResult;
 import com.smartkb.domain.AdvancedRagMetrics;
 import com.smartkb.domain.AdvancedRagResult;
@@ -22,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,6 +66,7 @@ public class SmartKbController {
     private final RagEvaluationService ragEvaluationService;
     private final AnswerEvaluationService answerEvaluationService;
     private final DocumentIngestionSubmissionService documentIngestionSubmissionService;
+    private final DocumentRetryService documentRetryService;
     private final DocumentManagementService documentManagementService;
     private final ChatMemory chatMemory;
     private final SmartKbMetricsService metricsService;
@@ -481,6 +485,37 @@ public class SmartKbController {
             return UUID.randomUUID().toString();
         }
         return conversationId;
+    }
+
+    /** 重新提交失败的文档入库任务。 */
+    @PostMapping("/documents/{documentId}/retry")
+    public ResponseEntity<Map<String, Object>> retryDocument(@PathVariable UUID documentId) {
+        log.info("重试文档入库任务: documentId={}", documentId);
+        try {
+            DocumentRetryResult result = documentRetryService.retry(documentId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("documentId", result.documentId().toString());
+            response.put("jobId", result.jobId().toString());
+            response.put("status", result.status().name());
+            response.put("retryCount", result.retryCount());
+            response.put("queued", result.queued());
+            response.put("message", result.queued() ? "文档已重新提交异步入库" : "文档重试任务已在处理中");
+            return ResponseEntity.status(result.queued() ? HttpStatus.ACCEPTED : HttpStatus.OK).body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("重试文档入库任务失败: documentId={}", documentId, e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()));
+        }
     }
 
     private boolean isUuid(String value) {

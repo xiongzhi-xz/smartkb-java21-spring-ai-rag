@@ -2,6 +2,8 @@ package com.smartkb.controller;
 
 import com.smartkb.application.DocumentIngestionSubmissionService;
 import com.smartkb.application.DocumentUploadResult;
+import com.smartkb.application.DocumentRetryResult;
+import com.smartkb.application.DocumentRetryService;
 import com.smartkb.config.GlobalExceptionHandler;
 import com.smartkb.domain.AdvancedRagMetrics;
 import com.smartkb.domain.AdvancedRagResult;
@@ -66,6 +68,9 @@ class SmartKbControllerTest {
 
     @MockBean
     private DocumentIngestionSubmissionService documentIngestionSubmissionService;
+
+    @MockBean
+    private DocumentRetryService documentRetryService;
 
     @MockBean
     private DocumentManagementService documentManagementService;
@@ -251,6 +256,35 @@ class SmartKbControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error").value("文档不存在: " + documentId));
+    }
+
+    @Test
+    void shouldAcceptFailedDocumentRetry() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        UUID jobId = UUID.randomUUID();
+        when(documentRetryService.retry(documentId)).thenReturn(
+                new DocumentRetryResult(documentId, jobId, IngestionJobStatus.RETRYING, 1, true));
+
+        mockMvc.perform(post("/api/documents/{documentId}/retry", documentId))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.documentId").value(documentId.toString()))
+                .andExpect(jsonPath("$.jobId").value(jobId.toString()))
+                .andExpect(jsonPath("$.status").value("RETRYING"))
+                .andExpect(jsonPath("$.retryCount").value(1))
+                .andExpect(jsonPath("$.queued").value(true));
+    }
+
+    @Test
+    void shouldReturnConflictWhenDocumentCannotBeRetried() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        when(documentRetryService.retry(documentId))
+                .thenThrow(new IllegalStateException("文档当前不可重试: " + documentId + ", status=READY"));
+
+        mockMvc.perform(post("/api/documents/{documentId}/retry", documentId))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").value("文档当前不可重试: " + documentId + ", status=READY"));
     }
 
     @Test

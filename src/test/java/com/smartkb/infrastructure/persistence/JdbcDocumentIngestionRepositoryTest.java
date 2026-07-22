@@ -8,14 +8,17 @@ import com.smartkb.domain.KnowledgeDocument;
 import com.smartkb.domain.KnowledgeDocumentStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,6 +75,59 @@ class JdbcDocumentIngestionRepositoryTest {
 
         verify(jdbcTemplate).update(anyString(), eq(jobId), eq(documentId));
         verify(jdbcTemplate).update(anyString(), eq(documentId));
+    }
+
+    @Test
+    void shouldIncrementRetryCountAndClearPreviousFailure() {
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+        JdbcDocumentIngestionRepository repository = new JdbcDocumentIngestionRepository(
+                jdbcTemplate,
+                mock(IngestionJobRepository.class));
+        UUID jobId = UUID.randomUUID();
+        UUID documentId = UUID.randomUUID();
+        KnowledgeDocument document = document(documentId, UUID.randomUUID());
+        IngestionJob retryingJob = new IngestionJob(jobId, documentId, "upload-key", IngestionJobStatus.RETRYING, 2);
+        when(jdbcTemplate.update(anyString(), eq(jobId), eq(documentId))).thenReturn(1);
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(documentId))).thenReturn(1);
+        when(jdbcTemplate.query(
+                anyString(),
+                org.mockito.ArgumentMatchers.<ResultSetExtractor<Optional<DocumentIngestionSubmission>>>any(),
+                eq(documentId)))
+                .thenReturn(Optional.of(new DocumentIngestionSubmission(document, retryingJob)));
+
+        assertThat(repository.markRetrying(jobId, documentId))
+                .contains(new DocumentIngestionSubmission(document, retryingJob));
+
+        var sql = forClass(String.class);
+        verify(jdbcTemplate).update(sql.capture(), eq(jobId), eq(documentId));
+        assertThat(sql.getValue())
+                .contains("retry_count = retry_count + 1")
+                .contains("error_code = NULL")
+                .contains("status = 'FAILED'");
+    }
+
+    @Test
+    void shouldRestoreFailedStatusWhenRetryPublishFails() {
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+        JdbcDocumentIngestionRepository repository = new JdbcDocumentIngestionRepository(
+                jdbcTemplate,
+                mock(IngestionJobRepository.class));
+        UUID jobId = UUID.randomUUID();
+        UUID documentId = UUID.randomUUID();
+        when(jdbcTemplate.update(
+                anyString(), eq("RETRY_PUBLISH_FAILED"), eq("rabbit unavailable"), eq(jobId), eq(documentId)))
+                .thenReturn(1);
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(documentId))).thenReturn(1);
+
+        assertThat(repository.markRetryPublishFailed(
+                jobId, documentId, "RETRY_PUBLISH_FAILED", "rabbit unavailable")).isTrue();
+
+        var sql = forClass(String.class);
+        verify(jdbcTemplate).update(
+                sql.capture(), eq("RETRY_PUBLISH_FAILED"), eq("rabbit unavailable"), eq(jobId), eq(documentId));
+        assertThat(sql.getValue())
+                .contains("status = 'FAILED'")
+                .contains("status = 'RETRYING'");
     }
 
     private KnowledgeDocument document(UUID documentId, UUID knowledgeBaseId) {

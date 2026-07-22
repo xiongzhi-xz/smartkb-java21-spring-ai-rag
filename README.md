@@ -108,6 +108,7 @@ docker compose up -d
 | `POST` | `/api/documents/upload` | 保存原文件并提交 RabbitMQ 异步入库任务，返回 `documentId`/`jobId` |
 | `GET` | `/api/documents` | 查询文档列表 |
 | `GET` | `/api/documents/{documentId}` | 按文档 ID 查询状态、任务和 chunks；兼容文件名查询 |
+| `POST` | `/api/documents/{documentId}/retry` | 校验原文件并重新提交失败的异步入库任务；重复请求不会重复发布事件 |
 | `DELETE` | `/api/documents/{fileName}` | 删除文档和向量 |
 | `POST` | `/api/chat/conversation/stream` | 多轮流式对话 |
 | `POST` | `/api/chat/advanced/stream` | Advanced RAG 分阶段流式回答 |
