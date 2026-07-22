@@ -737,6 +737,17 @@
                 </details>
             `;
         }
+
+        if (!isUser && details.traceId) {
+            html += `
+                <details class="mt-3 border-t border-gray-200 pt-3 text-xs text-gray-600">
+                    <summary class="cursor-pointer select-none text-blue-600 hover:text-blue-700" data-retrieval-trace-id="${escapeHtml(details.traceId)}">
+                        查看检索追踪
+                    </summary>
+                    <div class="mt-2 text-gray-400">展开后加载候选证据...</div>
+                </details>
+            `;
+        }
         
         html += `</div>`;
         return html;
@@ -1340,6 +1351,27 @@
         });
     }
 
+    function initRetrievalTraceNavigation() {
+        const chatContainer = document.getElementById('chatContainer');
+        chatContainer.addEventListener('toggle', async function(e) {
+            const trigger = e.target.querySelector('[data-retrieval-trace-id]');
+            if (!trigger || !e.target.open || e.target.dataset.traceLoaded) return;
+            e.target.dataset.traceLoaded = 'true';
+            const target = trigger.nextElementSibling;
+            try {
+                const res = await fetch(`/api/retrieval-traces/${encodeURIComponent(trigger.dataset.retrievalTraceId)}`);
+                const trace = await res.json();
+                if (!res.ok) throw new Error(trace.error || '加载检索追踪失败');
+                const candidates = Array.isArray(trace.candidates) ? trace.candidates : [];
+                target.innerHTML = `模式：${escapeHtml(trace.retrievalMode || '')} · ${escapeHtml(trace.latencyMs || 0)} ms<br>`
+                    + candidates.map((item, index) => `<div class="mt-2 rounded border border-gray-100 bg-gray-50 p-2">#${index + 1} · ${escapeHtml(item.candidate?.chunkId || '')}<br>${renderText(item.candidate?.content || '')}</div>`).join('');
+            } catch (error) {
+                target.textContent = error.message || '加载检索追踪失败';
+                target.className = 'mt-2 text-red-600';
+            }
+        }, true);
+    }
+
     document.getElementById('documentDetailOverlay').addEventListener('click', function(e) {
         if (e.target === this) {
             closeDocumentDetail();
@@ -1442,6 +1474,7 @@
         initDocumentDetailResize();
         initDocumentDetailWidth();
         initReferenceNavigation();
+        initRetrievalTraceNavigation();
         loadDocuments(); // 自动加载文档列表
     };
 </script>
