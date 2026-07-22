@@ -11,6 +11,7 @@
 - The static workbench has not switched to `/api/chat/stream`: it presently has no enterprise `knowledgeBaseId` state. The next focused task is to expose/select that boundary from document metadata, then consume the enterprise SSE endpoint without sending an invalid request.
 - The document list now includes `knowledgeBaseId`. In Advanced mode, the static workbench uses `/api/chat/stream` only when the selected READY enterprise documents resolve to one knowledge base; otherwise it preserves the existing Advanced SSE flow. `mvn -B test` passed (95 tests).
 - Enterprise response cards now lazily load and display the retrieval trace through `GET /api/retrieval-traces/{traceId}`. Existing citation controls still navigate to document detail; UUID-based enterprise citations use the existing UUID detail route. `mvn -B test` passed (95 tests).
+- Phase 4 is complete. The next independent phase is Phase 5: expand Testcontainers coverage, exercise fault degradation, and add observability/performance evidence. Start it in a new conversation after reading this handoff, `SPEC.md`, `git status`, and the last five commits.
 
 - Phase 2a and 2b are implemented: MinIO/RabbitMQ configuration, repeatable object-storage consumption, upload submission orchestration, `kb_document`/`ingestion_job` atomic preparation, object persistence, and event publication.
 - `POST /api/documents/upload` now returns `202 Accepted` with `documentId`, `jobId`, `status`, and `queued`; duplicate content reuses the checksum-keyed document/task and does not create a second indexing task.
