@@ -5,8 +5,9 @@
 - Phase 2a and 2b are implemented: MinIO/RabbitMQ configuration, repeatable object-storage consumption, upload submission orchestration, `kb_document`/`ingestion_job` atomic preparation, object persistence, and event publication.
 - `POST /api/documents/upload` now returns `202 Accepted` with `documentId`, `jobId`, `status`, and `queued`; duplicate content reuses the checksum-keyed document/task and does not create a second indexing task.
 - Consumer transitions update both `ingestion_job` and `kb_document` together with guarded `PROCESSING -> READY/FAILED` state changes.
+- Document list/detail reads now use `kb_document` and the latest `ingestion_job` first; UUID detail lookup exposes lifecycle/task fields, while the legacy file-name route and vector-store chunk content remain compatible.
 - `JdbcIngestionJobRepository` uses `ON CONFLICT DO NOTHING` so idempotent preparation remains safe inside a transaction under concurrent duplicate uploads.
-- Verification passed: `mvn -B test` (56 tests), `git diff --check`, and the same 56 tests in `maven:3.9-eclipse-temurin-21` (Temurin JDK 21.0.11).
+- Verification passed: `mvn -B test` (59 tests), `git diff --check`, and the same 59 tests in `maven:3.9-eclipse-temurin-21` (Temurin JDK 21.0.11).
 - Phase 2c remains: document status/detail APIs, delete/retry APIs, and Testcontainers integration verification.
 - The historical environment notes below are retained only as context.
 

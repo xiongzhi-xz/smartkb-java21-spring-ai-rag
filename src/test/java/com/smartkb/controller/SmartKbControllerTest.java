@@ -41,6 +41,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -205,6 +206,51 @@ class SmartKbControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error").value("redis unavailable"));
+    }
+
+    @Test
+    void shouldRouteUuidDocumentDetailToEnterpriseQuery() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        when(documentManagementService.getDocumentDetail(documentId))
+                .thenReturn(Map.of(
+                        "documentId", documentId.toString(),
+                        "fileName", "demo.md",
+                        "status", "READY",
+                        "chunkCount", 2));
+
+        mockMvc.perform(get("/api/documents/{documentId}", documentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.document.documentId").value(documentId.toString()))
+                .andExpect(jsonPath("$.document.status").value("READY"))
+                .andExpect(jsonPath("$.document.chunkCount").value(2));
+
+        verify(documentManagementService).getDocumentDetail(documentId);
+    }
+
+    @Test
+    void shouldKeepFileNameDocumentDetailCompatibility() throws Exception {
+        when(documentManagementService.getDocumentDetail("legacy.md"))
+                .thenReturn(Map.of("fileName", "legacy.md", "chunkCount", 1, "chunks", List.of()));
+
+        mockMvc.perform(get("/api/documents/legacy.md"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.document.fileName").value("legacy.md"));
+
+        verify(documentManagementService).getDocumentDetail("legacy.md");
+    }
+
+    @Test
+    void shouldReturnNotFoundForMissingEnterpriseDocument() throws Exception {
+        UUID documentId = UUID.randomUUID();
+        when(documentManagementService.getDocumentDetail(documentId))
+                .thenThrow(new IllegalArgumentException("文档不存在: " + documentId));
+
+        mockMvc.perform(get("/api/documents/{documentId}", documentId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").value("文档不存在: " + documentId));
     }
 
     @Test

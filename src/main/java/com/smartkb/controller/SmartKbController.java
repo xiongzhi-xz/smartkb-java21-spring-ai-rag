@@ -368,7 +368,9 @@ public class SmartKbController {
         log.info("查询文档详情: {}", fileName);
 
         try {
-            Map<String, Object> detail = documentManagementService.getDocumentDetail(fileName);
+            Map<String, Object> detail = isUuid(fileName)
+                    ? documentManagementService.getDocumentDetail(UUID.fromString(fileName))
+                    : documentManagementService.getDocumentDetail(fileName);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -376,6 +378,12 @@ public class SmartKbController {
 
             return ResponseEntity.ok(response);
 
+        } catch (IllegalArgumentException e) {
+            log.warn("文档不存在: {}", fileName);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
         } catch (Exception e) {
             log.error("查询文档详情失败: {}", fileName, e);
             return ResponseEntity.internalServerError().body(Map.of(
@@ -473,6 +481,15 @@ public class SmartKbController {
             return UUID.randomUUID().toString();
         }
         return conversationId;
+    }
+
+    private boolean isUuid(String value) {
+        try {
+            UUID.fromString(value);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     /**

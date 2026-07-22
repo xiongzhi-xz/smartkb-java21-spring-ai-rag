@@ -1227,7 +1227,12 @@
             : false;
 
         title.textContent = documentDetail.fileName || selectedDocumentFileName || '文档详情';
-        meta.textContent = `${chunks.length} 个片段${hasTargetChunk ? ' · 已定位引用片段' : ''}${normalizedTargetChunkId && !hasTargetChunk ? ' · 未找到目标片段' : ''}`;
+        const jobStatus = documentDetail.job && documentDetail.job.status
+            ? `任务 ${documentDetail.job.status}`
+            : '';
+        const documentStatus = documentDetail.status ? `文档 ${documentDetail.status}` : '';
+        const lifecycleStatus = [documentStatus, jobStatus].filter(Boolean).join(' · ');
+        meta.textContent = `${lifecycleStatus ? lifecycleStatus + ' · ' : ''}${chunks.length} 个片段${hasTargetChunk ? ' · 已定位引用片段' : ''}${normalizedTargetChunkId && !hasTargetChunk ? ' · 未找到目标片段' : ''}`;
 
         if (chunks.length === 0) {
             body.innerHTML = '<div class="text-center text-sm text-gray-400 py-12">暂无可查看的文档片段</div>';
@@ -1331,11 +1336,12 @@
                             showDocumentDetail(fileName);
                         }
                     });
+                    const statusText = doc.status ? ` · ${doc.status}` : '';
                     docDiv.innerHTML = `
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex-1 min-w-0">
                                 <div class="font-medium text-sm text-gray-900 truncate">${escapeHtml(fileName)}</div>
-                                <div class="text-xs text-gray-500 mt-1">${escapeHtml(doc.chunkCount || doc.chunks || 0)} 个片段</div>
+                                <div class="text-xs text-gray-500 mt-1">${escapeHtml(doc.chunkCount || doc.chunks || 0)} 个片段${escapeHtml(statusText)}</div>
                             </div>
                             <i class="fa-solid fa-file-alt text-gray-300 group-hover:text-blue-500"></i>
                             <button

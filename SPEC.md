@@ -137,6 +137,7 @@ src/main/java/com/smartkb
   - [x] Phase 2a: 完成 MinIO/RabbitMQ 本地配置、扩展入库事件和消费者状态门禁。
   - [x] Phase 2b: 完成上传提交编排、`kb_document`/`ingestion_job` 原子准备、对象保存和事件发布。
   - [ ] Phase 2c: 补齐文档状态查询、删除、失败重试和 Testcontainers 集成验证。
+    - [x] Phase 2c-a: 企业文档列表/详情优先读取 `kb_document` 与最新 `ingestion_job`，并保留文件名兼容查询。
 - [ ] Phase 3: 引入 Milvus 与 OpenSearch，完成双路召回、过滤、RRF 融合和索引一致性。
 - [ ] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。
 - [ ] Phase 5: 补齐 Testcontainers 集成测试、故障降级、监控指标和压测报告。

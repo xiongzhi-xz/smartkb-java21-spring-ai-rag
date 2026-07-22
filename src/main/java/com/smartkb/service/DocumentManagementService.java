@@ -1,15 +1,10 @@
 package com.smartkb.service;
 
-import com.smartkb.domain.Document;
-import com.smartkb.domain.DocumentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -38,67 +33,200 @@ public class DocumentManagementService {
     private final VectorStoreService vectorStoreService;
 
     /**
-     * 查询所有已上传文档（简单版）
+     * 查询所有已上传文档。
      * <p>
-     * 从 vector_store 表中查询唯一的文档列表
+     * 企业文档表是生命周期事实来源；vector_store 只用于补充已完成文档的
+     * chunk 数量，并保留旧链路文档的兼容展示。
      *
      * @return 文档列表
      */
     public List<Map<String, Object>> listDocuments() {
         log.info("查询所有已上传文档");
 
-        try {
-            String sql = """
-                    SELECT
-                        metadata->>'fileName' as file_name,
-                        metadata->>'fileType' as file_type,
-                        COUNT(*) as chunk_count,
-                        MIN(metadata->>'uploadTime') as upload_time
-                    FROM vector_store
-                    WHERE metadata->>'fileName' IS NOT NULL
-                    GROUP BY metadata->>'fileName', metadata->>'fileType'
-                    ORDER BY MIN(metadata->>'uploadTime') DESC
-                    """;
+        List<Map<String, Object>> enterpriseDocuments = listEnterpriseDocuments();
+        Set<String> enterpriseFileNames = enterpriseDocuments.stream()
+                .map(document -> String.valueOf(document.get("fileName")))
+                .collect(java.util.stream.Collectors.toSet());
 
-            List<Map<String, Object>> documents = jdbcTemplate.query(sql, (rs, rowNum) -> {
-                Map<String, Object> doc = new HashMap<>();
-                doc.put("fileName", rs.getString("file_name"));
-                doc.put("fileType", rs.getString("file_type"));
-                doc.put("chunkCount", rs.getInt("chunk_count"));
-                doc.put("uploadTime", rs.getString("upload_time"));
-                return doc;
-            });
-
-            log.info("查询到 {} 个文档", documents.size());
-            return documents;
-
-        } catch (Exception e) {
-            log.error("查询文档列表失败", e);
-            return Collections.emptyList();
-        }
+        List<Map<String, Object>> legacyDocuments = listLegacyDocuments();
+        legacyDocuments.removeIf(document -> enterpriseFileNames.contains(document.get("fileName")));
+        enterpriseDocuments.addAll(legacyDocuments);
+        log.info("查询到 {} 个文档（企业文档 {} 个，兼容文档 {} 个）",
+                enterpriseDocuments.size(),
+                enterpriseDocuments.size() - legacyDocuments.size(),
+                legacyDocuments.size());
+        return enterpriseDocuments;
     }
 
     /**
      * 查询文档详情（包含所有 chunks）
      *
-     * @param fileName 文件名
+     * @param fileName 文件名（兼容旧接口）
      * @return 文档详情
      */
     public Map<String, Object> getDocumentDetail(String fileName) {
         log.info("查询文档详情: {}", fileName);
 
         try {
-            String sql = """
-                    SELECT
-                        id,
-                        content,
-                        metadata
+            Optional<UUID> enterpriseDocumentId = jdbcTemplate.query("""
+                    SELECT id
+                    FROM kb_document
+                    WHERE file_name = ?
+                    ORDER BY updated_at DESC
+                    LIMIT 1
+                    """, (rs, rowNum) -> rs.getObject("id", UUID.class), fileName)
+                    .stream()
+                    .findFirst();
+            if (enterpriseDocumentId.isPresent()) {
+                return getDocumentDetail(enterpriseDocumentId.get());
+            }
+        } catch (Exception e) {
+            log.debug("企业文档名查询不可用，回退旧 vector_store: {}", fileName, e);
+        }
+
+        return getLegacyDocumentDetail(fileName);
+    }
+
+    /** 按企业文档 ID 查询生命周期、最新任务和 Chunk 状态。 */
+    public Map<String, Object> getDocumentDetail(UUID documentId) {
+        log.info("查询企业文档详情: {}", documentId);
+        Map<String, Object> detail = jdbcTemplate.query("""
+                SELECT d.id, d.knowledge_base_id, d.file_name, d.content_type, d.object_key,
+                       d.content_checksum, d.size_bytes, d.version_no, d.status AS document_status,
+                       d.created_at, d.updated_at,
+                       j.id AS job_id, j.status AS job_status, j.retry_count,
+                       j.error_code, j.error_message, j.started_at, j.finished_at
+                FROM kb_document d
+                LEFT JOIN LATERAL (
+                    SELECT id, status, retry_count, error_code, error_message,
+                           started_at, finished_at, created_at
+                    FROM ingestion_job
+                    WHERE document_id = d.id
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                ) j ON TRUE
+                WHERE d.id = ?
+                """, (rs, rowNum) -> {
+            Map<String, Object> document = new HashMap<>();
+            document.put("documentId", rs.getObject("id", UUID.class).toString());
+            document.put("knowledgeBaseId", rs.getObject("knowledge_base_id", UUID.class).toString());
+            document.put("fileName", rs.getString("file_name"));
+            document.put("fileType", fileType(rs.getString("file_name")));
+            document.put("contentType", rs.getString("content_type"));
+            document.put("objectKey", rs.getString("object_key"));
+            document.put("contentChecksum", rs.getString("content_checksum"));
+            document.put("sizeBytes", rs.getLong("size_bytes"));
+            document.put("versionNo", rs.getInt("version_no"));
+            document.put("status", rs.getString("document_status"));
+            document.put("createdAt", String.valueOf(rs.getObject("created_at")));
+            document.put("updatedAt", String.valueOf(rs.getObject("updated_at")));
+
+            Map<String, Object> job = new HashMap<>();
+            UUID jobId = rs.getObject("job_id", UUID.class);
+            if (jobId != null) {
+                job.put("jobId", jobId.toString());
+                job.put("status", rs.getString("job_status"));
+                job.put("retryCount", rs.getInt("retry_count"));
+                job.put("errorCode", rs.getString("error_code"));
+                job.put("errorMessage", rs.getString("error_message"));
+                job.put("startedAt", nullableString(rs.getObject("started_at")));
+                job.put("finishedAt", nullableString(rs.getObject("finished_at")));
+            }
+            document.put("job", job);
+
+            List<Map<String, Object>> chunks = findChunks(documentId);
+            document.put("chunkCount", chunks.size());
+            document.put("chunks", chunks);
+            return document;
+        }, documentId).stream().findFirst().orElseThrow(() ->
+                new IllegalArgumentException("文档不存在: " + documentId));
+
+        log.info("企业文档详情查询完成: documentId={}, chunks={}", documentId, detail.get("chunkCount"));
+        return detail;
+    }
+
+    private List<Map<String, Object>> listEnterpriseDocuments() {
+        try {
+            return jdbcTemplate.query("""
+                    SELECT d.id, d.file_name, d.content_type, d.status AS document_status,
+                           d.size_bytes, d.version_no, d.created_at, d.updated_at,
+                           j.id AS job_id, j.status AS job_status, j.retry_count,
+                           j.error_code, COUNT(v.id) AS chunk_count
+                    FROM kb_document d
+                    LEFT JOIN LATERAL (
+                        SELECT id, status, retry_count, error_code, created_at
+                        FROM ingestion_job
+                        WHERE document_id = d.id
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    ) j ON TRUE
+                    LEFT JOIN vector_store v
+                        ON v.metadata->>'documentId' = d.id::text
+                    GROUP BY d.id, d.file_name, d.content_type, d.status,
+                             d.size_bytes, d.version_no, d.created_at, d.updated_at,
+                             j.id, j.status, j.retry_count, j.error_code
+                    ORDER BY d.updated_at DESC
+                    """, (rs, rowNum) -> {
+                Map<String, Object> document = new HashMap<>();
+                UUID documentId = rs.getObject("id", UUID.class);
+                document.put("documentId", documentId.toString());
+                document.put("fileName", rs.getString("file_name"));
+                document.put("fileType", fileType(rs.getString("file_name")));
+                document.put("contentType", rs.getString("content_type"));
+                document.put("status", rs.getString("document_status"));
+                document.put("chunkCount", rs.getInt("chunk_count"));
+                document.put("sizeBytes", rs.getLong("size_bytes"));
+                document.put("versionNo", rs.getInt("version_no"));
+                document.put("createdAt", nullableString(rs.getObject("created_at")));
+                document.put("updatedAt", nullableString(rs.getObject("updated_at")));
+                UUID jobId = rs.getObject("job_id", UUID.class);
+                if (jobId != null) {
+                    document.put("jobId", jobId.toString());
+                    document.put("jobStatus", rs.getString("job_status"));
+                    document.put("retryCount", rs.getInt("retry_count"));
+                    document.put("errorCode", rs.getString("error_code"));
+                }
+                return document;
+            });
+        } catch (Exception e) {
+            log.warn("企业文档列表查询失败，将仅返回兼容 vector_store 文档", e);
+            return new ArrayList<>();
+        }
+    }
+
+    private List<Map<String, Object>> listLegacyDocuments() {
+        try {
+            return jdbcTemplate.query("""
+                    SELECT metadata->>'fileName' AS file_name,
+                           metadata->>'fileType' AS file_type,
+                           COUNT(*) AS chunk_count,
+                           MIN(metadata->>'uploadTime') AS upload_time
+                    FROM vector_store
+                    WHERE metadata->>'fileName' IS NOT NULL
+                    GROUP BY metadata->>'fileName', metadata->>'fileType'
+                    ORDER BY MIN(metadata->>'uploadTime') DESC
+                    """, (rs, rowNum) -> {
+                Map<String, Object> document = new HashMap<>();
+                document.put("fileName", rs.getString("file_name"));
+                document.put("fileType", rs.getString("file_type"));
+                document.put("chunkCount", rs.getInt("chunk_count"));
+                document.put("uploadTime", rs.getString("upload_time"));
+                return document;
+            });
+        } catch (Exception e) {
+            log.warn("兼容 vector_store 文档列表查询失败", e);
+            return new ArrayList<>();
+        }
+    }
+
+    private Map<String, Object> getLegacyDocumentDetail(String fileName) {
+        try {
+            List<Map<String, Object>> chunks = jdbcTemplate.query("""
+                    SELECT id, content, metadata
                     FROM vector_store
                     WHERE metadata->>'fileName' = ?
                     ORDER BY metadata->>'chunkIndex'
-                    """;
-
-            List<Map<String, Object>> chunks = jdbcTemplate.query(sql, (rs, rowNum) -> {
+                    """, (rs, rowNum) -> {
                 Map<String, Object> chunk = new HashMap<>();
                 chunk.put("id", rs.getString("id"));
                 chunk.put("content", rs.getString("content"));
@@ -107,16 +235,65 @@ public class DocumentManagementService {
 
             Map<String, Object> detail = new HashMap<>();
             detail.put("fileName", fileName);
+            detail.put("fileType", fileType(fileName));
             detail.put("chunkCount", chunks.size());
             detail.put("chunks", chunks);
-
-            log.info("文档详情查询完成: {} chunks", chunks.size());
+            log.info("兼容文档详情查询完成: {} chunks", chunks.size());
             return detail;
-
         } catch (Exception e) {
             log.error("查询文档详情失败: {}", fileName, e);
             throw new RuntimeException("查询文档详情失败: " + e.getMessage(), e);
         }
+    }
+
+    private List<Map<String, Object>> findChunks(UUID documentId) {
+        List<Map<String, Object>> vectorChunks;
+        try {
+            vectorChunks = jdbcTemplate.query("""
+                    SELECT id, content, metadata->>'chunkIndex' AS chunk_index
+                    FROM vector_store
+                    WHERE metadata->>'documentId' = ?
+                    ORDER BY NULLIF(metadata->>'chunkIndex', '')::integer NULLS LAST, id
+                    """, (rs, rowNum) -> {
+                Map<String, Object> chunk = new HashMap<>();
+                chunk.put("id", rs.getString("id"));
+                chunk.put("content", rs.getString("content"));
+                chunk.put("ordinal", rs.getString("chunk_index"));
+                chunk.put("indexStatus", "READY");
+                return chunk;
+            }, documentId.toString());
+        } catch (Exception e) {
+            log.debug("vector_store chunk 查询失败，回退 document_chunk: {}", documentId, e);
+            vectorChunks = new ArrayList<>();
+        }
+        if (!vectorChunks.isEmpty()) {
+            return vectorChunks;
+        }
+
+        return jdbcTemplate.query("""
+                SELECT id, ordinal, index_status
+                FROM document_chunk
+                WHERE document_id = ?
+                ORDER BY ordinal
+                """, (rs, rowNum) -> {
+            Map<String, Object> chunk = new HashMap<>();
+            chunk.put("id", rs.getObject("id", UUID.class).toString());
+            chunk.put("ordinal", rs.getInt("ordinal"));
+            chunk.put("indexStatus", rs.getString("index_status"));
+            chunk.put("content", "");
+            return chunk;
+        }, documentId);
+    }
+
+    private String fileType(String fileName) {
+        int dotIndex = fileName == null ? -1 : fileName.lastIndexOf('.');
+        return dotIndex > 0 && dotIndex < fileName.length() - 1
+                ? fileName.substring(dotIndex + 1).toLowerCase(Locale.ROOT)
+                : "";
+    }
+
+    private String nullableString(Object value) {
+        return value == null ? null : value.toString();
     }
 
     /**
