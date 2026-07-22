@@ -148,7 +148,7 @@ public class DocumentManagementService {
     private List<Map<String, Object>> listEnterpriseDocuments() {
         try {
             return jdbcTemplate.query("""
-                    SELECT d.id, d.file_name, d.content_type, d.status AS document_status,
+                    SELECT d.id, d.knowledge_base_id, d.file_name, d.content_type, d.status AS document_status,
                            d.size_bytes, d.version_no, d.created_at, d.updated_at,
                            j.id AS job_id, j.status AS job_status, j.retry_count,
                            j.error_code, COUNT(v.id) AS chunk_count
@@ -162,7 +162,7 @@ public class DocumentManagementService {
                     ) j ON TRUE
                     LEFT JOIN vector_store v
                         ON v.metadata->>'documentId' = d.id::text
-                    GROUP BY d.id, d.file_name, d.content_type, d.status,
+                    GROUP BY d.id, d.knowledge_base_id, d.file_name, d.content_type, d.status,
                              d.size_bytes, d.version_no, d.created_at, d.updated_at,
                              j.id, j.status, j.retry_count, j.error_code
                     ORDER BY d.updated_at DESC
@@ -170,6 +170,7 @@ public class DocumentManagementService {
                 Map<String, Object> document = new HashMap<>();
                 UUID documentId = rs.getObject("id", UUID.class);
                 document.put("documentId", documentId.toString());
+                document.put("knowledgeBaseId", rs.getObject("knowledge_base_id", UUID.class).toString());
                 document.put("fileName", rs.getString("file_name"));
                 document.put("fileType", fileType(rs.getString("file_name")));
                 document.put("contentType", rs.getString("content_type"));

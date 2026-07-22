@@ -983,6 +983,58 @@
         };
     }
 
+    function enterpriseRetrievalScope() {
+        const readyDocuments = uploadedDocuments.filter(doc => doc.status === 'READY' && doc.knowledgeBaseId && doc.documentId);
+        const selected = advancedFilterFileName
+            ? readyDocuments.filter(doc => (doc.fileName || doc.name) === advancedFilterFileName)
+            : readyDocuments;
+        const knowledgeBaseIds = [...new Set(selected.map(doc => doc.knowledgeBaseId))];
+        return knowledgeBaseIds.length === 1
+            ? { knowledgeBaseId: knowledgeBaseIds[0], documentIds: selected.map(doc => doc.documentId) }
+            : null;
+    }
+
+    async function streamEnterpriseMessage(payload, pendingMessage) {
+        const res = await fetch('/api/chat/stream', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        if (!res.ok || !res.body) throw new Error('企业检索问答请求失败');
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let answer = '';
+        let nextConversationId = payload.conversationId || null;
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            let boundaryIndex;
+            while ((boundaryIndex = buffer.indexOf('\n\n')) >= 0) {
+                const event = parseSseBlock(buffer.slice(0, boundaryIndex).trim());
+                buffer = buffer.slice(boundaryIndex + 2);
+                if (!event.data) continue;
+                const data = JSON.parse(event.data);
+                if (event.type === 'conversation') {
+                    nextConversationId = data.conversationId || nextConversationId;
+                    conversationId = nextConversationId;
+                    localStorage.setItem(conversationIdKey, conversationId);
+                    updateConversationStatus();
+                } else if (event.type === 'stage') {
+                    updateAssistantMessage(pendingMessage, '正在' + (data.name || '处理') + '...');
+                } else if (event.type === 'done') {
+                    answer = data.answer || '未生成回答';
+                    updateAssistantMessage(pendingMessage, answer, [], {
+                        references: data.references || [], rewrittenQuery: data.rewrittenQuery,
+                        retrievalMode: data.retrievalMode, traceId: data.traceId, latencyMs: data.latencyMs
+                    });
+                } else if (event.type === 'error') {
+                    throw new Error(data.error || '企业检索问答失败');
+                }
+            }
+        }
+        return { answer: answer || '未生成回答', conversationId: nextConversationId };
+    }
+
     async function sendMessage() {
         if (chatBusy) return;
 
@@ -1009,7 +1061,10 @@
                 const streamResult = await streamConversationMessage(payload, pendingMessage);
                 answer = streamResult.answer;
             } else {
-                const streamResult = await streamAdvancedMessage(payload, pendingMessage);
+                const scope = enterpriseRetrievalScope();
+                const streamResult = scope
+                    ? await streamEnterpriseMessage({ ...payload, ...scope }, pendingMessage)
+                    : await streamAdvancedMessage(payload, pendingMessage);
                 answer = streamResult.answer;
             }
 
