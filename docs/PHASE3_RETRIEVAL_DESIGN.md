@@ -94,8 +94,8 @@ A missing rank contributes zero. Tie-breaking is `chunkId` ascending. The result
 
 - [x] Phase 3a (20-30 min): add immutable chunk/candidate domain records and outbound ports for index write, delete, and retrieval; unit-test idempotent payload construction.
 - [x] Phase 3b (20-30 min): add Milvus and OpenSearch Docker Compose services, configuration properties, health checks, and client adapters. Add no schema migration in this task.
-- [ ] Phase 3c (20-30 min): change ingestion orchestration to persist stable chunk identities and write both indexes before the existing READY transition; add failure/duplicate-event tests.
-- [ ] Phase 3d (20-30 min): replace enterprise retrieval with parallel dense/keyword calls, filter validation, weighted RRF, and single-backend degradation; unit-test ranking and failure modes.
+- [x] Phase 3c (20-30 min): change ingestion orchestration to persist stable chunk identities and write both indexes before the existing READY transition; add failure/duplicate-event tests.
+- [x] Phase 3d (20-30 min): replace enterprise retrieval with parallel dense/keyword calls, filter validation, weighted RRF, and single-backend degradation; unit-test ranking and failure modes.
 - [ ] Phase 3e (20-30 min): extend deletion cleanup to both indexes, then add adapter integration tests with Testcontainers or a compose-backed acceptance test.
 
 ## Acceptance Criteria

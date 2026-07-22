@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.opensearch.client.opensearch._types.FieldValue;
 
 /** OpenSearch writer. Query composition is intentionally deferred to Phase 3d. */
 @Component
@@ -39,11 +40,35 @@ public class OpenSearchKeywordIndex implements KeywordIndex {
 
     @Override
     public List<RetrievalCandidate> search(RetrievalRequest request) {
-        throw new UnsupportedOperationException("OpenSearch retrieval is implemented in Phase 3d");
+        try {
+            var response = client.search(search -> search.index(properties.getOpensearch().getIndex())
+                    .size(request.candidateTopK()).query(query -> query.bool(bool -> {
+                        bool.must(match -> match.match(value -> value.field("content")
+                                .query(FieldValue.of(request.query()))));
+                        bool.filter(filter -> filter.term(term -> term.field("knowledgeBaseId")
+                                .value(FieldValue.of(request.knowledgeBaseId().toString()))));
+                        if (!request.documentIds().isEmpty()) {
+                            bool.filter(filter -> filter.terms(terms -> terms.field("documentId").terms(values -> values
+                                    .value(request.documentIds().stream().map(id -> FieldValue.of(id.toString())).toList()))));
+                        }
+                        return bool;
+                    })), Map.class);
+            return response.hits().hits().stream().map(hit -> candidate(hit.source(), hit.score())).toList();
+        } catch (IOException exception) {
+            throw new IllegalStateException("OpenSearch search failed", exception);
+        }
     }
 
     @Override
     public int deleteByDocumentId(UUID documentId) {
         throw new UnsupportedOperationException("OpenSearch cleanup is implemented in Phase 3e");
+    }
+
+    private RetrievalCandidate candidate(Map<String, Object> source, Double score) {
+        if (source == null || score == null) throw new IllegalStateException("OpenSearch search hit is incomplete");
+        return new RetrievalCandidate(UUID.fromString((String) source.get("chunkId")),
+                UUID.fromString((String) source.get("documentId")), UUID.fromString((String) source.get("knowledgeBaseId")),
+                ((Number) source.get("versionNo")).intValue(), ((Number) source.get("ordinal")).intValue(),
+                (String) source.get("content"), score);
     }
 }
