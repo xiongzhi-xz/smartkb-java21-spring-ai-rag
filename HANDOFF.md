@@ -1,5 +1,14 @@
 # SmartKB Handoff
 
+## 2026-07-23 Phase 5c
+
+- 已完成真实 Compose 后端故障注入 smoke：`scripts/smoke/retrieval-degradation.ps1 -OpenSearchPort 19200`，通过 `RetrievalDegradationSmokeIT` 验证生产适配器的降级路径。
+- 修复 Milvus 客户端启动时 eager 连接导致异常早于检索降级边界的问题：`MilvusDenseVectorIndex` 改为延迟获取客户端，`MilvusClientAdapter` 对创建/健康检查失败返回不可用，不阻断应用启动。
+- 四个核心场景全部通过：停止 Milvus 后为 `keyword-only`，停止 OpenSearch 后为 `dense-only`，同时停止两端后返回 `RETRIEVAL_UNAVAILABLE`；`seed` 和 `cleanup` 也通过，临时 collection/index 已清理，Compose 服务已恢复健康。
+- 最终报告：`target/reports/retrieval-degradation-smoke.md`；结果为 `PASS`，场景尝试次数为 `seed=1`、`keyword-only=1`、`dense-only=2`、`unavailable=1`、`cleanup=2`。`dense-only` 与 cleanup 的有限重试只用于覆盖 Milvus 重启后的 collection 恢复窗口。
+- 验证：`mvn -B -DskipTests test-compile`、`mvn -B test`（96 tests）、PowerShell 脚本语法检查和真实 Compose smoke 均通过；报告仅记录观察结果，不代表 QPS、P95/P99、吞吐量或容量结论。
+- Phase 5 已完成。下一阶段为 Phase 6：Docker Compose/K3s 本地部署验收与项目文档更新；进入下一独立阶段前建议新开对话并先读取本文件、`SPEC.md`、`git status` 和最近 5 条提交。
+
 ## 2026-07-23 Phase 5b
 
 - 已完成可重复的 Compose 检索 smoke：`scripts/smoke/retrieval-backends.ps1` 只启动 Milvus/OpenSearch，执行 `RetrievalBackendsSmokeIT`，并生成 `target/reports/retrieval-backends-smoke.md`。

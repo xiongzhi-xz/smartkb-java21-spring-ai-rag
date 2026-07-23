@@ -41,6 +41,26 @@
 ./scripts/smoke/retrieval-backends.ps1 -OpenSearchPort 19200
 ```
 
+## 故障降级 smoke
+
+在真实 Compose 后端上执行：
+
+```powershell
+./scripts/smoke/retrieval-degradation.ps1 -OpenSearchPort 19200
+```
+
+本次运行报告位于 `target/reports/retrieval-degradation-smoke.md`，结果为 `PASS`：
+
+| 场景 | 依赖状态 | 预期结果 | Attempts | Status |
+| --- | --- | --- | ---: | --- |
+| `seed` | Milvus + OpenSearch | 确定性数据写入两个后端 | 1 | PASS |
+| `keyword-only` | Milvus 停止 | OpenSearch 检索，模式为 `keyword-only` | 1 | PASS |
+| `dense-only` | OpenSearch 停止 | Milvus 检索，模式为 `dense-only` | 2 | PASS |
+| `unavailable` | 两端停止 | 返回 `RETRIEVAL_UNAVAILABLE` | 1 | PASS |
+| `cleanup` | 后端恢复 | 清理临时 collection/index | 2 | PASS |
+
+`dense-only` 和 cleanup 的第二次尝试是后端恢复后的有限重试，不是性能采样。该故障注入 smoke 证明降级分支和恢复清理可复现，但不提供固定 QPS、P50/P95/P99、吞吐量或容量承诺。
+
 ## 报告字段
 
 本地生成报告包含：
@@ -71,4 +91,5 @@
 
 | 日期 | Commit | 场景 | 数据规模 | 并发/次数 | 结果 | 报告 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 待执行 | 待记录 | Milvus + OpenSearch retrieval smoke | 2 chunks | 单次回环 | 待运行 | `target/reports/retrieval-backends-smoke.md` |
+| 2026-07-23 | 本次 Phase 5c 提交 | Milvus/OpenSearch retrieval degradation smoke | 5 scenarios | 单次故障注入回环 | PASS | `target/reports/retrieval-degradation-smoke.md` |
+| 2026-07-23 | e262b38 | Milvus + OpenSearch retrieval smoke | 2 chunks | 单次回环 | 已完成 | `target/reports/retrieval-backends-smoke.md` |

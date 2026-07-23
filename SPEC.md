@@ -149,10 +149,10 @@ src/main/java/com/smartkb
   - [x] Phase 3d: 并行召回、过滤、RRF 融合和降级。
   - [x] Phase 3e: 双索引删除和集成验证。
 - [x] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。
-- [ ] Phase 5: 补齐 Testcontainers 集成测试、故障降级、监控指标和压测报告。
+- [x] Phase 5: 补齐 Testcontainers 集成测试、故障降级、监控指标和检索验证报告。
   - [x] Phase 5a: 为企业检索记录请求数、单后端降级、不可用次数和延迟指标。
   - [x] Phase 5b: 增加 Milvus/OpenSearch Compose 检索 smoke、真实耗时/错误报告和端口覆盖说明；不虚构 QPS 或分位数。
-  - [ ] Phase 5c: 补齐真实后端故障注入与可复现降级验证。
+  - [x] Phase 5c: 补齐真实后端故障注入与可复现降级验证；覆盖 Milvus、OpenSearch 单后端故障、双后端不可用和恢复清理。
 - [ ] Phase 6: Docker Compose/K3s 本地部署验收与项目文档更新。
 
 ## 验收标准

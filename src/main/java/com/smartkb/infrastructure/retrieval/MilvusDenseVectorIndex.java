@@ -9,6 +9,8 @@ import com.smartkb.domain.RetrievalRequest;
 import com.smartkb.service.EmbeddingService;
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.grpc.DataType;
+import io.milvus.param.IndexType;
+import io.milvus.param.MetricType;
 import io.milvus.param.R;
 import io.milvus.param.collection.CreateCollectionParam;
 import io.milvus.param.collection.FieldType;
@@ -16,32 +18,49 @@ import io.milvus.param.collection.FlushParam;
 import io.milvus.param.collection.HasCollectionParam;
 import io.milvus.param.collection.LoadCollectionParam;
 import io.milvus.param.dml.DeleteParam;
-import io.milvus.param.dml.UpsertParam;
 import io.milvus.param.dml.SearchParam;
+import io.milvus.param.dml.UpsertParam;
 import io.milvus.param.index.CreateIndexParam;
-import io.milvus.param.IndexType;
-import io.milvus.param.MetricType;
 import io.milvus.response.SearchResultsWrapper;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.UUID;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-/** Milvus writer. Search is added with the retrieval orchestration in Phase 3d. */
+/** Milvus gateway with lazy client acquisition so a backend outage can degrade retrieval. */
 @Component
-@RequiredArgsConstructor
 public class MilvusDenseVectorIndex implements DenseVectorIndex {
 
-    private final MilvusServiceClient client;
+    private final Supplier<MilvusServiceClient> clientSupplier;
     private final RetrievalIndexProperties properties;
     private final EmbeddingService embeddingService;
+
+    public MilvusDenseVectorIndex(ObjectProvider<MilvusServiceClient> clientProvider,
+                                  RetrievalIndexProperties properties, EmbeddingService embeddingService) {
+        this(clientProvider::getObject, properties, embeddingService);
+    }
+
+    /** Test/integration constructor for an already-created real client. */
+    public MilvusDenseVectorIndex(MilvusServiceClient client,
+                                  RetrievalIndexProperties properties, EmbeddingService embeddingService) {
+        this(() -> client, properties, embeddingService);
+    }
+
+    MilvusDenseVectorIndex(Supplier<MilvusServiceClient> clientSupplier,
+                                   RetrievalIndexProperties properties, EmbeddingService embeddingService) {
+        this.clientSupplier = clientSupplier;
+        this.properties = properties;
+        this.embeddingService = embeddingService;
+    }
 
     @Override
     public void upsert(List<IndexableChunk> chunks) {
         if (chunks.isEmpty()) return;
-        ensureCollection();
+        MilvusServiceClient client = client();
+        ensureCollection(client);
         List<JsonObject> rows = chunks.stream().map(this::row).toList();
         requireSuccess(client.upsert(UpsertParam.newBuilder()
                 .withCollectionName(properties.getMilvus().getCollection()).withRows(rows).build()), "upsert");
@@ -53,6 +72,7 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
 
     @Override
     public List<RetrievalCandidate> search(RetrievalRequest request) {
+        MilvusServiceClient client = client();
         List<Float> queryVector = embeddingService.embedText(request.query()).stream().map(Double::floatValue).toList();
         R<io.milvus.grpc.SearchResults> result = client.search(SearchParam.newBuilder()
                 .withCollectionName(properties.getMilvus().getCollection())
@@ -80,6 +100,7 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
 
     @Override
     public int deleteByDocumentId(UUID documentId) {
+        MilvusServiceClient client = client();
         String collection = properties.getMilvus().getCollection();
         R<Boolean> existing = client.hasCollection(HasCollectionParam.newBuilder().withCollectionName(collection).build());
         requireSuccess(existing, "check collection");
@@ -90,7 +111,11 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
         return 0;
     }
 
-    private void ensureCollection() {
+    private MilvusServiceClient client() {
+        return clientSupplier.get();
+    }
+
+    private void ensureCollection(MilvusServiceClient client) {
         String collection = properties.getMilvus().getCollection();
         R<Boolean> existing = client.hasCollection(HasCollectionParam.newBuilder().withCollectionName(collection).build());
         requireSuccess(existing, "check collection");

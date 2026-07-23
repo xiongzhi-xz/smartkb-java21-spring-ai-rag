@@ -68,6 +68,22 @@ Milvus + OpenSearch Compose 检索 smoke：
 ./scripts/smoke/retrieval-backends.ps1 -OpenSearchPort 19200
 ```
 
+真实后端故障降级 smoke：
+
+```powershell
+./scripts/smoke/retrieval-degradation.ps1 -OpenSearchPort 19200
+```
+
+该命令使用真实 Compose 中的 Milvus 和 OpenSearch，依次执行：
+
+- `seed`：向两个后端写入确定性测试数据。
+- `keyword-only`：停止 Milvus，预期 OpenSearch 继续检索并报告 `keyword-only`。
+- `dense-only`：停止 OpenSearch，预期 Milvus 继续检索并报告 `dense-only`。
+- `unavailable`：停止两个后端，预期返回 `RETRIEVAL_UNAVAILABLE`。
+- `cleanup`：恢复后端并删除本次创建的临时 collection/index。
+
+脚本会把每个场景的实际耗时、尝试次数和错误写入 `target/reports/retrieval-degradation-smoke.md`，并在结束时检查清理/恢复结果。`dense-only` 和 cleanup 最多有限重试，用于等待 Milvus 重启后的 collection 恢复；该 smoke 不是并发压测，不提供 QPS、P95/P99 或容量结论。
+
 ## 本地链路验证
 
 ### 1. 启动 PostgreSQL 和 Redis
