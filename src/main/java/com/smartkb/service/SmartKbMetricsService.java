@@ -70,6 +70,10 @@ public class SmartKbMetricsService {
 
     private final Counter aiCallsTotal;
     private final Timer aiCallDuration;
+    private final Counter enterpriseRetrievalRequestsTotal;
+    private final Counter enterpriseRetrievalDegradedTotal;
+    private final Counter enterpriseRetrievalUnavailableTotal;
+    private final Timer enterpriseRetrievalDuration;
 
     public SmartKbMetricsService(MeterRegistry registry) {
         log.info("初始化 SmartKB 可观测性指标");
@@ -157,6 +161,15 @@ public class SmartKbMetricsService {
                 .description("AI 模型调用耗时")
                 .publishPercentileHistogram()
                 .register(registry);
+
+        enterpriseRetrievalRequestsTotal = Counter.builder("smartkb.retrieval.enterprise.requests")
+                .description("Enterprise dual-index retrieval requests").register(registry);
+        enterpriseRetrievalDegradedTotal = Counter.builder("smartkb.retrieval.enterprise.degraded")
+                .description("Enterprise retrieval requests served by one backend").register(registry);
+        enterpriseRetrievalUnavailableTotal = Counter.builder("smartkb.retrieval.enterprise.unavailable")
+                .description("Enterprise retrieval requests with both backends unavailable").register(registry);
+        enterpriseRetrievalDuration = Timer.builder("smartkb.retrieval.enterprise.duration")
+                .description("Enterprise dual-index retrieval latency").publishPercentileHistogram().register(registry);
     }
 
     // ===== Advanced RAG 指标记录方法 =====
@@ -241,5 +254,15 @@ public class SmartKbMetricsService {
 
     public void recordLowConfidenceRefusal() {
         lowConfidenceRefusalTotal.increment();
+    }
+
+    public void recordEnterpriseRetrieval(String mode, int backendFailureCount, long durationMs) {
+        enterpriseRetrievalRequestsTotal.increment();
+        if (backendFailureCount >= 2) {
+            enterpriseRetrievalUnavailableTotal.increment();
+        } else if (backendFailureCount == 1) {
+            enterpriseRetrievalDegradedTotal.increment();
+        }
+        if (durationMs > 0) enterpriseRetrievalDuration.record(java.time.Duration.ofMillis(durationMs));
     }
 }

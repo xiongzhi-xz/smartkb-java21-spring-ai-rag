@@ -6,6 +6,7 @@ import com.smartkb.domain.EnterpriseRetrievalResult;
 import com.smartkb.domain.FusedRetrievalCandidate;
 import com.smartkb.domain.RetrievalCandidate;
 import com.smartkb.domain.RetrievalRequest;
+import com.smartkb.service.SmartKbMetricsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,6 @@ import java.util.concurrent.Executors;
 
 /** Runs independent enterprise indexes concurrently and applies the Phase 3 weighted RRF contract. */
 @Service
-@RequiredArgsConstructor
 public class EnterpriseRetrievalService {
 
     private static final double DENSE_WEIGHT = 0.55;
@@ -31,8 +31,23 @@ public class EnterpriseRetrievalService {
 
     private final DenseVectorIndex denseVectorIndex;
     private final KeywordIndex keywordIndex;
+    private final SmartKbMetricsService metricsService;
+
+    public EnterpriseRetrievalService(DenseVectorIndex denseVectorIndex, KeywordIndex keywordIndex,
+                                      SmartKbMetricsService metricsService) {
+        this.denseVectorIndex = denseVectorIndex;
+        this.keywordIndex = keywordIndex;
+        this.metricsService = metricsService;
+    }
+
+    /** Compatibility constructor for focused domain tests. */
+    public EnterpriseRetrievalService(DenseVectorIndex denseVectorIndex, KeywordIndex keywordIndex) {
+        this(denseVectorIndex, keywordIndex,
+                new SmartKbMetricsService(new io.micrometer.core.instrument.simple.SimpleMeterRegistry()));
+    }
 
     public EnterpriseRetrievalResult retrieve(RetrievalRequest request) {
+        long started = System.currentTimeMillis();
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             CompletableFuture<List<RetrievalCandidate>> dense = CompletableFuture.supplyAsync(
                     () -> denseVectorIndex.search(request), executor);
@@ -41,6 +56,7 @@ public class EnterpriseRetrievalService {
             SearchOutcome denseOutcome = await(dense, "milvus");
             SearchOutcome keywordOutcome = await(keyword, "opensearch");
             if (denseOutcome.failure() != null && keywordOutcome.failure() != null) {
+                metricsService.recordEnterpriseRetrieval("unavailable", 2, System.currentTimeMillis() - started);
                 throw new RetrievalUnavailableException(denseOutcome.failure(), keywordOutcome.failure());
             }
 
@@ -53,6 +69,7 @@ public class EnterpriseRetrievalService {
             if (keywordOutcome.failure() != null) failures.add("opensearch: " + keywordOutcome.failure().getClass().getSimpleName());
             String mode = denseOutcome.failure() != null ? "keyword-only"
                     : keywordOutcome.failure() != null ? "dense-only" : "hybrid";
+            metricsService.recordEnterpriseRetrieval(mode, failures.size(), System.currentTimeMillis() - started);
             return new EnterpriseRetrievalResult(mode, fuse(denseCandidates, keywordCandidates, request.candidateTopK()), failures);
         }
     }
