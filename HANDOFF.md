@@ -1,5 +1,12 @@
 # SmartKB Handoff
 
+## 2026-07-23 MinIO image access fix
+
+- Replaced the inaccessible Docker Hub MinIO reference in full/minimal Compose with the official Quay release `RELEASE.2024-06-13T22-53-53Z`, pinned to digest `sha256:c7175077d39a8cc10c9fd611cdcc68b6a5b365793e9ac6f4198ffff1ef0fe555`.
+- Verified the image architecture, entrypoint, bundled `curl`, Compose command, and `/minio/health/live` endpoint with a disposable standalone container.
+- Full/minimal Compose parsing, `mvn -B test` (101 tests), and `git diff --check` passed.
+- Phase 6d is still not complete. The next step is the isolated full Compose runtime verification; after that, run the disposable K3d air-gap verification.
+
 ## 2026-07-23 Isolated deployment retry preparation
 
 - Confirmed the MinIO manifest request is denied by the configured DaoCloud mirror with HTTP 403 after registry authentication; direct/alternate registry endpoints were not usable from this network. This is an image-distribution blocker, not an application defect.

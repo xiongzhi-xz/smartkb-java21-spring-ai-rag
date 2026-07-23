@@ -39,14 +39,11 @@ They cover Milvus/OpenSearch writes, knowledge-base filtering, document deletion
 
 ### Full/minimal startup result for this run
 
-A new full Compose runtime verification was not completed on this machine because of external environment conditions rather than Compose parsing errors:
+A new full Compose runtime verification is still pending on this machine because host ports including `5432`, `6379`, and `8082` are occupied by other local projects. The original Docker Hub MinIO reference also returned HTTP 403 through the configured Docker Desktop mirror.
 
-1. Host ports including `5432`, `6379`, and `8082` are occupied by other local projects.
-2. The Docker Desktop image mirror returned HTTP 403 while resolving the pinned MinIO image, so minimal Compose stopped during the image pull phase.
+The Compose files now use the official Quay image `quay.io/minio/minio:RELEASE.2024-06-13T22-53-53Z` pinned to digest `sha256:c7175077d39a8cc10c9fd611cdcc68b6a5b365793e9ac6f4198ffff1ef0fe555`. A standalone compatibility smoke using the Compose command and health endpoint passed locally. This does not claim that the full Compose stack has started successfully yet.
 
-This record therefore does not claim that a new full Compose end-to-end startup passed on 2026-07-23. The repository now supports an isolated retry without stopping other projects: set `SMARTKB_CONTAINER_PREFIX` to a unique value, override the host port variables documented in [STARTUP.md](../STARTUP.md), and run Compose with a unique `-p` project name. Container-internal ports remain unchanged.
-
-The remaining Compose blocker is image access, not port mapping. Confirm that Docker can pull `minio/minio:RELEASE.2024-06-13T19-53-10Z`, or load that exact image from an offline archive, before starting the isolated stack. Do not stop or delete other projects' data containers just to free ports.
+The repository supports an isolated retry without stopping other projects: set `SMARTKB_CONTAINER_PREFIX` to a unique value, override the host port variables documented in [STARTUP.md](../STARTUP.md), and run Compose with a unique `-p` project name. Container-internal ports remain unchanged. Do not stop or delete other projects' data containers just to free ports.
 
 ## K3s / K3d
 

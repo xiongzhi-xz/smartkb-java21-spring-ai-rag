@@ -64,7 +64,7 @@ docker compose -p smartkb-acceptance -f docker-compose.yml up -d --build
 docker compose -p smartkb-acceptance -f docker-compose.yml down
 ```
 
-如果 `minio/minio:RELEASE.2024-06-13T19-53-10Z` 尚未存在于本机，启动仍会在镜像拉取阶段停止；先配置可用镜像出口或执行离线 `docker load`，不要为了释放端口停止其他项目容器。
+如果 `quay.io/minio/minio:RELEASE.2024-06-13T22-53-53Z@sha256:c7175077d39a8cc10c9fd611cdcc68b6a5b365793e9ac6f4198ffff1ef0fe555` 尚未存在于本机，启动仍会在镜像拉取阶段停止；先配置可用镜像出口或执行离线 `docker load`，不要为了释放端口停止其他项目容器。
 
 ## 方式二：本地 Hybrid 模式
 
