@@ -7,7 +7,7 @@ import com.smartkb.domain.FusedRetrievalCandidate;
 import com.smartkb.domain.RetrievalCandidate;
 import com.smartkb.domain.RetrievalRequest;
 import com.smartkb.service.SmartKbMetricsService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ public class EnterpriseRetrievalService {
     private final KeywordIndex keywordIndex;
     private final SmartKbMetricsService metricsService;
 
+    @Autowired
     public EnterpriseRetrievalService(DenseVectorIndex denseVectorIndex, KeywordIndex keywordIndex,
                                       SmartKbMetricsService metricsService) {
         this.denseVectorIndex = denseVectorIndex;

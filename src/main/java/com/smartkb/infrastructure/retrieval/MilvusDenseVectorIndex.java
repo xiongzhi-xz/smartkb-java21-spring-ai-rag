@@ -23,6 +23,7 @@ import io.milvus.param.dml.UpsertParam;
 import io.milvus.param.index.CreateIndexParam;
 import io.milvus.response.SearchResultsWrapper;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
     private final RetrievalIndexProperties properties;
     private final EmbeddingService embeddingService;
 
+    @Autowired
     public MilvusDenseVectorIndex(ObjectProvider<MilvusServiceClient> clientProvider,
                                   RetrievalIndexProperties properties, EmbeddingService embeddingService) {
         this(clientProvider::getObject, properties, embeddingService);

@@ -39,11 +39,11 @@ They cover Milvus/OpenSearch writes, knowledge-base filtering, document deletion
 
 ### Full/minimal startup result for this run
 
-A new full Compose runtime verification is still pending on this machine because host ports including `5432`, `6379`, and `8082` are occupied by other local projects. The original Docker Hub MinIO reference also returned HTTP 403 through the configured Docker Desktop mirror.
+A full Compose runtime verification passed on 2026-07-23 using an isolated project and high host-port mappings, without stopping other projects. The stack was started with `docker compose -p smartkb-acceptance -f docker-compose.yml up -d --build` after setting the port variables documented in [STARTUP.md](../STARTUP.md).
 
-The Compose files now use the official Quay image `quay.io/minio/minio:RELEASE.2024-06-13T22-53-53Z` pinned to digest `sha256:c7175077d39a8cc10c9fd611cdcc68b6a5b365793e9ac6f4198ffff1ef0fe555`. A standalone compatibility smoke using the Compose command and health endpoint passed locally. This does not claim that the full Compose stack has started successfully yet.
+All nine services reached the expected running state; the health-checked services PostgreSQL, Redis, RabbitMQ, MinIO, Milvus, OpenSearch, Reranker, and SmartKB returned healthy status. The SmartKB endpoint `GET /actuator/health` returned `{"status":"UP"}` and `GET /` returned HTTP 200. MinIO, Milvus, OpenSearch, and Reranker probe requests returned HTTP 200; Prometheus reported `Prometheus Server is Ready`; Grafana `/api/health` returned HTTP 200.
 
-The repository supports an isolated retry without stopping other projects: set `SMARTKB_CONTAINER_PREFIX` to a unique value, override the host port variables documented in [STARTUP.md](../STARTUP.md), and run Compose with a unique `-p` project name. Container-internal ports remain unchanged. Do not stop or delete other projects' data containers just to free ports.
+The run also fixed two repository build/startup defects exposed by the isolated verification: the Dockerfile referenced a non-existent `.mvn/settings.xml`, and two Spring beans with test compatibility constructors lacked an explicit `@Autowired` production constructor. The application image rebuilt successfully and the full stack was rechecked after those fixes. The isolated Compose project was then shut down; other containers were not modified.
 
 ## K3s / K3d
 
