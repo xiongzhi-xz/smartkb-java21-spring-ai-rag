@@ -50,6 +50,24 @@ docker run --rm `
   mvn -B "-Dapi.version=1.40" -P integration-tests verify
 ```
 
+Milvus + OpenSearch Compose 检索 smoke：
+
+```powershell
+./scripts/smoke/retrieval-backends.ps1
+```
+
+该命令只启动 `milvus` 和 `opensearch`，运行 `RetrievalBackendsSmokeIT` 的一次确定性写入、检索和删除回环，并生成 `target/reports/retrieval-backends-smoke.md`。报告只记录实际观察到的每步耗时和错误，不推导 QPS、P95/P99 或容量结论。默认保留服务运行；需要停止时使用：
+
+```powershell
+./scripts/smoke/retrieval-backends.ps1 -StopServices
+```
+
+如果本机 `9200` 已被其他 Elasticsearch/OpenSearch 实例占用，可显式指定宿主机端口：
+
+```powershell
+./scripts/smoke/retrieval-backends.ps1 -OpenSearchPort 19200
+```
+
 ## 本地链路验证
 
 ### 1. 启动 PostgreSQL 和 Redis

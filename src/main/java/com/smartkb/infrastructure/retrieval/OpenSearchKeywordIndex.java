@@ -45,10 +45,12 @@ public class OpenSearchKeywordIndex implements KeywordIndex {
                     .size(request.candidateTopK()).query(query -> query.bool(bool -> {
                         bool.must(match -> match.match(value -> value.field("content")
                                 .query(FieldValue.of(request.query()))));
-                        bool.filter(filter -> filter.term(term -> term.field("knowledgeBaseId")
+                        // Dynamic mapping stores UUID metadata as text + keyword. Use the
+                        // exact keyword subfield so hyphenated UUID filters remain stable.
+                        bool.filter(filter -> filter.term(term -> term.field("knowledgeBaseId.keyword")
                                 .value(FieldValue.of(request.knowledgeBaseId().toString()))));
                         if (!request.documentIds().isEmpty()) {
-                            bool.filter(filter -> filter.terms(terms -> terms.field("documentId").terms(values -> values
+                            bool.filter(filter -> filter.terms(terms -> terms.field("documentId.keyword").terms(values -> values
                                     .value(request.documentIds().stream().map(id -> FieldValue.of(id.toString())).toList()))));
                         }
                         return bool;

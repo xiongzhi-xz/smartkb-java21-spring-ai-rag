@@ -141,15 +141,18 @@ src/main/java/com/smartkb
     - [x] Phase 2c-b: 增加失败入库任务重试 API，完成 `FAILED -> RETRYING` 保护迁移、对象校验、幂等竞态控制和发布失败补偿。
     - [x] Phase 2c-c: 增加企业文档删除 API，保护活动任务，按索引、MinIO、PostgreSQL 顺序清理并支持失败后重试。
     - [x] Phase 2c-d: PostgreSQL 16 Testcontainers 已完成真实验证，覆盖 Flyway 迁移、幂等提交、状态保护、失败重试和稳定状态删除。
-- [ ] Phase 3: 引入 Milvus 与 OpenSearch，完成双路召回、过滤、RRF 融合和索引一致性。
+- [x] Phase 3: 引入 Milvus 与 OpenSearch，完成双路召回、过滤、RRF 融合和索引一致性。
   - [x] Phase 3 design: 双索引唯一 chunk identity、入库 READY 门禁、删除顺序、RRF 合同和单后端降级已评审。详见 `docs/PHASE3_RETRIEVAL_DESIGN.md`。
   - [x] Phase 3a: 建立 chunk/candidate 领域模型与索引端口，并覆盖幂等写入键和请求边界测试。
   - [x] Phase 3b: 接入 Milvus/OpenSearch 本地配置、健康检查和客户端适配器；未修改 PostgreSQL migration。
   - [x] Phase 3c: 入库双索引写入和 READY 门禁。
   - [x] Phase 3d: 并行召回、过滤、RRF 融合和降级。
   - [x] Phase 3e: 双索引删除和集成验证。
-- [ ] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。
+- [x] Phase 4: 迁移查询编排、引用追溯、SSE 阶段事件和检索 trace。
 - [ ] Phase 5: 补齐 Testcontainers 集成测试、故障降级、监控指标和压测报告。
+  - [x] Phase 5a: 为企业检索记录请求数、单后端降级、不可用次数和延迟指标。
+  - [x] Phase 5b: 增加 Milvus/OpenSearch Compose 检索 smoke、真实耗时/错误报告和端口覆盖说明；不虚构 QPS 或分位数。
+  - [ ] Phase 5c: 补齐真实后端故障注入与可复现降级验证。
 - [ ] Phase 6: Docker Compose/K3s 本地部署验收与项目文档更新。
 
 ## 验收标准

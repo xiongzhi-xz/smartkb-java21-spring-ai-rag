@@ -1,5 +1,14 @@
 # SmartKB Handoff
 
+## 2026-07-23 Phase 5b
+
+- 已完成可重复的 Compose 检索 smoke：`scripts/smoke/retrieval-backends.ps1` 只启动 Milvus/OpenSearch，执行 `RetrievalBackendsSmokeIT`，并生成 `target/reports/retrieval-backends-smoke.md`。
+- smoke 真实验证了双后端写入、知识库过滤检索和按文档删除；本次使用 `-OpenSearchPort 19200` 避开本机已有 Elasticsearch 占用的 `9200`。
+- 修复真实后端暴露的两个适配器问题：Milvus 搜索参数 JSON 双重转义、写入后未 flush 导致同周期检索不可见；OpenSearch UUID 过滤改用 `.keyword` 子字段。
+- `docs/PERFORMANCE_REPORT.md` 已移除未复现的固定 QPS/倍数，改为 smoke 说明和正式压测字段要求。
+- 验证：`mvn -B test` 通过（96 tests）；`./scripts/smoke/retrieval-backends.ps1 -OpenSearchPort 19200` 通过（96 unit tests + 1 smoke IT）；`git diff --check` 通过。
+- 当前唯一下一步：Phase 5c，增加真实后端故障注入与可复现降级验证；不要把本次 smoke 的单次耗时当作压测结论。
+
 ## Current State (2026-07-22)
 
 - Phase 4 is in progress. The first delivery adds `EnterpriseChatService`, which uses the Phase 3 dual-index retrieval result to generate an evidence-grounded answer, persists user/assistant messages, citation JSON, and a durable `retrieval_trace` linked to the assistant message.

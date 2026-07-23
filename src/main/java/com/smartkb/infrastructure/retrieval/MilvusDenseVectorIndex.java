@@ -12,6 +12,7 @@ import io.milvus.grpc.DataType;
 import io.milvus.param.R;
 import io.milvus.param.collection.CreateCollectionParam;
 import io.milvus.param.collection.FieldType;
+import io.milvus.param.collection.FlushParam;
 import io.milvus.param.collection.HasCollectionParam;
 import io.milvus.param.collection.LoadCollectionParam;
 import io.milvus.param.dml.DeleteParam;
@@ -44,6 +45,10 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
         List<JsonObject> rows = chunks.stream().map(this::row).toList();
         requireSuccess(client.upsert(UpsertParam.newBuilder()
                 .withCollectionName(properties.getMilvus().getCollection()).withRows(rows).build()), "upsert");
+        // Make the write visible to the following read in the same ingestion cycle.
+        requireSuccess(client.flush(FlushParam.newBuilder()
+                .addCollectionName(properties.getMilvus().getCollection())
+                .withSyncFlush(true).build()), "flush");
     }
 
     @Override
@@ -57,7 +62,7 @@ public class MilvusDenseVectorIndex implements DenseVectorIndex {
                 .withTopK(request.candidateTopK())
                 .withExpr(filterExpression(request))
                 .withOutFields(List.of("chunkId", "documentId", "knowledgeBaseId", "versionNo", "ordinal", "content"))
-                .withParams("{\\\"nprobe\\\": 16}").build());
+                .withParams("{\"nprobe\": 16}").build());
         requireSuccess(result, "search");
         try {
             SearchResultsWrapper wrapper = new SearchResultsWrapper(result.getData().getResults());
