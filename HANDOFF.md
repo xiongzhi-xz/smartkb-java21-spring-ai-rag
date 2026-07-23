@@ -1,5 +1,11 @@
 # SmartKB Handoff
 
+## 2026-07-23 Isolated deployment retry preparation
+
+- Confirmed the MinIO manifest request is denied by the configured DaoCloud mirror with HTTP 403 after registry authentication; direct/alternate registry endpoints were not usable from this network. This is an image-distribution blocker, not an application defect.
+- Added default-preserving Compose variables for host ports and `SMARTKB_CONTAINER_PREFIX`, so full/minimal stacks can run under a unique Compose project without stopping other projects. See the isolated command block in `STARTUP.md`.
+- Phase 6d is still not complete: the isolated path is prepared, but the exact MinIO image and the K3s system images still need a working registry or offline import.
+
 ## 2026-07-23 Conversation cache alignment
 
 - Phase 6d remains externally blocked: the pinned MinIO image still returns HTTP 403 through the configured mirror, required host ports remain occupied by other projects, and those containers were not stopped.

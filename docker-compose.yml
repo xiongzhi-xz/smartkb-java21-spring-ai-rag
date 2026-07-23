@@ -2,7 +2,7 @@ services:
   # PostgreSQL 16 + pgvector 扩展
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: smartkb-postgres
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-postgres
     environment:
       POSTGRES_DB: smartkb
       POSTGRES_USER: smartkb
@@ -26,7 +26,7 @@ services:
   # Redis - 会话记忆 + 缓存
   redis:
     image: redis:7-alpine
-    container_name: smartkb-redis
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-redis
     # 不映射到宿主机（容器内部通信走 Docker 网络）
     # 如需从宿主机 redis-cli 连接：取消下行注释
     # ports:
@@ -44,10 +44,10 @@ services:
 
   rabbitmq:
     image: rabbitmq:3.13-management
-    container_name: smartkb-rabbitmq
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${SMARTKB_RABBITMQ_PORT:-5672}:5672"
+      - "${SMARTKB_RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     environment:
       RABBITMQ_DEFAULT_USER: smartkb
       RABBITMQ_DEFAULT_PASS: smartkb123
@@ -63,11 +63,11 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2024-06-13T19-53-10Z
-    container_name: smartkb-minio
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-minio
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${SMARTKB_MINIO_PORT:-9000}:9000"
+      - "${SMARTKB_MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
       MINIO_ROOT_USER: smartkb
       MINIO_ROOT_PASSWORD: smartkb123
@@ -83,14 +83,14 @@ services:
 
   milvus:
     image: milvusdb/milvus:v2.4.8
-    container_name: smartkb-milvus
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-milvus
     command: ["milvus", "run", "standalone"]
     environment:
       ETCD_USE_EMBED: "true"
       COMMON_STORAGETYPE: local
     ports:
-      - "19530:19530"
-      - "9091:9091"
+      - "${SMARTKB_MILVUS_PORT:-19530}:19530"
+      - "${SMARTKB_MILVUS_HEALTH_PORT:-9091}:9091"
     volumes:
       - milvus_data:/var/lib/milvus
     healthcheck:
@@ -104,7 +104,7 @@ services:
 
   opensearch:
     image: opensearchproject/opensearch:2.18.0
-    container_name: smartkb-opensearch
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-opensearch
     environment:
       discovery.type: single-node
       plugins.security.disabled: "true"
@@ -117,7 +117,7 @@ services:
         hard: -1
     ports:
       - "${SMARTKB_OPENSEARCH_PORT:-9200}:9200"
-      - "9600:9600"
+      - "${SMARTKB_OPENSEARCH_METRICS_PORT:-9600}:9600"
     volumes:
       - opensearch_data:/usr/share/opensearch/data
     healthcheck:
@@ -133,9 +133,9 @@ services:
     build:
       context: ./reranker-service
       dockerfile: Dockerfile
-    container_name: smartkb-reranker
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-reranker
     ports:
-      - "8090:8090"
+      - "${SMARTKB_RERANKER_PORT:-8090}:8090"
     environment:
       RERANKER_MODEL: BAAI/bge-reranker-v2-m3
       RERANKER_MAX_LENGTH: 1024
@@ -156,9 +156,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: smartkb-app
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-app
     ports:
-      - "8082:8080"
+      - "${SMARTKB_APP_PORT:-8082}:8080"
     environment:
       # 使用 Docker 网络内部 DNS 连接 PostgreSQL 和 Redis
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartkb
@@ -206,7 +206,7 @@ services:
   # Prometheus - 指标采集
   prometheus:
     image: prom/prometheus:v2.52.0
-    container_name: smartkb-prometheus
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-prometheus
     # 不映射到宿主机，Grafana 通过 Docker 网络访问
     # 容器内部 Grafana 可通过 http://prometheus:9090 访问
     # 如需从宿主机浏览器访问：取消下行注释
@@ -226,9 +226,9 @@ services:
   # Grafana - 可视化
   grafana:
     image: grafana/grafana:10.4.3
-    container_name: smartkb-grafana
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-grafana
     ports:
-      - "3001:3000"
+      - "${SMARTKB_GRAFANA_PORT:-3001}:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin123

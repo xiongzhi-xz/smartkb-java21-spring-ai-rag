@@ -44,7 +44,9 @@ A new full Compose runtime verification was not completed on this machine becaus
 1. Host ports including `5432`, `6379`, and `8082` are occupied by other local projects.
 2. The Docker Desktop image mirror returned HTTP 403 while resolving the pinned MinIO image, so minimal Compose stopped during the image pull phase.
 
-This record therefore does not claim that a new full Compose end-to-end startup passed on 2026-07-23. Before retrying, free the required ports and confirm that Docker can pull `minio/minio:RELEASE.2024-06-13T19-53-10Z`. Do not stop or delete other projects' data containers just to free ports.
+This record therefore does not claim that a new full Compose end-to-end startup passed on 2026-07-23. The repository now supports an isolated retry without stopping other projects: set `SMARTKB_CONTAINER_PREFIX` to a unique value, override the host port variables documented in [STARTUP.md](../STARTUP.md), and run Compose with a unique `-p` project name. Container-internal ports remain unchanged.
+
+The remaining Compose blocker is image access, not port mapping. Confirm that Docker can pull `minio/minio:RELEASE.2024-06-13T19-53-10Z`, or load that exact image from an offline archive, before starting the isolated stack. Do not stop or delete other projects' data containers just to free ports.
 
 ## K3s / K3d
 

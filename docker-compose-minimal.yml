@@ -2,13 +2,13 @@ services:
   # PostgreSQL 16 + pgvector
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: smartkb-postgres
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-postgres
     environment:
       POSTGRES_DB: smartkb
       POSTGRES_USER: smartkb
       POSTGRES_PASSWORD: smartkb123
     ports:
-      - "5432:5432"
+      - "${SMARTKB_POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -21,9 +21,9 @@ services:
   # Redis
   redis:
     image: redis:7-alpine
-    container_name: smartkb-redis
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-redis
     ports:
-      - "6379:6379"
+      - "${SMARTKB_REDIS_PORT:-6379}:6379"
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
@@ -35,11 +35,11 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2024-06-13T19-53-10Z
-    container_name: smartkb-minio
+    container_name: ${SMARTKB_CONTAINER_PREFIX:-smartkb}-minio
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${SMARTKB_MINIO_PORT:-9000}:9000"
+      - "${SMARTKB_MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
       MINIO_ROOT_USER: smartkb
       MINIO_ROOT_PASSWORD: smartkb123

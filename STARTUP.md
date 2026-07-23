@@ -36,6 +36,36 @@ docker compose up -d
 - Health：http://localhost:8082/actuator/health
 - Grafana：http://localhost:3001
 
+### 端口冲突时的隔离验收
+
+Compose 默认端口保持不变；如果宿主机已有其他项目占用端口，可通过环境变量覆盖宿主映射端口，并使用独立容器名前缀和 Compose 项目名。容器内部通信端口不变，应用配置无需改动：
+
+```powershell
+$env:SMARTKB_CONTAINER_PREFIX = "smartkb-acceptance"
+$env:SMARTKB_RABBITMQ_PORT = "25672"
+$env:SMARTKB_RABBITMQ_MANAGEMENT_PORT = "25673"
+$env:SMARTKB_MINIO_PORT = "29000"
+$env:SMARTKB_MINIO_CONSOLE_PORT = "29001"
+$env:SMARTKB_MILVUS_PORT = "29530"
+$env:SMARTKB_MILVUS_HEALTH_PORT = "29091"
+$env:SMARTKB_OPENSEARCH_PORT = "29200"
+$env:SMARTKB_OPENSEARCH_METRICS_PORT = "29600"
+$env:SMARTKB_RERANKER_PORT = "28090"
+$env:SMARTKB_APP_PORT = "28082"
+$env:SMARTKB_GRAFANA_PORT = "23001"
+
+docker compose -p smartkb-acceptance -f docker-compose.yml config --quiet
+docker compose -p smartkb-acceptance -f docker-compose.yml up -d --build
+```
+
+验收结束后只清理本次隔离项目：
+
+```powershell
+docker compose -p smartkb-acceptance -f docker-compose.yml down
+```
+
+如果 `minio/minio:RELEASE.2024-06-13T19-53-10Z` 尚未存在于本机，启动仍会在镜像拉取阶段停止；先配置可用镜像出口或执行离线 `docker load`，不要为了释放端口停止其他项目容器。
+
 ## 方式二：本地 Hybrid 模式
 
 ### 1. 启动 PostgreSQL 和 Redis
