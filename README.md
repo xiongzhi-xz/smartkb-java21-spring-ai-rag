@@ -19,7 +19,7 @@ SmartKB 是一个基于 Java 21、Spring Boot、Spring AI、PostgreSQL/pgvector 
 - **可量化评测**：内置中文测试集，对比普通检索和 Advanced RAG 的 Recall@K、Top1、MRR 与引用覆盖率。
 - **低置信度拒答**：检索证据不足时跳过生成模型，返回明确拒答原因，降低无依据回答风险。
 - **答案质量 Judge**：离线评估 Faithfulness、Answer Relevance 与 Context Relevance，并保留每项评分理由。
-- **Redis 会话记忆**：实现 Spring AI `ChatMemory`，使用 Redis List + TTL 保存多轮上下文，并支持不可用时降级。
+- **会话持久化与缓存**：会话事实写入 PostgreSQL，Redis 只缓存近期上下文窗口并设置 TTL；Redis 不可用时自动回源 PostgreSQL。
 - **Java 21 虚拟线程**：用于文档解析和 Embedding 批处理等 IO 密集任务。
 - **流式交互**：普通问答和 Advanced RAG 均支持 SSE；Advanced 模式会返回各阶段状态和耗时。
 - **可观测性**：Micrometer 指标、Prometheus 采集和 Grafana Dashboard。
@@ -58,7 +58,8 @@ flowchart LR
     Rerank --> LLM[Chat Model]
     LLM --> API
 
-    API --> Redis[(Redis ChatMemory)]
+    API --> PGChat[(PostgreSQL Conversation Memory)]
+    PGChat -. recent context cache .-> Redis[(Redis TTL Cache)]
     API --> Metrics[Micrometer]
     Metrics --> Prometheus
     Prometheus --> Grafana
@@ -133,9 +134,9 @@ Before starting the full stack, check host ports, Docker image access, GPU/Reran
 
 同一组 8 个固定检索用例的本地结果：纯 BGE 为 Top1 `6/8`、MRR `0.875`；规则重排为 Top1 `8/8`、MRR `1.0`；融合后保持 Top1 `8/8`、MRR `1.0`。该结果只代表当前小型定制测试集，不外推到通用数据集。
 
-### 为什么自研 Redis ChatMemory？
+### 为什么会话事实放 PostgreSQL、Redis 只做缓存？
 
-项目使用的 Spring AI 版本未提供适配当前需求的 Redis 实现，因此直接实现轻量 `ChatMemory` 接口。Redis List 保留消息顺序，TTL 控制会话生命周期，读写时续期保持活跃会话。
+会话消息需要审计、按顺序恢复，并在服务重启后保持不丢失，因此由 PostgreSQL 持久化。`PostgresChatMemory` 通过 `ConversationContextCache` 缓存近期上下文窗口；Redis 使用 JSON value 和 TTL 加速读取，读写或删除失败时忽略缓存错误并回源 PostgreSQL，不影响会话事实。
 
 ### 虚拟线程解决什么问题？
 
@@ -159,7 +160,7 @@ git diff --check
 
 ## 项目概述
 
-> SmartKB 是我基于 Java 21 和 Spring AI 实现的可解释 RAG 知识库。除了文档入库和流式问答，我重点解决了三个工程问题：第一，用 Hybrid Search 和查询改写提高中文技术文档召回；第二，用引用 chunk 和 Recall@K、MRR 评测让结果可解释、可量化；第三，用 Redis ChatMemory、Micrometer 和 Docker Compose 补齐会话持久化、监控和交付能力。项目中的取舍都有明确边界，例如当前重排是规则算法，我会通过现有评测集判断是否值得引入 Cross-Encoder。
+> SmartKB 是我基于 Java 21 和 Spring AI 实现的可解释 RAG 知识库。除了文档入库和流式问答，我重点解决了三个工程问题：第一，用 Hybrid Search 和查询改写提高中文技术文档召回；第二，用引用 chunk 和 Recall@K、MRR 评测让结果可解释、可量化；第三，用 PostgreSQL 会话持久化、Redis 上下文缓存、Micrometer 和 Docker Compose 补齐会话恢复、监控和交付能力。项目中的取舍都有明确边界，例如当前重排是规则算法，我会通过现有评测集判断是否值得引入 Cross-Encoder。
 
 ## 相关文档
 
@@ -168,4 +169,4 @@ git diff --check
 - [STARTUP.md](STARTUP.md)：启动说明
 - [TESTING.md](TESTING.md)：测试与联调说明
 - [docs/PERFORMANCE_REPORT.md](docs/PERFORMANCE_REPORT.md)：性能验证记录
-- [docs/REDIS_CHAT_MEMORY_VERIFICATION.md](docs/REDIS_CHAT_MEMORY_VERIFICATION.md)：会话记忆验证
+- [docs/REDIS_CHAT_MEMORY_VERIFICATION.md](docs/REDIS_CHAT_MEMORY_VERIFICATION.md)：会话持久化与 Redis 上下文缓存验证

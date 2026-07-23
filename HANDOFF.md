@@ -1,5 +1,12 @@
 # SmartKB Handoff
 
+## 2026-07-23 Conversation cache alignment
+
+- Phase 6d remains externally blocked: the pinned MinIO image still returns HTTP 403 through the configured mirror, required host ports remain occupied by other projects, and those containers were not stopped.
+- Audited the existing Phase 1c implementation: PostgreSQL is the authoritative conversation store; Redis only caches a bounded recent context window with TTL and degrades to PostgreSQL on cache failures.
+- Added `RedisConversationContextCacheTest` for JSON round trips, TTL writes, eviction, and Redis failure handling; corrected README/SPEC and replaced the obsolete Redis List ChatMemory verification narrative.
+- Phase 1c is now accurately checked off. The only remaining unchecked phase is Phase 6/6d runtime verification when external image and port conditions permit.
+
 ## 2026-07-23 Phase 6a-6c
 
 - Docker Compose full/minimal configuration parsing passed; `docker-compose-minimal.yml` no longer has the obsolete top-level `version` field.

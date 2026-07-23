@@ -78,7 +78,7 @@ Question + conversationId
   -> SSE response
 ```
 
-- Redis 只缓存近期会话摘要、热点检索结果和限流计数；缓存失效不丢失会话事实。
+- Redis 只缓存近期会话上下文窗口、热点检索结果和限流计数；缓存失效不丢失 PostgreSQL 中的会话事实。
 - 回答、引用、模型调用耗时、检索候选和拒答原因均可追溯。
 
 ## 数据模型
@@ -132,7 +132,7 @@ src/main/java/com/smartkb
 
 - [x] Phase 1a: 引入 Flyway 企业 RAG 核心表，完成 PostgreSQL 持久化会话；Redis 不再承载长期记忆。
 - [x] Phase 1b: 建立会话领域端口与 PostgreSQL Repository 适配器。
-- [ ] Phase 1c: 建立 Redis 缓存适配层与会话摘要缓存策略。
+- [x] Phase 1c: 建立 Redis 可失效的会话上下文缓存适配层与 TTL/window 策略；Redis 不承载会话事实。
 - [x] Phase 2: 引入 MinIO、RabbitMQ，完成异步文档入库、状态机、重试和幂等控制。
   - [x] Phase 2a: 完成 MinIO/RabbitMQ 本地配置、扩展入库事件和消费者状态门禁。
   - [x] Phase 2b: 完成上传提交编排、`kb_document`/`ingestion_job` 原子准备、对象保存和事件发布。
