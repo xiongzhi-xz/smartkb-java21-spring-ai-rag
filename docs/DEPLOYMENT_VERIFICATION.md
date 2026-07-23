@@ -60,9 +60,10 @@ Result: YAML parsing passed and `K3sDemoManifestTest` passed. The test covers Na
 ### Runtime history
 
 - 2026-06-18: a disposable K3d runtime verification passed. PostgreSQL, Redis, and SmartKB reached `Running`; PVCs reached `Bound`; `/actuator/health` returned `UP`.
-- 2026-07-23: a disposable K3d recheck was blocked before application startup because the K3s node could not pull `rancher/mirrored-pause:3.6`; Pod sandboxes and the local-path provisioner could not start. A second attempt explicitly imported the pause and application images, but K3d reported a missing content digest and the node still had no imported images. The retry limit was reached and the temporary cluster was deleted.
+- 2026-07-23: a disposable K3d recheck was blocked before application startup because the K3s node could not pull `rancher/mirrored-pause:3.6`; Pod sandboxes and the local-path provisioner could not start. A second attempt explicitly imported the pause and application images, but K3d reported a missing content digest and the node still had no imported images.
+- 2026-07-23 continuation: importing a Docker-saved pause image directly with containerd (`ctr -n k8s.io images import`) succeeded, and Kubernetes began creating Pod sandboxes. The node then reached `ImagePullBackOff` for `rancher/mirrored-coredns-coredns:1.14.3`, `rancher/local-path-provisioner:v0.0.36`, and `rancher/mirrored-metrics-server:v0.8.1` because Docker Hub requests returned EOF. The disposable cluster and temporary image archive were deleted.
 
-The second failure happened before Kubernetes could create application sandboxes. It does not prove that the application resources in `k8s/k3s-demo.yaml` fail at runtime, and static tests must not be presented as a replacement for a successful runtime check.
+These failures happened before the SmartKB manifest could complete a new runtime acceptance. They do not prove that the application resources in `k8s/k3s-demo.yaml` fail at runtime, and static tests must not be presented as a replacement for a successful runtime check.
 
 ## Repeatable acceptance order
 
@@ -88,5 +89,5 @@ For full Compose and disposable K3d runtime procedures, see `STARTUP.md` and `k8
 - Milvus/OpenSearch retrieval and degradation smoke: passed in Phase 5.
 - K3s manifest static/structure checks: passed.
 - New full Compose runtime verification on 2026-07-23: incomplete because of host-port conflicts and the MinIO image mirror.
-- New K3d runtime verification on 2026-07-23: incomplete because of the K3s pause-image pull/import path.
+- New K3d runtime verification on 2026-07-23: incomplete because the K3s node could not access the required system images; direct containerd import resolved the pause image only.
 - Production-grade deployment: out of scope for this project.

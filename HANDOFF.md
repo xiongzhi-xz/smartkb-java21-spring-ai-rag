@@ -5,7 +5,7 @@
 - Docker Compose full/minimal configuration parsing passed; `docker-compose-minimal.yml` no longer has the obsolete top-level `version` field.
 - Phase 5 Milvus/OpenSearch retrieval and degradation smoke remains the real backend evidence; no single-run timing was presented as a performance claim.
 - K3s YAML parsing and `K3sDemoManifestTest` passed; the 2026-06-18 disposable K3d run remains the latest complete runtime pass.
-- The 2026-07-23 full Compose recheck was blocked by occupied host ports and an HTTP 403 from the MinIO image mirror. The K3d recheck was blocked by pause-image pull/import failure. Two K3d attempts were made, then the temporary cluster was deleted.
+- The 2026-07-23 full Compose recheck was blocked by occupied host ports and an HTTP 403 from the MinIO image mirror. In K3d, direct containerd import fixed the pause-image blocker, but CoreDNS, local-path-provisioner, and metrics-server still reached `ImagePullBackOff` because Docker Hub requests returned EOF. The temporary cluster and image archive were deleted.
 - Added `docs/DEPLOYMENT_VERIFICATION.md` and aligned README, STARTUP, TESTING, K3s guidance, and the deployment plan with the actual results and project boundaries.
 - The only next step is Phase 6d: re-run full Compose and disposable K3d runtime verification when ports are free and Docker/K3s image access works; if both pass, check off Phase 6 and make the final handoff commit.
 
