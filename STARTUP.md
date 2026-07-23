@@ -120,3 +120,7 @@ curl http://localhost:8080/actuator/health
 - 检查向量表是否有记录。
 - 检查 Embedding 维度是否一致。
 - 检查相似度阈值和文档过滤条件。
+
+## Deployment verification record
+
+The current Compose/K3s checks, historical runtime evidence, and environment blockers are recorded in [docs/DEPLOYMENT_VERIFICATION.md](docs/DEPLOYMENT_VERIFICATION.md).

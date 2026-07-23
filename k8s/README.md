@@ -6,7 +6,7 @@ K3s 部署方案和现有 manifest 审计见：`../docs/K3S_DEPLOYMENT_PLAN.md`�
 
 K3s demo manifest: `k8s/k3s-demo.yaml`.
 
-Runtime status: `k8s/k3s-demo.yaml` was verified on a disposable K3d cluster on 2026-06-18. PostgreSQL, Redis, and SmartKB reached `Running`; PVCs reached `Bound`; `/actuator/health` returned `UP` with `db`, `redis`, and `diskSpace` all `UP`.
+Runtime status: `k8s/k3s-demo.yaml` was verified on a disposable K3d cluster on 2026-06-18. PostgreSQL, Redis, and SmartKB reached `Running`; PVCs reached `Bound`; `/actuator/health` returned `UP` with `db`, `redis`, and `diskSpace` all `UP`. A 2026-07-23 recheck was blocked before Pod startup by the local K3s node failing to pull/import its pause image; see `../docs/DEPLOYMENT_VERIFICATION.md`.
 
 Windows K3d note: if `kubectl` hangs or returns TLS EOF with a generated `host.docker.internal` server URL, create a temporary kubeconfig for the demo and replace that server URL with `https://127.0.0.1:<k3d-api-port>`.
 

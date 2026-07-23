@@ -154,6 +154,10 @@ src/main/java/com/smartkb
   - [x] Phase 5b: 增加 Milvus/OpenSearch Compose 检索 smoke、真实耗时/错误报告和端口覆盖说明；不虚构 QPS 或分位数。
   - [x] Phase 5c: 补齐真实后端故障注入与可复现降级验证；覆盖 Milvus、OpenSearch 单后端故障、双后端不可用和恢复清理。
 - [ ] Phase 6: Docker Compose/K3s 本地部署验收与项目文档更新。
+  - [x] Phase 6a: Compose full/minimal configuration parsing passed; removed the obsolete minimal `version` field and recorded port/MinIO mirror blockers.
+  - [x] Phase 6b: K3s YAML parsing and `K3sDemoManifestTest` passed; retained the 2026-06-18 runtime evidence and recorded the 2026-07-23 pause-image blocker.
+  - [x] Phase 6c: README, STARTUP, TESTING, K3s guidance, and the deployment verification report were aligned.
+  - [ ] Phase 6d: Re-run full Compose and disposable K3d runtime verification in an environment with free ports and working image access.
 
 ## 验收标准
 

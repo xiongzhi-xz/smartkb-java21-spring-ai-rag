@@ -9,7 +9,7 @@ Provide a conservative K3s deployment path for SmartKB that preserves the curren
 Existing files:
 
 - `Dockerfile`: builds the Spring Boot app inside Docker with Maven and runs as a non-root user.
-- `docker-compose.yml`: verified local full-chain deployment for PostgreSQL, Redis, app, Prometheus, and Grafana.
+- `docker-compose.yml`: Compose configuration parses successfully; historical local runs exist, while the 2026-07-23 full runtime recheck was not completed because of occupied host ports and a blocked MinIO image pull. See `DEPLOYMENT_VERIFICATION.md`.
 - `k8s/deployment-draft.yaml`: draft Kubernetes manifest kept for historical design notes.
 - `k8s/k3s-demo.yaml`: K3s demo manifest with explicit app environment variables and Secret references.
 - `k8s/README.md`: generic Kubernetes deployment notes.
@@ -172,7 +172,7 @@ Local syntax check:
 
 - `npx --yes js-yaml k8s/k3s-demo.yaml` passed.
 - `mvn -Dtest=K3sDemoManifestTest test` passed and guards the demo manifest structure, required app env vars, Secret references, probes, services, ingress, and PostgreSQL `PGDATA`.
-- Disposable K3d runtime verification passed on 2026-06-18 with `k3d` v5.9.0 and K3s v1.35.5+k3s1.
+- Disposable K3d runtime verification passed on 2026-06-18 with `k3d` v5.9.0 and K3s v1.35.5+k3s1. The 2026-07-23 recheck was blocked before application scheduling by the K3s node pause-image pull/import path; it is recorded as incomplete rather than passed.
 - Verified path:
   - tagged the Docker Compose app image as `smartkb:local`;
   - created a disposable `smartkb-demo` K3d cluster;

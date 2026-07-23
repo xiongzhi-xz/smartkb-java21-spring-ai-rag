@@ -238,3 +238,14 @@ node scripts/smoke/workbench-desktop-screenshots.mjs
 - 并发数
 - 模型和网络条件
 - P50、P95、P99 与错误率
+
+## Deployment configuration acceptance
+
+```powershell
+docker compose -f docker-compose.yml config --quiet
+docker compose -f docker-compose-minimal.yml config --quiet
+npx --yes js-yaml k8s/k3s-demo.yaml
+mvn -B -Dtest=K3sDemoManifestTest test
+```
+
+These commands validate Compose parsing, YAML parsing, and K3s manifest structure; they do not replace a full runtime check. See [docs/DEPLOYMENT_VERIFICATION.md](docs/DEPLOYMENT_VERIFICATION.md) for the 2026-07-23 results and blockers.

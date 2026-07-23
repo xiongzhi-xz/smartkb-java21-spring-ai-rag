@@ -101,6 +101,8 @@ docker compose up -d
 
 完整话术见 [DEMO.md](DEMO.md)。
 
+Before starting the full stack, check host ports, Docker image access, GPU/Reranker, Ollama, and the Chat API. Current Compose/K3s verification results and environment blockers are recorded in [docs/DEPLOYMENT_VERIFICATION.md](docs/DEPLOYMENT_VERIFICATION.md).
+
 ## API
 
 | 方法 | 路径 | 说明 |
