@@ -1,5 +1,13 @@
 # SmartKB Handoff
 
+## 2026-07-24 Phase 6 deployment acceptance complete
+
+- Phase 6/6d is complete. Isolated full Compose runtime verification passed on 2026-07-23, and disposable K3d air-gap runtime verification passed on 2026-07-24.
+- The K3d run imported the official K3s v1.35.5+k3s1 air-gap archive and local SmartKB/PostgreSQL/Redis image archive into the temporary node. PostgreSQL, Redis, SmartKB, and both PVCs became ready; `/actuator/health` returned `UP` and `/` returned HTTP 200 through a service port-forward.
+- Fixed K3d compatibility defects: Milvus client construction is lazy so an unavailable optional backend does not prevent application startup; the compact K3s demo explicitly disables Rabbit health because it intentionally does not deploy RabbitMQ.
+- Final verification passed: `mvn -B test` (101 tests), both Compose config checks, K3s YAML parsing, `K3sDemoManifestTest`, and `git diff --check`.
+- The disposable K3d cluster was deleted. The system temporary air-gap/application archive files remain because the terminal policy rejected their removal; they are outside the repository and can be removed manually from `%TEMP%`.
+
 ## 2026-07-23 Full Compose runtime verification
 
 - Isolated full Compose startup passed with project `smartkb-acceptance` and high host ports; no other project containers were stopped or modified.

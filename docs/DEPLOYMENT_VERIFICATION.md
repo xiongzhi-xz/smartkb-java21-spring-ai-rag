@@ -4,7 +4,7 @@
 
 This record covers Phase 6 in `SPEC.md`: Docker Compose and K3s delivery checks, plus the limits of the local runtime environment. It is not a production capacity, HA, TLS, secret-management, or performance report.
 
-Verification date: 2026-07-23.
+Verification date: 2026-07-24.
 
 ## Environment
 
@@ -56,13 +56,13 @@ mvn -B -Dtest=K3sDemoManifestTest test
 
 Result: YAML parsing passed and `K3sDemoManifestTest` passed. The test covers Namespace, Secret references, PostgreSQL/Redis, application environment variables, probes, Services, Ingress, PVCs, and PostgreSQL `PGDATA`.
 
-### Runtime history
+### Air-gap runtime verification
 
-- 2026-06-18: a disposable K3d runtime verification passed. PostgreSQL, Redis, and SmartKB reached `Running`; PVCs reached `Bound`; `/actuator/health` returned `UP`.
-- 2026-07-23: a disposable K3d recheck was blocked before application startup because the K3s node could not pull `rancher/mirrored-pause:3.6`; Pod sandboxes and the local-path provisioner could not start. A second attempt explicitly imported the pause and application images, but K3d reported a missing content digest and the node still had no imported images.
-- 2026-07-23 continuation: importing a Docker-saved pause image directly with containerd (`ctr -n k8s.io images import`) succeeded, and Kubernetes began creating Pod sandboxes. The node then reached `ImagePullBackOff` for `rancher/mirrored-coredns-coredns:1.14.3`, `rancher/local-path-provisioner:v0.0.36`, and `rancher/mirrored-metrics-server:v0.8.1` because Docker Hub requests returned EOF. The disposable cluster and temporary image archive were deleted.
+On 2026-07-24, a disposable K3d v5.9.0 cluster using K3s v1.35.5+k3s1 completed runtime verification without registry pulls. The matching official K3s air-gap archive was copied to the server node's `/var/lib/rancher/k3s/agent/images/` directory and loaded by restarting that disposable node. A Docker archive containing `smartkb:local`, `pgvector/pgvector:pg16`, and `redis:7-alpine` was then imported with `ctr -n k8s.io images import`.
 
-These failures happened before the SmartKB manifest could complete a new runtime acceptance. They do not prove that the application resources in `k8s/k3s-demo.yaml` fail at runtime, and static tests must not be presented as a replacement for a successful runtime check.
+The `smartkb` namespace and placeholder-only demo Secret were created, then `k8s/k3s-demo.yaml` was applied. PostgreSQL, Redis, and SmartKB reached `Running`/`Ready`; both PVCs reached `Bound`. A port-forward to `smartkb-service` verified `GET /actuator/health` as `UP` with `db`, `redis`, `diskSpace`, liveness, and readiness all `UP`; `GET /` returned HTTP 200.
+
+The run exposed two deployment compatibility defects that were fixed and rechecked: the Milvus client had been eagerly constructed despite the retrieval adapter's lazy-failure design, and RabbitMQ is deliberately absent from the compact K3s demo but was included in its health result. The Milvus Bean is now lazy, and the demo manifest disables only the Rabbit health indicator. This does not claim that the compact manifest provides document-ingestion or enterprise dual-index retrieval; those components remain covered by the full Compose deployment.
 
 ## Repeatable acceptance order
 
@@ -87,6 +87,6 @@ For full Compose and disposable K3d runtime procedures, see `STARTUP.md` and `k8
 - Compose delivery files: passed configuration validation.
 - Milvus/OpenSearch retrieval and degradation smoke: passed in Phase 5.
 - K3s manifest static/structure checks: passed.
-- New full Compose runtime verification on 2026-07-23: incomplete because of host-port conflicts and the MinIO image mirror.
-- New K3d runtime verification on 2026-07-23: incomplete because the K3s node could not access the required system images; direct containerd import resolved the pause image only.
+- Full Compose runtime verification on 2026-07-23: passed with an isolated project and high host ports.
+- Disposable K3d air-gap runtime verification on 2026-07-24: passed with imported K3s system and application images.
 - Production-grade deployment: out of scope for this project.

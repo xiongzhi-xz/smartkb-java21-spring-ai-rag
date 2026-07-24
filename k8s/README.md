@@ -6,9 +6,11 @@ K3s 部署方案和现有 manifest 审计见：`../docs/K3S_DEPLOYMENT_PLAN.md`�
 
 K3s demo manifest: `k8s/k3s-demo.yaml`.
 
-Runtime status: `k8s/k3s-demo.yaml` was verified on a disposable K3d cluster on 2026-06-18. PostgreSQL, Redis, and SmartKB reached `Running`; PVCs reached `Bound`; `/actuator/health` returned `UP` with `db`, `redis`, and `diskSpace` all `UP`. During the 2026-07-23 recheck, direct containerd import resolved the pause-image blocker, but required K3s system images still reached `ImagePullBackOff` because registry requests returned EOF; see `../docs/DEPLOYMENT_VERIFICATION.md`.
+Runtime status: `k8s/k3s-demo.yaml` was verified again by disposable K3d air-gap verification on 2026-07-24. PostgreSQL, Redis, and SmartKB reached `Running`; PVCs reached `Bound`; `/actuator/health` returned `UP` with `db`, `redis`, and `diskSpace` all `UP`; `/` returned HTTP 200. The compact demo intentionally does not deploy RabbitMQ, MinIO, Milvus, or OpenSearch. Rabbit health is disabled in the application Pod so only the dependencies supplied by this manifest define its liveness contract; see `../docs/DEPLOYMENT_VERIFICATION.md`.
 
 Windows K3d note: if `kubectl` hangs or returns TLS EOF with a generated `host.docker.internal` server URL, create a temporary kubeconfig for the demo and replace that server URL with `https://127.0.0.1:<k3d-api-port>`.
+
+For networks that cannot pull K3s system images, import the matching official K3s air-gap archive into the server node at `/var/lib/rancher/k3s/agent/images/`, restart that disposable node, then import a Docker archive containing `smartkb:local`, `pgvector/pgvector:pg16`, and `redis:7-alpine` with `ctr -n k8s.io images import` before applying the manifest.
 
 ```powershell
 kubectl create namespace smartkb

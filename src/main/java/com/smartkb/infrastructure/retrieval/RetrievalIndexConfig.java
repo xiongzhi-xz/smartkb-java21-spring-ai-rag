@@ -10,12 +10,14 @@ import org.opensearch.client.transport.rest_client.RestClientTransport;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 @EnableConfigurationProperties(RetrievalIndexProperties.class)
 public class RetrievalIndexConfig {
 
     @Bean(destroyMethod = "close")
+    @Lazy
     MilvusServiceClient milvusClient(RetrievalIndexProperties properties) {
         RetrievalIndexProperties.Milvus milvus = properties.getMilvus();
         return new MilvusServiceClient(ConnectParam.newBuilder()

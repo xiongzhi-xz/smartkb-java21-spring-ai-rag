@@ -199,6 +199,10 @@ spec:
               value: redis-service
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
+            # This compact demo does not include RabbitMQ. Keep its reconnecting
+            # listener out of the base deployment health contract.
+            - name: MANAGEMENT_HEALTH_RABBIT_ENABLED
+              value: "false"
             - name: OLLAMA_BASE_URL
               value: http://host.k3d.internal:11434
             - name: OPENAI_API_KEY
