@@ -1,5 +1,11 @@
 # SmartKB Enterprise RAG SPEC
 
+## 2026-07-24 Compatibility Record
+
+- Enterprise ingestion still uses Milvus and OpenSearch as its primary indexes. Until legacy `/api/chat/advanced` is retired, it also writes file-scoped compatibility rows to pgvector `vector_store`.
+- The compatibility write is part of the READY gate, so Advanced RAG cannot report a document as ready while its legacy retrieval path has no data.
+- The isolated environment verified retrieval candidates through the compatibility path. End-to-end answer generation remains dependent on the configured OpenAI-compatible transit endpoint returning complete JSON.
+
 ## 当前目标
 
 将 SmartKB 从以 `PgVectorStore + Redis ChatMemory` 为中心的演示型 RAG，重构为可在本地 Docker Compose 与 K3s 环境运行的单租户企业知识库服务。重点是文档生命周期、异步入库、可追溯检索、持久化会话和可观测交付，而非仅替换向量数据库。

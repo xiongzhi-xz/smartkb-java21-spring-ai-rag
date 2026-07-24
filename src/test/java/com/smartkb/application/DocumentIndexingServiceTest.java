@@ -8,6 +8,7 @@ import com.smartkb.domain.KnowledgeDocument;
 import com.smartkb.domain.KnowledgeDocumentStatus;
 import com.smartkb.service.DocumentLoaderService;
 import com.smartkb.service.EmbeddingService;
+import com.smartkb.service.VectorStoreService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
 import org.springframework.core.io.ByteArrayResource;
@@ -32,6 +33,7 @@ class DocumentIndexingServiceTest {
         DocumentChunkRepository chunks = mock(DocumentChunkRepository.class);
         DenseVectorIndex dense = mock(DenseVectorIndex.class);
         KeywordIndex keyword = mock(KeywordIndex.class);
+        VectorStoreService legacyVectorStore = mock(VectorStoreService.class);
         Document first = new Document("first chunk");
         first.setEmbedding(List.of(0.1, 0.2));
         Document second = new Document("second chunk");
@@ -41,7 +43,7 @@ class DocumentIndexingServiceTest {
         when(loader.loadAndSplitDocument(any(), org.mockito.ArgumentMatchers.eq("md"))).thenReturn(parsed);
         when(chunks.persistOrVerify(any(), any(), org.mockito.ArgumentMatchers.eq(1), any())).thenAnswer(call -> call.getArgument(3));
 
-        new DocumentIndexingService(loader, embedding, chunks, dense, keyword)
+        new DocumentIndexingService(loader, embedding, chunks, dense, keyword, legacyVectorStore)
                 .index(document, new ByteArrayResource(new byte[0]), "md");
 
         var payload = org.mockito.ArgumentCaptor.forClass(List.class);
@@ -51,10 +53,15 @@ class DocumentIndexingServiceTest {
                 .containsExactly(UUID.nameUUIDFromBytes((document.id() + ":0").getBytes()),
                         UUID.nameUUIDFromBytes((document.id() + ":1").getBytes()));
         assertThat(indexed).extracting(IndexableChunk::contentHash).doesNotHaveDuplicates();
-        inOrder(chunks, dense, keyword).verify(chunks).persistOrVerify(any(), any(), org.mockito.ArgumentMatchers.eq(1), any());
-        inOrder(chunks, dense, keyword).verify(dense).upsert(any());
-        inOrder(chunks, dense, keyword).verify(keyword).upsert(any());
-        inOrder(chunks, dense, keyword).verify(chunks).markReady(any(), any());
+        inOrder(chunks, dense, keyword, legacyVectorStore).verify(chunks).persistOrVerify(any(), any(), org.mockito.ArgumentMatchers.eq(1), any());
+        inOrder(chunks, dense, keyword, legacyVectorStore).verify(dense).upsert(any());
+        inOrder(chunks, dense, keyword, legacyVectorStore).verify(keyword).upsert(any());
+        var legacyPayload = org.mockito.ArgumentCaptor.forClass(List.class);
+        inOrder(chunks, dense, keyword, legacyVectorStore).verify(legacyVectorStore).addDocuments(legacyPayload.capture());
+        inOrder(chunks, dense, keyword, legacyVectorStore).verify(chunks).markReady(any(), any());
+        @SuppressWarnings("unchecked") List<Document> legacyDocuments = legacyPayload.getValue();
+        assertThat(legacyDocuments).extracting(item -> item.getMetadata().get("fileName"))
+                .containsOnly(document.fileName());
     }
 
     @Test
@@ -64,13 +71,14 @@ class DocumentIndexingServiceTest {
         DocumentChunkRepository chunks = mock(DocumentChunkRepository.class);
         DenseVectorIndex dense = mock(DenseVectorIndex.class);
         KeywordIndex keyword = mock(KeywordIndex.class);
+        VectorStoreService legacyVectorStore = mock(VectorStoreService.class);
         Document parsed = new Document("chunk");
         parsed.setEmbedding(List.of(0.1));
         when(loader.loadAndSplitDocument(any(), any())).thenReturn(List.of(parsed));
         when(chunks.persistOrVerify(any(), any(), any(Integer.class), any())).thenAnswer(call -> call.getArgument(3));
         doThrow(new IllegalStateException("unavailable")).when(keyword).upsert(any());
 
-        assertThatThrownBy(() -> new DocumentIndexingService(loader, embedding, chunks, dense, keyword)
+        assertThatThrownBy(() -> new DocumentIndexingService(loader, embedding, chunks, dense, keyword, legacyVectorStore)
                 .index(document(), new ByteArrayResource(new byte[0]), "md"))
                 .isInstanceOf(IndexingFailureException.class)
                 .extracting("errorCode").isEqualTo("OPENSEARCH_INDEX_FAILED");

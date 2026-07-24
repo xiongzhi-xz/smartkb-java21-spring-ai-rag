@@ -1,5 +1,14 @@
 # SmartKB Handoff
 
+## 2026-07-24 Business Acceptance Follow-up
+
+- Fixed the compatibility gap between enterprise ingestion and legacy Advanced RAG. `DocumentIndexingService` now writes the same embedded chunks to Milvus, OpenSearch, and the legacy pgvector `vector_store` before the document can become READY.
+- Legacy rows carry `documentId`, `fileName`, `fileType`, `chunkIndex`, and stable `evalChunkId` metadata; the new unit test asserts the write occurs before `markReady`.
+- Full verification passed: `mvn test` (101 tests) and `git diff --check`.
+- Isolated acceptance uploaded `advanced-rag-demo.md`, reached READY with 16 chunks, and confirmed 12 semantic plus 8 keyword candidates under the filename filter.
+- Final-answer acceptance remains blocked by the configured OpenAI-compatible transit endpoint returning truncated/empty JSON. Query rewriting falls back; answer generation fails while deserializing `ChatCompletion`.
+- The isolated app later exited with code 255 during repeated model-backed evaluation. Do not treat this as an indexing failure or change the configured model provider without user authorization.
+
 ## 2026-07-24 Phase 7 HTTP load baseline complete
 
 - Added `scripts/performance/http-load.ps1`, a dependency-free PowerShell runspace load tool for GET endpoints. It writes request parameters, success/error counts, throughput, P50/P95/P99, and host basics to `target/reports` and returns nonzero when any request fails.

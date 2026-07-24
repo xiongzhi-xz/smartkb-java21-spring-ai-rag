@@ -7,6 +7,7 @@ import com.smartkb.domain.IndexableChunk;
 import com.smartkb.domain.KnowledgeDocument;
 import com.smartkb.service.DocumentLoaderService;
 import com.smartkb.service.EmbeddingService;
+import com.smartkb.service.VectorStoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.core.io.Resource;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -29,6 +32,7 @@ public class DocumentIndexingService {
     private final DocumentChunkRepository documentChunkRepository;
     private final DenseVectorIndex denseVectorIndex;
     private final KeywordIndex keywordIndex;
+    private final VectorStoreService vectorStoreService;
 
     public void index(KnowledgeDocument document, Resource resource, String fileType) {
         List<Document> parsed = documentLoaderService.loadAndSplitDocument(resource, fileType);
@@ -54,6 +58,11 @@ public class DocumentIndexingService {
             throw new IndexingFailureException("OPENSEARCH_INDEX_FAILED", exception);
         }
         try {
+            vectorStoreService.addDocuments(legacyDocuments(document, fileType, parsed, persisted));
+        } catch (RuntimeException exception) {
+            throw new IndexingFailureException("LEGACY_PGVECTOR_INDEX_FAILED", exception);
+        }
+        try {
             documentChunkRepository.markReady(document.id(), persisted.stream().map(IndexableChunk::chunkId).toList());
         } catch (RuntimeException exception) {
             throw new IndexingFailureException("INDEX_FINALIZATION_FAILED", exception);
@@ -65,6 +74,27 @@ public class DocumentIndexingService {
         UUID chunkId = UUID.nameUUIDFromBytes((document.id() + ":" + ordinal).getBytes(StandardCharsets.UTF_8));
         return new IndexableChunk(chunkId, document.id(), document.knowledgeBaseId(), document.versionNo(), ordinal,
                 sha256(content), content, parsed.getEmbedding().stream().map(Double::floatValue).toList());
+    }
+
+    private List<Document> legacyDocuments(
+            KnowledgeDocument document,
+            String fileType,
+            List<Document> parsed,
+            List<IndexableChunk> persisted) {
+        return IntStream.range(0, parsed.size())
+                .mapToObj(index -> {
+                    Document source = parsed.get(index);
+                    Map<String, Object> metadata = new HashMap<>(source.getMetadata());
+                    metadata.put("documentId", document.id().toString());
+                    metadata.put("fileName", document.fileName());
+                    metadata.put("fileType", fileType);
+                    metadata.put("chunkIndex", index + 1);
+                    metadata.put("evalChunkId", String.format("chunk-%02d", index + 1));
+                    Document legacy = new Document(persisted.get(index).chunkId().toString(), source.getContent(), metadata);
+                    legacy.setEmbedding(source.getEmbedding());
+                    return legacy;
+                })
+                .toList();
     }
 
     private String sha256(String content) {
