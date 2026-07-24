@@ -87,6 +87,27 @@
 
 在这些条件未落盘并可复现前，项目文档不引用固定 QPS、性能提升倍数或“支持数千并发”等结论。
 
+## HTTP 并发基线工具
+
+`scripts/performance/http-load.ps1` 使用 PowerShell runspace 并发执行 GET 请求，不新增压测依赖。默认目标是本地健康端点；完成完整运行环境准备后，可显式替换为已定义、无副作用的读接口。
+
+```powershell
+./scripts/performance/http-load.ps1 `
+  -Url http://localhost:8080/actuator/health `
+  -Requests 200 `
+  -Concurrency 20 `
+  -WarmupRequests 20 `
+  -Scenario "actuator-health-baseline"
+```
+
+脚本将测量参数、成功/失败数、错误率、总耗时、吞吐量和 P50/P95/P99 写入 `target/reports/http-load.md`。任一请求失败时，报告仍会保留，但脚本以非零状态退出，不能将该次运行作为成功基线。
+
+### 2026-07-24 isolated health baseline
+
+使用隔离 Compose PostgreSQL/Redis、独立 SmartKB 进程和 `http://localhost:28080/actuator/health` 运行。100 次请求、10 并发、10 次预热全部成功；观测吞吐为 262.32 req/s，P50/P95/P99 分别为 23.82/41.86/50.70 ms。环境为 Windows 10.0.26200.0、20 个逻辑处理器和 PowerShell 5.1；详细本地报告位于 `target/reports/http-load-baseline.md`。
+
+该结果只用于验证压测工具与本地 HTTP 健康路径，未包含文档数据、Ollama Embedding、ChatModel、MinIO、RabbitMQ、Milvus 或 OpenSearch，不得用作 RAG 吞吐或生产容量结论。
+
 ## 待执行记录
 
 | 日期 | Commit | 场景 | 数据规模 | 并发/次数 | 结果 | 报告 |

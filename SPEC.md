@@ -158,6 +158,9 @@ src/main/java/com/smartkb
   - [x] Phase 6b: K3s YAML parsing and `K3sDemoManifestTest` passed; retained the 2026-06-18 runtime evidence and recorded the 2026-07-23 pause-image blocker.
   - [x] Phase 6c: README, STARTUP, TESTING, K3s guidance, and the deployment verification report were aligned.
   - [x] Phase 6d: Re-ran full Compose and disposable K3d air-gap runtime verification with isolated ports and imported images.
+- [x] Phase 7: 可复现 HTTP 并发压测与性能报告。
+  - [x] Phase 7a: 提供无需新依赖的并发 HTTP 压测脚本，记录吞吐、P50/P95/P99、错误率和运行参数。
+  - [x] Phase 7b: 在隔离的本地 PostgreSQL/Redis 环境上完成健康端点基线；RAG 查询压测仍需固定模型、数据集和查询集后单独执行。
 
 ## 验收标准
 

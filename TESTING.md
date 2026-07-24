@@ -56,6 +56,14 @@ Milvus + OpenSearch Compose 检索 smoke：
 ./scripts/smoke/retrieval-backends.ps1
 ```
 
+HTTP 并发基线（默认健康端点）：
+
+```powershell
+./scripts/performance/http-load.ps1 -Requests 200 -Concurrency 20 -WarmupRequests 20
+```
+
+脚本把吞吐、P50/P95/P99 和错误率写入 `target/reports/http-load.md`。它只测量指定 HTTP GET 路径；要发布 RAG 性能结论，仍需固定文档/Chunk 规模、模型、查询集和运行环境。
+
 该命令只启动 `milvus` 和 `opensearch`，运行 `RetrievalBackendsSmokeIT` 的一次确定性写入、检索和删除回环，并生成 `target/reports/retrieval-backends-smoke.md`。报告只记录实际观察到的每步耗时和错误，不推导 QPS、P95/P99 或容量结论。默认保留服务运行；需要停止时使用：
 
 ```powershell

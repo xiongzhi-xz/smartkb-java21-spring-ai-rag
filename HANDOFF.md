@@ -1,5 +1,11 @@
 # SmartKB Handoff
 
+## 2026-07-24 Phase 7 HTTP load baseline complete
+
+- Added `scripts/performance/http-load.ps1`, a dependency-free PowerShell runspace load tool for GET endpoints. It writes request parameters, success/error counts, throughput, P50/P95/P99, and host basics to `target/reports` and returns nonzero when any request fails.
+- Script parser and a disposable local HTTP-server self-test passed. An isolated PostgreSQL/Redis + SmartKB run measured `/actuator/health` with 100 requests, 10 concurrency, and 10 warmups: 100 successful, 0 failures, 262.32 req/s, P50/P95/P99 23.82/41.86/50.70 ms.
+- This is only a local health-endpoint baseline. RAG query performance remains intentionally unclaimed until a fixed document scale, model setup, query set, and full dependency profile are recorded.
+
 ## 2026-07-24 Phase 6 deployment acceptance complete
 
 - Phase 6/6d is complete. Isolated full Compose runtime verification passed on 2026-07-23, and disposable K3d air-gap runtime verification passed on 2026-07-24.
