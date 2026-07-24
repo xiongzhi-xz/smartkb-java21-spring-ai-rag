@@ -1,5 +1,14 @@
 # SmartKB Handoff
 
+## 2026-07-24 Transit Compatibility Acceptance Complete
+
+- The configured OpenAI-compatible endpoint and `deepseek-v4-flash` are usable from both the host and the isolated application container; this was verified only with the documented RAG question, never a generic greeting or health prompt.
+- The failure was not the network, key, model, RAG index, or `stream: false`. Spring's automatically selected Apache HttpComponents transport received truncated JSON while the same container completed the request through its JDK URLConnection-compatible path.
+- `OpenAiClientConfig` now omits `max_tokens` unless explicitly configured and explicitly uses `SimpleClientHttpRequestFactory`. It retains only desensitized debug request metadata (URI, top-level JSON field names, and byte count).
+- Added `OpenAiClientConfigTest`, which runs against a local HTTP server and asserts the default wire payload contains `messages`, `model`, `stream: false`, and `temperature`, with no `max_tokens`.
+- Full verification passed: `mvn test` (102 tests) and `git diff --check`.
+- Isolated Compose acceptance passed after rebuilding `smartkb-app`: both documented Advanced RAG questions returned HTTP 200, `success=true`, `refused=false`, a non-empty rewritten query, five retrieved chunks, and five reference chunks for `advanced-rag-demo.md`.
+
 ## 2026-07-24 Business Acceptance Follow-up
 
 - Added `spring.mvc.async.request-timeout` with a 120-second default and `SMARTKB_ASYNC_REQUEST_TIMEOUT` override in both default and hybrid profiles. Advanced RAG SSE no longer aborts at Spring MVC's ~30-second default.
