@@ -87,6 +87,10 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
+  mvc:
+    async:
+      request-timeout: ${SMARTKB_ASYNC_REQUEST_TIMEOUT:120s}
+
 # 服务器配置
 server:
   port: 8080

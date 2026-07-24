@@ -2,6 +2,9 @@
 
 ## 2026-07-24 Business Acceptance Follow-up
 
+- Added `spring.mvc.async.request-timeout` with a 120-second default and `SMARTKB_ASYNC_REQUEST_TIMEOUT` override in both default and hybrid profiles. Advanced RAG SSE no longer aborts at Spring MVC's ~30-second default.
+- Retest after the change kept the application healthy but received no terminal response from the configured transit ChatModel within 120 seconds. The request was interrupted only when the configured server-side timeout elapsed.
+- User action is required before final answer-generation acceptance can proceed: make the configured OpenAI-compatible transit endpoint return a complete chat-completions JSON response within the timeout, then retry the two documented Advanced RAG questions.
 - Fixed the compatibility gap between enterprise ingestion and legacy Advanced RAG. `DocumentIndexingService` now writes the same embedded chunks to Milvus, OpenSearch, and the legacy pgvector `vector_store` before the document can become READY.
 - Legacy rows carry `documentId`, `fileName`, `fileType`, `chunkIndex`, and stable `evalChunkId` metadata; the new unit test asserts the write occurs before `markReady`.
 - Full verification passed: `mvn test` (101 tests) and `git diff --check`.

@@ -5,6 +5,7 @@
 - Enterprise ingestion still uses Milvus and OpenSearch as its primary indexes. Until legacy `/api/chat/advanced` is retired, it also writes file-scoped compatibility rows to pgvector `vector_store`.
 - The compatibility write is part of the READY gate, so Advanced RAG cannot report a document as ready while its legacy retrieval path has no data.
 - The isolated environment verified retrieval candidates through the compatibility path. End-to-end answer generation remains dependent on the configured OpenAI-compatible transit endpoint returning complete JSON.
+- SSE generation requests use a 120-second MVC async timeout by default, configurable through `SMARTKB_ASYNC_REQUEST_TIMEOUT`. The current transit endpoint did not return a terminal chat response within that window, so final generation acceptance is externally blocked.
 
 ## 当前目标
 
