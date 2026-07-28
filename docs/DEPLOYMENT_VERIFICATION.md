@@ -21,7 +21,7 @@ The Phase 6 entries below are historical Java 21 evidence and must not be read a
 
 `docker build -t smartkb:java25-validation .` succeeded. The resulting runtime image reports Temurin 25.0.3, contains `/app/app.jar`, and runs as non-root UID 100. The Docker build no longer prefetches test-only dependencies with `dependency:go-offline`; the complete test suite is run separately before image construction.
 
-The PostgreSQL Testcontainers portion of `mvn -B -Dapi.version=1.40 -P integration-tests verify` passed on Java 25: PostgreSQL 16.14 started, Flyway V1/V2/V3 completed, and `EnterpriseRagPersistenceIT` passed two tests. The profile also includes retrieval smoke ITs that require running Milvus/OpenSearch and a `smartkb.degradation.scenario` value. They were not supplied in this verification, so their failure is an external-smoke precondition rather than Java 25 evidence.
+The self-contained `mvn -B -Dapi.version=1.40 -P integration-tests verify` passed on Java 25: 102 unit tests passed, PostgreSQL 16.14 started, Flyway V1/V2/V3 completed, and `EnterpriseRagPersistenceIT` passed two tests. The profile excludes the Compose-dependent retrieval smoke ITs. `RetrievalBackendsSmokeIT` and `RetrievalDegradationSmokeIT` remain available through their dedicated PowerShell drivers, which provide the required Milvus/OpenSearch services and fault-injection parameters. Explicit `-Dit.test=RetrievalDegradationSmokeIT` selection was also verified on Java 25 with its self-contained `unavailable` fault scenario.
 
 ## Docker Compose
 

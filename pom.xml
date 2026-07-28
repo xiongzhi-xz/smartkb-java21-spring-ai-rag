@@ -306,6 +306,11 @@
                             <includes>
                                 <include>**/*IT.java</include>
                             </includes>
+                            <excludes>
+                                <!-- Compose-dependent smoke tests are run explicitly by scripts/smoke. -->
+                                <exclude>**/RetrievalBackendsSmokeIT.java</exclude>
+                                <exclude>**/RetrievalDegradationSmokeIT.java</exclude>
+                            </excludes>
                         </configuration>
                     </plugin>
                 </plugins>

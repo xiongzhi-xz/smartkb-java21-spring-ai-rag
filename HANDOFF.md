@@ -2,6 +2,8 @@
 
 ## 2026-07-28 Java 25 Upgrade
 
+- The default `integration-tests` Maven profile now runs only self-contained Testcontainers integration tests. On Temurin 25.0.3, `mvn -B -Dapi.version=1.40 -P integration-tests verify` passed 102 unit tests and 2 PostgreSQL Testcontainers tests. Compose-dependent retrieval smoke tests are excluded by default and remain executable via `scripts/smoke/retrieval-backends.ps1` and `scripts/smoke/retrieval-degradation.ps1`, which select them explicitly with `-Dit.test`; the `unavailable` degradation scenario was verified under Temurin 25 with an explicit `-Dit.test=RetrievalDegradationSmokeIT` invocation.
+
 - The project now compiles with Java 25. `pom.xml` sets `java.version` and `maven.compiler.release` to 25; the Docker build/runtime images and GitHub Actions use Temurin 25.
 - Java 25 exposed three verified build-stack requirements: explicit `proc=full` for Lombok annotation processing, Lombok 1.18.40, and Byte Buddy 1.17.8 for Mockito inline mocks. Spring Boot 3.3.1 could not scan Java 25 class files, so it was upgraded to the compatible 3.5.12 maintenance line. Spring AI remains 1.0.0-M1.
 - MinIO 9.0.1 publishes OkHttp 5 metadata that Maven resolves without the JVM classes under the newer Boot dependency management. `okhttp-jvm:5.3.2` is declared explicitly, matching the MinIO POM.

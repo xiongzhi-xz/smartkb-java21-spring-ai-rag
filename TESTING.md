@@ -23,13 +23,13 @@ git diff --check
 
 ## 集成测试
 
-PostgreSQL Testcontainers 用例（企业文档生命周期）：
+默认集成测试只运行自包含的 PostgreSQL Testcontainers 用例（企业文档生命周期）：
 
 ```bash
 mvn -Pintegration-tests verify
 ```
 
-需要本机 Docker 可用。
+需要本机 Docker 可用。Milvus/OpenSearch 检索 smoke 不属于默认 profile，它们需要已启动的 Compose 后端或故障注入参数，并由下方专用脚本显式执行。
 
 该用例会对 Flyway V1/V2 迁移后的真实 PostgreSQL 验证重复上传幂等、重复消费状态保护、失败重试和稳定文档删除。运行前先确认：
 
