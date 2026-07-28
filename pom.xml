@@ -28,6 +28,9 @@
         <lombok.version>1.18.40</lombok.version>
         <!-- Required for Mockito inline mocks against Java 25 class files. -->
         <byte-buddy.version>1.17.8</byte-buddy.version>
+        <!-- Avoid Mockito's unsupported runtime self-attachment on current and future JDKs. -->
+        <mockito.javaagent>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</mockito.javaagent>
+        <argLine></argLine>
         <testcontainers.version>1.20.6</testcontainers.version>
         <milvus-sdk.version>2.4.8</milvus-sdk.version>
         <opensearch-java.version>2.18.0</opensearch-java.version>
@@ -282,6 +285,14 @@
                     <proc>full</proc>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--enable-native-access=ALL-UNNAMED ${mockito.javaagent} ${argLine}</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -303,6 +314,7 @@
                             </execution>
                         </executions>
                         <configuration>
+                            <argLine>--enable-native-access=ALL-UNNAMED ${mockito.javaagent} ${argLine}</argLine>
                             <includes>
                                 <include>**/*IT.java</include>
                             </includes>

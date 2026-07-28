@@ -23,6 +23,8 @@ The Phase 6 entries below are historical Java 21 evidence and must not be read a
 
 The self-contained `mvn -B -Dapi.version=1.40 -P integration-tests verify` passed on Java 25: 102 unit tests passed, PostgreSQL 16.14 started, Flyway V1/V2/V3 completed, and `EnterpriseRagPersistenceIT` passed two tests. The profile excludes the Compose-dependent retrieval smoke ITs. `RetrievalBackendsSmokeIT` and `RetrievalDegradationSmokeIT` remain available through their dedicated PowerShell drivers, which provide the required Milvus/OpenSearch services and fault-injection parameters. Explicit `-Dit.test=RetrievalDegradationSmokeIT` selection was also verified on Java 25 with its self-contained `unavailable` fault scenario.
 
+Surefire and Failsafe now load the Spring Boot-managed Mockito 5.17.0 JAR as an explicit Java agent and enable native access for unnamed test modules. Temurin 25.0.3 `mvn -B clean verify`, the self-contained integration profile, and an isolated Compose `RetrievalBackendsSmokeIT` run all passed without Mockito self-attachment, dynamic-agent, or restricted-native-access warnings. The real-backend smoke used the disposable `smartkb-java25-smoke` Compose project with separate Milvus/OpenSearch ports; its containers, network, and named volumes were removed after the run.
+
 ## Docker Compose
 
 ### Configuration checks

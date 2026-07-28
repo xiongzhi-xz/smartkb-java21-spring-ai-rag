@@ -31,6 +31,8 @@ mvn -Pintegration-tests verify
 
 需要本机 Docker 可用。Milvus/OpenSearch 检索 smoke 不属于默认 profile，它们需要已启动的 Compose 后端或故障注入参数，并由下方专用脚本显式执行。
 
+Java 25 的 Surefire/Failsafe 测试 JVM 会自动加载 Spring Boot 管理的 Mockito agent，并启用未命名模块的 native access；不需要在命令行额外配置 agent。
+
 该用例会对 Flyway V1/V2 迁移后的真实 PostgreSQL 验证重复上传幂等、重复消费状态保护、失败重试和稳定文档删除。运行前先确认：
 
 ```bash
