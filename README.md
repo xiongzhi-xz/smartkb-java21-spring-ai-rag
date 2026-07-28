@@ -1,6 +1,6 @@
 # SmartKB
 
-SmartKB 是一个基于 Java 21、Spring Boot、Spring AI、PostgreSQL/pgvector 和 Redis 构建的可解释 RAG 知识库。
+SmartKB 是一个基于 Java 25、Spring Boot、Spring AI、PostgreSQL/pgvector 和 Redis 构建的可解释 RAG 知识库。
 
 项目重点不是“接一个大模型接口”，而是实现一条可运行、可评测、可观测的 RAG 工程闭环：
 
@@ -20,7 +20,7 @@ SmartKB 是一个基于 Java 21、Spring Boot、Spring AI、PostgreSQL/pgvector 
 - **低置信度拒答**：检索证据不足时跳过生成模型，返回明确拒答原因，降低无依据回答风险。
 - **答案质量 Judge**：离线评估 Faithfulness、Answer Relevance 与 Context Relevance，并保留每项评分理由。
 - **会话持久化与缓存**：会话事实写入 PostgreSQL，Redis 只缓存近期上下文窗口并设置 TTL；Redis 不可用时自动回源 PostgreSQL。
-- **Java 21 虚拟线程**：用于文档解析和 Embedding 批处理等 IO 密集任务。
+- **Java 25 虚拟线程**：用于文档解析和 Embedding 批处理等 IO 密集任务。
 - **流式交互**：普通问答和 Advanced RAG 均支持 SSE；Advanced 模式会返回各阶段状态和耗时。
 - **可观测性**：Micrometer 指标、Prometheus 采集和 Grafana Dashboard。
 - **工程交付**：Docker Compose、K3s 演示清单、单元测试和浏览器 smoke 脚本。
@@ -29,7 +29,7 @@ SmartKB 是一个基于 Java 21、Spring Boot、Spring AI、PostgreSQL/pgvector 
 
 | 分类 | 技术 |
 | --- | --- |
-| Runtime | Java 21, Spring Boot 3.3.1 |
+| Runtime | Java 25, Spring Boot 3.5.12 |
 | AI | Spring AI, OpenAI-compatible Chat API, Ollama Embedding |
 | Retrieval | pgvector, Hybrid Search, Query Rewriting, Metadata Filter |
 | Storage | PostgreSQL 16, Redis 7 |
@@ -160,7 +160,7 @@ git diff --check
 
 ## 项目概述
 
-> SmartKB 是我基于 Java 21 和 Spring AI 实现的可解释 RAG 知识库。除了文档入库和流式问答，我重点解决了三个工程问题：第一，用 Hybrid Search 和查询改写提高中文技术文档召回；第二，用引用 chunk 和 Recall@K、MRR 评测让结果可解释、可量化；第三，用 PostgreSQL 会话持久化、Redis 上下文缓存、Micrometer 和 Docker Compose 补齐会话恢复、监控和交付能力。项目中的取舍都有明确边界，例如当前重排是规则算法，我会通过现有评测集判断是否值得引入 Cross-Encoder。
+> SmartKB 是我基于 Java 25 和 Spring AI 实现的可解释 RAG 知识库。除了文档入库和流式问答，我重点解决了三个工程问题：第一，用 Hybrid Search 和查询改写提高中文技术文档召回；第二，用引用 chunk 和 Recall@K、MRR 评测让结果可解释、可量化；第三，用 PostgreSQL 会话持久化、Redis 上下文缓存、Micrometer 和 Docker Compose 补齐会话恢复、监控和交付能力。项目中的取舍都有明确边界，例如当前重排是规则算法，我会通过现有评测集判断是否值得引入 Cross-Encoder。
 
 ## 相关文档
 

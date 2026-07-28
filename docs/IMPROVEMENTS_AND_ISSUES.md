@@ -199,7 +199,7 @@ RAG 的回答质量不只取决于模型，也取决于文档进入知识库时�
 ### 改进方案
 
 - 新增 `test-docs/advanced-rag-demo.md`，覆盖多个可验证主题：
-  - Java 21 Virtual Threads
+  - Java 25 Virtual Threads
   - Spring AI Advisor
   - pgvector
   - 查询改写

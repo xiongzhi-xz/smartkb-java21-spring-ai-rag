@@ -43,7 +43,7 @@ Browser
 
 | 领域 | 技术 | 职责 |
 | --- | --- | --- |
-| Runtime | Java 21, Spring Boot 3.x, Virtual Threads | API、任务编排、IO 并发 |
+| Runtime | Java 25, Spring Boot 3.x, Virtual Threads | API、任务编排、IO 并发 |
 | AI | Spring AI, Ollama Embedding, OpenAI-compatible ChatModel | 本地向量化与回答生成 |
 | Vector Retrieval | Milvus | 向量检索、Collection 生命周期、向量索引 |
 | Search | OpenSearch | 全文检索、过滤、聚合和稀疏召回 |
@@ -178,7 +178,7 @@ src/main/java/com/smartkb
 - 同一 `conversationId` 在服务重启后可从 PostgreSQL 恢复历史；Redis 不可用不丢失历史消息。
 - 检索结果包含来源文档、Chunk、融合与重排信息，并可按 traceId 复盘。
 - 本地 Ollama Embedding、当前 ChatModel 中转接口和 Redis 缓存可独立降级，不影响状态一致性。
-- 单元测试、适配器集成测试、Docker Compose 配置检查和 JDK 21 构建通过。
+- 单元测试、适配器集成测试、Docker Compose 配置检查和 JDK 25 构建通过。
 
 ## 不做什么
 

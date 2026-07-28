@@ -1,6 +1,6 @@
 # SmartKB 技术博客系列
 
-## 博客一：Java 21 Virtual Threads 在企业级 RAG 系统中的实战应用
+## 博客一：Java 25 Virtual Threads 在企业级 RAG 系统中的实战应用
 
 ### 目标读者
 - Java 后端工程师（3-5 年经验）
@@ -16,7 +16,7 @@
 
 #### 2. SmartKB 项目背景
 - 企业智能知识库的业务需求
-- 技术栈选型：Java 21 + Spring AI + pgvector
+- 技术栈选型：Java 25 + Spring AI + pgvector
 - 核心挑战：文档批量处理性能瓶颈
 
 #### 3. Virtual Threads 实战应用
@@ -141,7 +141,7 @@ String answer = chatClient.prompt()
 #### 2. 技术选型
 
 **后端技术栈**
-- Java 21（Virtual Threads）
+- Java 25（Virtual Threads）
 - Spring Boot 3.3+
 - Spring AI（Advisor 体系）
 
@@ -212,7 +212,7 @@ String answer = chatClient.prompt()
 
 ## 预期效果
 
-- 展示技术深度（Java 21 + Spring AI）
+- 展示技术深度（Java 25 + Spring AI）
 - 体现工程能力（从零到生产级）
 - 吸引潜在雇主关注
 - 为技术复盘提供素材
@@ -227,7 +227,7 @@ String answer = chatClient.prompt()
 "我在 Gap 期间独立完成了一个企业级智能知识库系统 SmartKB，这是一个基于 RAG 技术的 AI 应用。
 
 项目亮点：
-1. 使用 Java 21 Virtual Threads，文档批量处理性能提升 4 倍
+1. 使用 Java 25 Virtual Threads，文档批量处理性能提升 4 倍
 2. 基于 Spring AI Advisor 体系，实现了 Advanced RAG（查询改写、元数据过滤、重排序）
 3. 支持多种文档格式（PDF、Word、Markdown），使用 pgvector 作为向量数据库
 4. 完整的生产级设计：Kubernetes 部署、Grafana 监控、完善的异常处理

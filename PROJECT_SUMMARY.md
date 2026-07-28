@@ -2,7 +2,7 @@
 
 ## 定位
 
-Java 21 + Spring AI 可解释 RAG 知识库，用于展示完整的 AI 应用工程实践。
+Java 25 + Spring AI 可解释 RAG 知识库，用于展示完整的 AI 应用工程实践。
 
 ## 能力
 

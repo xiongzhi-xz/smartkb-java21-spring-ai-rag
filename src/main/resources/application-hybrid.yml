@@ -2,7 +2,7 @@ spring:
   application:
     name: smartkb
 
-  # Java 21 Virtual Threads
+  # Java 25 Virtual Threads
   threads:
     virtual:
       enabled: true

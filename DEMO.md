@@ -74,7 +74,7 @@
 
 ## 30 秒项目介绍
 
-> SmartKB 是一个 Java 21 + Spring AI 的可解释 RAG 知识库。我实现了从文档解析、Embedding、pgvector 入库到 Hybrid Search、查询改写、BGE 融合重排、流式回答和引用定位的完整链路，并通过 Redis ChatMemory 保存多轮上下文。系统会计算检索证据置信度，在证据不足时跳过生成并明确拒答；同时提供 Recall@K、MRR 检索评测和 Faithfulness、Answer Relevance、Context Relevance 答案评估。
+> SmartKB 是一个 Java 25 + Spring AI 的可解释 RAG 知识库。我实现了从文档解析、Embedding、pgvector 入库到 Hybrid Search、查询改写、BGE 融合重排、流式回答和引用定位的完整链路，并通过 Redis ChatMemory 保存多轮上下文。系统会计算检索证据置信度，在证据不足时跳过生成并明确拒答；同时提供 Recall@K、MRR 检索评测和 Faithfulness、Answer Relevance、Context Relevance 答案评估。
 
 ## 技术讨论
 

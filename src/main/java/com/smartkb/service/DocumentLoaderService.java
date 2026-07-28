@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * 核心功能：
  * 1. 支持多格式文档解析（PDF、Word、Markdown、TXT）
  * 2. 智能文本切片（基于 Token 分割，避免语义割裂）
- * 3. 使用 Java 21 Structured Concurrency 实现批量文档并发解析
+ * 3. 使用 Java 25 Structured Concurrency 实现批量文档并发解析
  * <p>
  * 技术选型：
  * - Spring AI PagePdfDocumentReader：专门优化的 PDF 解析器
@@ -99,7 +99,7 @@ public class DocumentLoaderService {
     /**
      * 批量加载并切片多个文档（使用 Virtual Threads 并发处理）
      * <p>
-     * 使用 Java 21 Virtual Thread Executor：
+     * 使用 Java 25 Virtual Thread Executor：
      * - newVirtualThreadPerTaskExecutor 为每个任务创建虚拟线程
      * - IO 阻塞时自动释放平台线程，支持高并发
      * <p>

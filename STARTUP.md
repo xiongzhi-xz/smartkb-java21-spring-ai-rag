@@ -2,7 +2,7 @@
 
 ## 环境要求
 
-- JDK 21
+- JDK 25
 - Maven 3.9+
 - Docker Desktop
 - Ollama

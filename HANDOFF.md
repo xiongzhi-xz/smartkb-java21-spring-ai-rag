@@ -1,5 +1,14 @@
 # SmartKB Handoff
 
+## 2026-07-28 Java 25 Upgrade
+
+- The project now compiles with Java 25. `pom.xml` sets `java.version` and `maven.compiler.release` to 25; the Docker build/runtime images and GitHub Actions use Temurin 25.
+- Java 25 exposed three verified build-stack requirements: explicit `proc=full` for Lombok annotation processing, Lombok 1.18.40, and Byte Buddy 1.17.8 for Mockito inline mocks. Spring Boot 3.3.1 could not scan Java 25 class files, so it was upgraded to the compatible 3.5.12 maintenance line. Spring AI remains 1.0.0-M1.
+- MinIO 9.0.1 publishes OkHttp 5 metadata that Maven resolves without the JVM classes under the newer Boot dependency management. `okhttp-jvm:5.3.2` is declared explicitly, matching the MinIO POM.
+- Verified with Temurin 25.0.3: `mvn -B clean verify` passed with 102 tests, zero failures, and zero errors. Docker Compose configuration parsing passed for both full and minimal files. The Docker image `smartkb:java25-validation` built successfully; its runtime reports Temurin 25.0.3, contains `/app/app.jar`, and runs as UID 100.
+- `mvn -B -Dapi.version=1.40 -P integration-tests verify` passed `EnterpriseRagPersistenceIT` (2 tests) against PostgreSQL 16.14 with Flyway V1/V2/V3. The same profile then failed its existing retrieval smoke ITs because Milvus/OpenSearch were not running and `smartkb.degradation.scenario` was not supplied; this is an external-smoke prerequisite, not a Java 25 failure.
+- Remaining risk: Mockito/Byte Buddy emits JDK warnings about dynamic agent loading and deprecated `Unsafe`; tests pass today, but the test configuration should migrate to explicit Mockito agent setup before a future JDK disables dynamic loading.
+
 ## 2026-07-24 Transit Compatibility Acceptance Complete
 
 - The configured OpenAI-compatible endpoint and `deepseek-v4-flash` are usable from both the host and the isolated application container; this was verified only with the documented RAG question, never a generic greeting or health prompt.

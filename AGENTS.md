@@ -4,7 +4,7 @@
 
 ## 项目定位
 
-SmartKB 是一个 Java 21 + Spring AI 企业智能知识库预研项目，目标是形成可本地运行、可演示、可解释的 RAG 工程闭环：
+SmartKB 是一个 Java 25 + Spring AI 企业智能知识库预研项目，目标是形成可本地运行、可演示、可解释的 RAG 工程闭环：
 
 ```text
 Docker PostgreSQL/Redis -> Ollama Embedding -> IDEA 启动 Spring Boot
@@ -13,7 +13,7 @@ Docker PostgreSQL/Redis -> Ollama Embedding -> IDEA 启动 Spring Boot
 
 核心技术栈：
 
-- Java 21，重点体现 Virtual Threads 在 IO 密集场景中的价值。
+- Java 25，重点体现 Virtual Threads 在 IO 密集场景中的价值。
 - Spring Boot 3.3+。
 - Spring AI，优先沿用 Advisor、ChatModel、VectorStore 等现有抽象。
 - PostgreSQL 16 + pgvector 作为向量库。

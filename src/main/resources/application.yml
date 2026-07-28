@@ -2,7 +2,7 @@ spring:
   application:
     name: smartkb
 
-  # Java 21 Virtual Threads - 2026主流IO密集场景优化
+  # Java 25 Virtual Threads - 2026主流IO密集场景优化
   threads:
     virtual:
       enabled: true  # 全局启用虚拟线程（Spring Boot 3.2+）

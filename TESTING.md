@@ -46,7 +46,7 @@ docker run --rm `
   -v "${PWD}:/workspace" `
   -v "${env:USERPROFILE}\.m2:/root/.m2" `
   -v "/var/run/docker.sock:/var/run/docker.sock" `
-  -w /workspace maven:3.9-eclipse-temurin-21 `
+  -w /workspace maven:3.9-eclipse-temurin-25 `
   mvn -B "-Dapi.version=1.40" -P integration-tests verify
 ```
 

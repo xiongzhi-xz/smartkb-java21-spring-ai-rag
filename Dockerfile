@@ -5,24 +5,20 @@
 # Maven uses the project default repository configuration in both host and container builds.
 
 # ---- 构建阶段 ----
-FROM maven:3.9-eclipse-temurin-21-alpine AS builder
+FROM maven:3.9-eclipse-temurin-25-alpine AS builder
 
 WORKDIR /app
 
 # Copy pom.xml first to cache dependency resolution.
 COPY pom.xml .
 
-# Resolve dependencies before copying sources.
-RUN --mount=type=cache,target=/root/.m2/repository \
-    mvn dependency:go-offline -B
-
 # 复制源代码并构建
 COPY src ./src
 RUN --mount=type=cache,target=/root/.m2/repository \
-    mvn clean package -DskipTests -B
+    mvn clean package -Dmaven.test.skip=true -B
 
 # ---- 运行阶段 ----
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 
