@@ -1,10 +1,10 @@
 # SmartKB Handoff
 
-## 2026-07-29 Java 25 Warning Triage Paused
+## 2026-07-29 Java 25 Warning Triage Complete
 
-- No repository files changed during this diagnostic attempt. The only remaining Java 25 compatibility warning is Lombok 1.18.40 calling `sun.misc.Unsafe::objectFieldOffset` during Maven compilation; Mockito's explicit agent and the retrieval smoke validations remain complete.
-- Docker Desktop's `com.docker.service` was stopped, so the Temurin 25 container could not run the intended `--sun-misc-unsafe-memory-access=deny` compile diagnostic. Do not treat this as a project build failure or restart Docker services without user approval.
-- Next step after Docker Desktop is available: run the deny-mode compile diagnostic under Temurin 25. If it confirms Lombok is blocked, keep the warning documented unless the user explicitly authorizes a Lombok upgrade; the Java 25 migration requirement does not permit upgrading dependencies merely to hide a warning.
+- The Temurin 25 `--sun-misc-unsafe-memory-access=deny` compile diagnostic fails in Lombok 1.18.40: its annotation processor falls back to reflective access to `JavacProcessingEnvironment`. Maven Central Lombok 1.18.46 was tested without changing repository files and fails on the same path.
+- Opening only `jdk.compiler/com.sun.tools.javac.processing` is not a safe remedy: the next failure is an `IllegalAccessError` for `com.sun.tools.javac.util.Context`, demonstrating that the workaround would require a brittle set of internal `jdk.compiler` exports/opens. Do not add those flags or use `allow` merely to suppress the warning.
+- Java 25's normal mode remains validated. The only safe action is to retain the warning as an upstream Lombok compatibility risk and re-evaluate when Lombok supports the deny-mode path; Mockito's explicit agent and the retrieval smoke validations remain complete.
 
 ## 2026-07-28 Java 25 Upgrade
 
