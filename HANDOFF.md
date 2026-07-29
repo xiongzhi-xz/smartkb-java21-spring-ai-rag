@@ -1,5 +1,12 @@
 # SmartKB Handoff
 
+## 2026-07-29 New-Window Continuation
+
+- Current goal: keep SmartKB's Java 25 migration stable without masking upstream incompatibilities or changing the configured model provider.
+- Completed: Java 25 build, unit/integration tests, Docker image, isolated retrieval smoke, Mockito explicit agent, and project-status alignment are committed through `9eac262`.
+- Current blockers: Lombok has no safe deny-mode remedy in either 1.18.40 or 1.18.46; final model-answer acceptance depends on the configured external OpenAI-compatible transit service returning complete JSON.
+- Next step: do not upgrade Spring AI or add JVM internal-module flags. A decision to remove Lombok is a broad refactor that needs explicit user authorization; otherwise rerun end-to-end answer acceptance only after the transit service is confirmed healthy.
+
 ## 2026-07-29 Java 25 Warning Triage Complete
 
 - The Temurin 25 `--sun-misc-unsafe-memory-access=deny` compile diagnostic fails in Lombok 1.18.40: its annotation processor falls back to reflective access to `JavacProcessingEnvironment`. Maven Central Lombok 1.18.46 was tested without changing repository files and fails on the same path.
