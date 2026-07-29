@@ -1,5 +1,11 @@
 # SmartKB Handoff
 
+## 2026-07-29 Java 25 Warning Triage Paused
+
+- No repository files changed during this diagnostic attempt. The only remaining Java 25 compatibility warning is Lombok 1.18.40 calling `sun.misc.Unsafe::objectFieldOffset` during Maven compilation; Mockito's explicit agent and the retrieval smoke validations remain complete.
+- Docker Desktop's `com.docker.service` was stopped, so the Temurin 25 container could not run the intended `--sun-misc-unsafe-memory-access=deny` compile diagnostic. Do not treat this as a project build failure or restart Docker services without user approval.
+- Next step after Docker Desktop is available: run the deny-mode compile diagnostic under Temurin 25. If it confirms Lombok is blocked, keep the warning documented unless the user explicitly authorizes a Lombok upgrade; the Java 25 migration requirement does not permit upgrading dependencies merely to hide a warning.
+
 ## 2026-07-28 Java 25 Upgrade
 
 - The default `integration-tests` Maven profile now runs only self-contained Testcontainers integration tests. On Temurin 25.0.3, `mvn -B -Dapi.version=1.40 -P integration-tests verify` passed 102 unit tests and 2 PostgreSQL Testcontainers tests. Compose-dependent retrieval smoke tests are excluded by default and remain executable via `scripts/smoke/retrieval-backends.ps1` and `scripts/smoke/retrieval-degradation.ps1`, which select them explicitly with `-Dit.test`; the `unavailable` degradation scenario was verified under Temurin 25 with an explicit `-Dit.test=RetrievalDegradationSmokeIT` invocation.
