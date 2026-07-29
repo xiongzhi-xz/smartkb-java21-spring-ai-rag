@@ -7,6 +7,17 @@ mvn test
 git diff --check
 ```
 
+上述命令需要 JDK 25。宿主机只有较低版本 JDK 时，不要覆盖 `maven.compiler.release`；使用 Docker Desktop 运行官方 Temurin 25 Maven 容器：
+
+```powershell
+docker run --rm `
+  -v "${PWD}:/workspace" `
+  -v "$env:USERPROFILE\.m2:/root/.m2" `
+  -w /workspace `
+  maven:3.9-eclipse-temurin-25-alpine `
+  mvn -B clean verify
+```
+
 默认测试覆盖：
 
 - 文档解析与切片

@@ -1,5 +1,15 @@
 # SmartKB Handoff
 
+## 2026-07-29 Current Local Validation Check
+
+- Repository migration remains complete: `pom.xml` requires Java 25, the Docker build/runtime use Temurin 25, and GitHub Actions installs Temurin 25.
+- Current shell validation cannot run on this machine configuration: `java -version` and Maven report Oracle JDK 22.0.1 from `D:\jdk`; consequently `mvn -B clean verify` stops at compilation with `release version 25 not supported`.
+- This is a local JDK selection gap, not a source compatibility regression. The official `maven:3.9-eclipse-temurin-25-alpine` container is the supported local fallback when Docker Desktop is available.
+- `winget install --id EclipseAdoptium.Temurin.25.JDK` timed out without installing a package; a direct Adoptium archive request also failed because the network connection closed. A local scan found JDK 21 and 22 only, no Java 25 compiler.
+- Docker Desktop remains a usable Java 25 runtime path: the existing `smartkb:java25-local-check` image runs Temurin 25.0.3. A cached Docker build completed, but an explicit `--no-cache` rebuild exceeded five minutes in the Maven package stage without returning a compiler error; do not treat that timeout as a new source-build pass.
+- On 2026-07-29, the official Maven/Temurin 25 container executed `mvn -B clean verify` successfully against the current mounted source: 102 tests, zero failures, zero errors. It emitted pre-existing warnings for Lombok's terminally deprecated `Unsafe` call, deprecated `@MockBean`, a Milvus deprecated API, and unchecked OpenSearch operations.
+- Next local action: use the documented container command for Java 25 verification. Installing a local Temurin 25 JDK remains useful for IDE development, but is no longer a blocker. Do not lower the project release target to make JDK 22 pass.
+
 ## 2026-07-29 New-Window Continuation
 
 - Current goal: keep SmartKB's Java 25 migration stable without masking upstream incompatibilities or changing the configured model provider.

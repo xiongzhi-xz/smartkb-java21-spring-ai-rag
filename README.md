@@ -149,6 +149,17 @@ mvn test
 git diff --check
 ```
 
+需要 JDK 25。若宿主机未安装 JDK 25，但 Docker Desktop 可用，可在仓库根目录使用官方 Temurin 25 Maven 容器完成同等的完整验证：
+
+```powershell
+docker run --rm `
+  -v "${PWD}:/workspace" `
+  -v "$env:USERPROFILE\.m2:/root/.m2" `
+  -w /workspace `
+  maven:3.9-eclipse-temurin-25-alpine `
+  mvn -B clean verify
+```
+
 企业文档生命周期的 PostgreSQL Testcontainers 验证使用 `mvn -Pintegration-tests verify`。涉及真实 PostgreSQL、Redis、Ollama 或 Chat API 的验证，需要按 [TESTING.md](TESTING.md) 准备本地环境。
 
 ## 项目边界
