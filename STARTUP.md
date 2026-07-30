@@ -19,7 +19,7 @@ cp .env.example .env
 填写：
 
 ```env
-TRANSIT_API_KEY=your-chat-api-key
+TRANSIT_API_KEY=
 TRANSIT_BASE_URL=https://api.deepseek.com
 AI_MODEL=deepseek-chat
 ```
@@ -97,15 +97,15 @@ IDEA 配置：
 
 ```text
 Main class: com.smartkb.SmartKbApplication
-Active profiles: hybrid
+Active profiles: local-demo,hybrid
 Environment variables:
-TRANSIT_API_KEY=your-chat-api-key;TRANSIT_BASE_URL=https://api.deepseek.com;AI_MODEL=deepseek-chat
+TRANSIT_API_KEY=<set-in-IDE-environment>;TRANSIT_BASE_URL=https://api.deepseek.com;AI_MODEL=deepseek-chat
 ```
 
 命令行也可以使用：
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=hybrid
+mvn spring-boot:run -Dspring-boot.run.profiles=local-demo,hybrid
 ```
 
 访问：http://localhost:8080

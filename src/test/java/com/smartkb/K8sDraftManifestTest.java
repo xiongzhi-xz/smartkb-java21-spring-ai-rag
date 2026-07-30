@@ -24,6 +24,9 @@ class K8sDraftManifestTest {
         );
         assertThat(manifest).contains(
                 "postgres-password: replace-at-deploy-time",
+                "rabbitmq-password: replace-at-deploy-time",
+                "minio-access-key: replace-at-deploy-time",
+                "minio-secret-key: replace-at-deploy-time",
                 "openai-api-key: replace-at-deploy-time"
         );
         assertThat(manifest).doesNotContain(

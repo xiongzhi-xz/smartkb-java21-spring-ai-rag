@@ -199,6 +199,21 @@ spec:
               value: redis-service
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartkb-secrets
+                  key: rabbitmq-password
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: smartkb-secrets
+                  key: minio-access-key
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: smartkb-secrets
+                  key: minio-secret-key
             # This compact demo does not include RabbitMQ. Keep its reconnecting
             # listener out of the base deployment health contract.
             - name: MANAGEMENT_HEALTH_RABBIT_ENABLED

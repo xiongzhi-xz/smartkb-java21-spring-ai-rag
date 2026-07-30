@@ -73,7 +73,7 @@ flowchart LR
 cp .env.example .env
 ```
 
-填写 Chat API 配置。不要提交真实密钥。
+在 `.env` 中设置实际的 `TRANSIT_API_KEY` 后再启动。不要提交真实密钥；完整 Compose 会在该变量缺失时拒绝启动。
 
 ### 2. 启动完整环境
 
@@ -87,7 +87,7 @@ docker compose up -d
 | Health | http://localhost:8082/actuator/health |
 | Grafana | http://localhost:3001 |
 
-也可以只启动 PostgreSQL 和 Redis，然后使用 `hybrid` profile 在本地运行 Spring Boot，详见 [STARTUP.md](STARTUP.md)。
+也可以只启动 PostgreSQL 和 Redis，然后使用 `local-demo,hybrid` profiles 在本地运行 Spring Boot，详见 [STARTUP.md](STARTUP.md)。
 
 ## 推荐演示路径
 

@@ -1,5 +1,15 @@
 # SmartKB Handoff
 
+## 2026-07-30 Public Configuration Security and Main Sync
+
+- Generic `application.yml` and the `hybrid` profile no longer include local database, RabbitMQ, MinIO, or Chat API credential defaults. The base observability defaults are INFO/WARN logging, 10% tracing, and no Actuator health details.
+- The documented local behavior is isolated in the explicit `local-demo` profile. Full Compose enables it automatically; local IDE/CLI startup now uses `local-demo,hybrid`. The full Compose app requires `TRANSIT_API_KEY` from the ignored `.env` before it starts.
+- A registered `EnvironmentPostProcessor` rejects non-local startup before the application context is created when database, RabbitMQ, object-storage, or Chat API credentials are absent, blank, or known example values. Kubernetes manifests inject these values through `smartkb-secrets`; the draft keeps only deployment-time replacement markers.
+- Regression coverage verifies the public profiles stay free of local defaults and verbose observability, verifies the local-demo boundary, and verifies missing non-local credentials fail. The MVC slice test explicitly selects `local-demo`, preserving its no-external-service test contract.
+- Validation on 2026-07-30: Java 25 container `mvn -B clean verify` passed (107 tests, zero failures/errors); a Java 25 JAR launch without credentials failed through the credential guard as intended; full/minimal Compose config parsing, K3s YAML tests, and `git diff --check` passed.
+- Branch state before the security commit: local `main` was eight verified commits ahead of `origin/main`. After the configuration commit, fetch `origin/main` and require a fast-forward push so local `main` and `origin/main` finish at the same commit.
+- Remaining risk: the explicit local-demo profile still uses documented local-only defaults and must never be enabled outside a developer-controlled environment. The pre-existing Lombok Java 25 `Unsafe` warning remains unchanged.
+
 ## 2026-07-29 Current Local Validation Check
 
 - Repository migration remains complete: `pom.xml` requires Java 25, the Docker build/runtime use Temurin 25, and GitHub Actions installs Temurin 25.

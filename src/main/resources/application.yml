@@ -9,9 +9,9 @@ spring:
 
   # 数据源配置 - PostgreSQL 16 + pgvector
   datasource:
-    url: jdbc:postgresql://localhost:5432/smartkb
-    username: smartkb
-    password: smartkb123
+    url: ${SMARTKB_DATASOURCE_URL:}
+    username: ${SMARTKB_DATASOURCE_USERNAME:}
+    password: ${SMARTKB_DATASOURCE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -38,10 +38,10 @@ spring:
           min-idle: 5
 
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
+    host: ${RABBITMQ_HOST:}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:smartkb}
-    password: ${RABBITMQ_PASSWORD:smartkb123}
+    username: ${RABBITMQ_USERNAME:}
+    password: ${RABBITMQ_PASSWORD:}
     publisher-confirm-type: correlated
     publisher-returns: true
     template:
@@ -54,7 +54,7 @@ spring:
   ai:
     # OpenAI 兼容接口 — 用于 Chat
     openai:
-      api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:your-api-key-here}}
+      api-key: ${TRANSIT_API_KEY:${OPENAI_API_KEY:}}
       base-url: ${TRANSIT_BASE_URL:https://api.deepseek.com}
       chat:
         options:
@@ -109,18 +109,18 @@ management:
         enabled: true
   tracing:
     sampling:
-      probability: 1.0  # 开发环境全采样，生产环境建议 0.1
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:0.1}
   endpoint:
     health:
-      show-details: always
+      show-details: ${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:never}
 
 # 日志配置
 logging:
   level:
     root: INFO
-    com.smartkb: DEBUG
-    org.springframework.ai: DEBUG
-    org.springframework.jdbc: DEBUG
+    com.smartkb: INFO
+    org.springframework.ai: INFO
+    org.springframework.jdbc: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
@@ -130,10 +130,10 @@ smartkb:
     id: ${SMARTKB_KNOWLEDGE_BASE_ID:00000000-0000-0000-0000-000000000001}
     name: ${SMARTKB_KNOWLEDGE_BASE_NAME:Default Knowledge Base}
   object-storage:
-    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-    access-key: ${MINIO_ACCESS_KEY:smartkb}
-    secret-key: ${MINIO_SECRET_KEY:smartkb123}
-    bucket: ${MINIO_BUCKET:smartkb-documents}
+    endpoint: ${MINIO_ENDPOINT:}
+    access-key: ${MINIO_ACCESS_KEY:}
+    secret-key: ${MINIO_SECRET_KEY:}
+    bucket: ${MINIO_BUCKET:}
   messaging:
     ingestion:
       exchange: smartkb.ingestion

@@ -16,6 +16,9 @@ For networks that cannot pull K3s system images, import the matching official K3
 kubectl create namespace smartkb
 kubectl -n smartkb create secret generic smartkb-secrets `
   --from-literal=postgres-password='<postgres-password>' `
+  --from-literal=rabbitmq-password='<rabbitmq-password>' `
+  --from-literal=minio-access-key='<minio-access-key>' `
+  --from-literal=minio-secret-key='<minio-secret-key>' `
   --from-literal=openai-api-key='<api-key>'
 kubectl apply -f k8s/k3s-demo.yaml
 kubectl -n smartkb rollout status deploy/smartkb-app

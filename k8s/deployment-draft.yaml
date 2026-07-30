@@ -37,6 +37,12 @@ data:
       ai:
         openai:
           api-key: ${OPENAI_API_KEY}
+      rabbitmq:
+        password: ${RABBITMQ_PASSWORD}
+    smartkb:
+      object-storage:
+        access-key: ${MINIO_ACCESS_KEY}
+        secret-key: ${MINIO_SECRET_KEY}
 
 ---
 # Secret - 敏感信息
@@ -48,6 +54,9 @@ metadata:
 type: Opaque
 stringData:
   postgres-password: replace-at-deploy-time
+  rabbitmq-password: replace-at-deploy-time
+  minio-access-key: replace-at-deploy-time
+  minio-secret-key: replace-at-deploy-time
   openai-api-key: replace-at-deploy-time
 
 ---
@@ -186,6 +195,21 @@ spec:
             secretKeyRef:
               name: smartkb-secrets
               key: openai-api-key
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smartkb-secrets
+              key: rabbitmq-password
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: smartkb-secrets
+              key: minio-access-key
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: smartkb-secrets
+              key: minio-secret-key
         - name: SPRING_PROFILES_ACTIVE
           value: prod
         ports:

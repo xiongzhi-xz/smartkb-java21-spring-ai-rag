@@ -49,6 +49,9 @@ class K3sDemoManifestTest {
         assertSecretEnv(app, "smartkb", "SPRING_DATASOURCE_PASSWORD", "smartkb-secrets", "postgres-password");
         assertEnv(app, "smartkb", "SPRING_DATA_REDIS_HOST", "redis-service");
         assertEnv(app, "smartkb", "SPRING_DATA_REDIS_PORT", "6379");
+        assertSecretEnv(app, "smartkb", "RABBITMQ_PASSWORD", "smartkb-secrets", "rabbitmq-password");
+        assertSecretEnv(app, "smartkb", "MINIO_ACCESS_KEY", "smartkb-secrets", "minio-access-key");
+        assertSecretEnv(app, "smartkb", "MINIO_SECRET_KEY", "smartkb-secrets", "minio-secret-key");
         assertEnv(app, "smartkb", "MANAGEMENT_HEALTH_RABBIT_ENABLED", "false");
         assertEnv(app, "smartkb", "OLLAMA_BASE_URL", "http://host.k3d.internal:11434");
         assertSecretEnv(app, "smartkb", "OPENAI_API_KEY", "smartkb-secrets", "openai-api-key");
